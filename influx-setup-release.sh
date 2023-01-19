@@ -87,6 +87,7 @@ fi
 
 
 if [ -z "$DISTRO" ]; then
+    DISTRO='fsl-imx-xwayland'
     if [ -z "$FSLDISTRO" ]; then
         FSLDISTRO='fsl-imx-xwayland'
     fi
@@ -215,12 +216,13 @@ if [ -d ../sources/meta-freescale ]; then
     sed -e "s,\$.BSPDIR./sources/meta-fsl-arm-extra\s,,g" -i conf/bblayers.conf
 fi
 
+#echo "#Embedded Artists Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
+#echo "BBLAYERS += \" \${BSPDIR}/sources/meta-ea \"" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-murata-wireless \"" >> $BUILD_DIR/conf/bblayers.conf
 
 echo "" >> $BUILD_DIR/conf/bblayers.conf
 echo "#Influx Technology Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-influx/ \"" >> $BUILD_DIR/conf/bblayers.conf
-
 
 cd  $BUILD_DIR
 clean_up
