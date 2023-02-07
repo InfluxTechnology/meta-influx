@@ -87,6 +87,7 @@ fi
 
 
 if [ -z "$DISTRO" ]; then
+    DISTRO='fsl-imx-xwayland'
     if [ -z "$FSLDISTRO" ]; then
         FSLDISTRO='fsl-imx-xwayland'
     fi
@@ -100,7 +101,7 @@ fi
 
 if [ -z "$MACHINE" ]; then
     echo setting to default machine
-    MACHINE='imx6qpsabresd'
+    MACHINE='imx8mm-redge'
 fi
 
 case $MACHINE in
@@ -184,12 +185,12 @@ echo "# i.MX Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
 hook_in_layer meta-imx/meta-bsp
 hook_in_layer meta-imx/meta-sdk
 hook_in_layer meta-imx/meta-ml
-hook_in_layer meta-nxp-demo-experience
+#hook_in_layer meta-nxp-demo-experience
 
 echo "" >> $BUILD_DIR/conf/bblayers.conf
-echo "BBLAYERS += \"\${BSPDIR}/sources/meta-browser/meta-chromium\"" >> $BUILD_DIR/conf/bblayers.conf
+#echo "BBLAYERS += \"\${BSPDIR}/sources/meta-browser/meta-chromium\"" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \"\${BSPDIR}/sources/meta-clang\"" >> $BUILD_DIR/conf/bblayers.conf
-echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD_DIR/conf/bblayers.conf
+#echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-networking\"" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-filesystems\"" >> $BUILD_DIR/conf/bblayers.conf
 
@@ -215,10 +216,13 @@ if [ -d ../sources/meta-freescale ]; then
     sed -e "s,\$.BSPDIR./sources/meta-fsl-arm-extra\s,,g" -i conf/bblayers.conf
 fi
 
-echo "#Influx Technology Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
-echo "BBLAYERS += \" \${BSPDIR}/sources/meta-influx \"" >> $BUILD_DIR/conf/bblayers.conf
-
+#echo "#Embedded Artists Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
+#echo "BBLAYERS += \" \${BSPDIR}/sources/meta-ea \"" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-murata-wireless \"" >> $BUILD_DIR/conf/bblayers.conf
+
+echo "" >> $BUILD_DIR/conf/bblayers.conf
+echo "#Influx Technology Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
+echo "BBLAYERS += \" \${BSPDIR}/sources/meta-influx/ \"" >> $BUILD_DIR/conf/bblayers.conf
 
 cd  $BUILD_DIR
 clean_up
