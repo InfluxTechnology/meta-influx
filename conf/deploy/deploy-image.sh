@@ -12,7 +12,8 @@ if [[ ! -d $CURR_DIR ]]; then
 fi
 
 BUILD="redge-image-base"
-MACHINE=$(sudo cat $(pwd)/influx/conf/local.conf | grep 'MACHINE' | sed "s/'//g" | sed "s/ //g" | awk -F '??=' '{print $2}')
+MACHINE=$(sudo cat $CURR_DIR/conf/local.conf | grep 'MACHINE' | sed "s/'//g" | sed "s/ //g" | awk -F '??=' '{print $2}')
+
 TMP_DIR=$CURR_DIR"/tmp/deploy/images/""$MACHINE"
 UUU_DIR=$PWD"/uuu-deploy/"
 UUU_FILES_DIR=$PWD"/uuu-deploy/files/"
@@ -24,7 +25,7 @@ fi
 
 #echo "Copying deploying files ..."
 
-cp "$TMP_DIR"/imx-boot-imx8mm-redge-sd.bin-flash_evk "$UUU_FILES_DIR"/imx-boot-redge-sd.bin
+cp "$TMP_DIR"/imx-boot-"$MACHINE"-sd.bin-flash_evk "$UUU_FILES_DIR"/imx-boot-redge-sd.bin
 cp "$TMP_DIR"/imx8mm-ea-ucom-kit_v2-1mw.dtb "$UUU_FILES_DIR"/
 
 #if [ "$WIC_FLAG" = true ]; 
@@ -45,4 +46,6 @@ cp "$TMP_DIR"/imx8mm-ea-ucom-kit_v2-1mw.dtb "$UUU_FILES_DIR"/
     rm "$UUU_FILES_DIR"/"$BUILD"-"$MACHINE".wic.bz2    
 #fi
 
-sudo "$UUU_DIR"/uuu "$UUU_DIR"deploy-image-wic.uuu
+##sudo "$UUU_DIR"/uuu "$UUU_DIR"deploy-image-wic.uuu
+echo "Archiving ..."
+tar czf uuu-deploy.tgz uuu-deploy/
