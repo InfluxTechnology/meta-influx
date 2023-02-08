@@ -56,6 +56,7 @@ clean_up()
 # Apply patches to recipes
 #
 patch -Np1 -r - sources/meta-imx/meta-sdk/conf/distro/include/fsl-imx-preferred-env.inc < sources/meta-influx/patches/0001-remove-fsl-preferred-provider.patch
+patch -Np1 -r - sources/meta-murata-wireless/recipes-connectivity/murata-binaries/murata-binaries_1.0.bb < sources/meta-influx/patches/0002-add-redge-machine.patch
 
 # get command line options
 OLD_OPTIND=$OPTIND
@@ -225,5 +226,9 @@ echo "#Influx Technology Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-influx/ \"" >> $BUILD_DIR/conf/bblayers.conf
 
 cd  $BUILD_DIR
+
+# coscript for deploy
+cp ../sources/meta-influx/conf/deploy/deploy-image.sh ./
+
 clean_up
 unset FSLDISTRO

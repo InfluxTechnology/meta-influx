@@ -1,11 +1,8 @@
 #!/bin/bash
+# Script for deploy
+# copy needed files 
 
-if [[ $1 == "" ]]; then 
-    echo "USAGE: deploy-example.sh build_dir"
-    exit
-fi
-PWD=$(pwd)
-CURR_DIR=$PWD/$1
+CURR_DIR=$PWD
 if [[ ! -d $CURR_DIR ]]; then
     echo "Folder $CURR_DIR not exists."
     exit
@@ -19,8 +16,8 @@ UUU_DIR=$PWD"/uuu-deploy/"
 UUU_FILES_DIR=$PWD"/uuu-deploy/files/"
 if [[ ! -d $UUU_FILES_DIR ]]; then
     mkdir -p $UUU_FILES_DIR
-    cp $PWD/sources/meta-influx/conf/deploy/deploy-image-wic.uuu $UUU_DIR/
-    cp $PWD/sources/meta-influx/conf/deploy/uuu $UUU_DIR/
+    cp ../sources/meta-influx/conf/deploy/deploy-image-wic.uuu $UUU_DIR/
+    cp ../sources/meta-influx/conf/deploy/uuu $UUU_DIR/
 fi
 
 #echo "Copying deploying files ..."
@@ -46,6 +43,10 @@ cp "$TMP_DIR"/imx8mm-ea-ucom-kit_v2-1mw.dtb "$UUU_FILES_DIR"/
     rm "$UUU_FILES_DIR"/"$BUILD"-"$MACHINE".wic.bz2    
 #fi
 
-##sudo "$UUU_DIR"/uuu "$UUU_DIR"deploy-image-wic.uuu
+# uncomment this when using local machine for build
+#echo "Deploying ..."
+#sudo "$UUU_DIR"/uuu "$UUU_DIR"deploy-image-wic.uuu
+
+# uncomment this when using remote machine for build
 echo "Archiving ..."
 tar czf uuu-deploy.tgz uuu-deploy/
