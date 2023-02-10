@@ -78,5 +78,5 @@ EXTRA_USERS_PARAMS = " \
   usermod -p '${PASSWD}' root; \
 "
 
-#  useradd -p '' tester; \
-#  usermod -s /bin/sh tester; \
+#  useradd -p '' tester; 
+#  usermod -s /bin/sh tester; 
