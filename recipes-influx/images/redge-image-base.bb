@@ -75,7 +75,8 @@ inherit extrausers
 
 PASSWD = '\$6\$qwerty123456\$FbXWy3i5PyuYYvNR.X1c4BbJ8zTcVEv7i9Di9erLRDTiIBiswLSnGo7iXBrhZPBNUh/TyLJ.RVbDiUFxWgmbX.'
 EXTRA_USERS_PARAMS = " \
-  useradd -p '' tester; \
-  usermod -s /bin/sh tester; \
   usermod -p '${PASSWD}' root; \
 "
+
+#  useradd -p '' tester; \
+#  usermod -s /bin/sh tester; \
