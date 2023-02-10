@@ -4,8 +4,11 @@ SECTION = "base"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM="file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-SRC_URI = "file://other/firststart.sh \
-	file://LICENSE \
+SRC_URI = "file://LICENSE \
+	file://other/firststart.sh \
+	file://wireless/wpa_supplicant@wlan0.service \
+	file://wireless/20-wireless-wlan0.network \
+	file://wireless/hostapd@wlan1.service \
 "
 
 S = "${WORKDIR}"
@@ -18,7 +21,6 @@ do_install () {
 	install -m 0755 -d ${D}${sysconfdir}/systemd/network
 	install -m 0755 -d ${D}${systemd_system_unitdir}
 	install -m 0755 -d ${D}/opt
-	install -m 0755 -d ${D}/opt/ea
 
 	# Influx Technology
 	# to find kernel release, type 'uname -r' on device and fill here  
@@ -73,6 +75,9 @@ do_install () {
 	# crypto support
 
 	# wireless
+	install -m 0644 ${WORKDIR}/wireless/wpa_supplicant@wlan0.service ${D}${systemd_system_unitdir}
+	install -m 0644 ${WORKDIR}/wireless/20-wireless-wlan0.network ${D}${sysconfdir}/systemd/network/
+	install -m 0644 ${WORKDIR}/wireless/hostapd@wlan1.service ${D}${systemd_system_unitdir}
 
 	# LTE
 
