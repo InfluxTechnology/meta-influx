@@ -16,7 +16,7 @@ SRCBRANCH = "ea_5.15.y"
 SRCREV = "4285970079df09f80dd66e8afffd23ace5a89865"
 DEPENDS += "lzop-native bc-native"
 
-#SRC_URI += "file://0001-uapi-Add-ion.h-to-userspace.patch"
+SRC_URI += "file://0001-uapi-Add-ion.h-to-userspace.patch"
 
 LINUX_VERSION = "5.15.32"
 
