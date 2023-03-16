@@ -56,7 +56,7 @@ IMAGE_INSTALL = "\
    influx-files \
 "
 
-IMAGE_INSTALL:append:imx8mnea-ucom = "\
+IMAGE_INSTALL:append:imx8mmea-ucom = "\
    ea-resizefs \
 "
 

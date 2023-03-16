@@ -5,10 +5,26 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM="file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI = "file://LICENSE \
+	file://other/VERSION \
 	file://other/firststart.sh \
+	file://other/autostart.sh \
+	file://other/autostart.service \
 	file://wireless/wpa_supplicant@wlan0.service \
 	file://wireless/20-wireless-wlan0.network \
 	file://wireless/hostapd@wlan1.service \
+	file://rexusb/libusb.so \
+	file://rexusb/rexgen \
+	file://rexusb/rexgen_stream \
+	file://rexusb/rexgen_data.service \
+	file://rexusb/config/Structure_v7.rxc \
+	file://rexusb/config/Structure_v7.xml \
+	file://rexusb/config/Structure_v7_gnss.rxc \
+	file://rexusb/config/Structure_v7_gnss.xml \
+	file://rexusb/demo/canreader.js \
+	file://rexusb/demo/canreader.py \
+	file://rexusb/demo/cansend.py \
+	file://rexusb/demo/gnss2can.js \
+	file://rexusb/firmware/firmware_3.26.bin \
 "
 
 S = "${WORKDIR}"
@@ -24,8 +40,8 @@ do_install () {
 
 	# Influx Technology
 	# to find kernel release, type 'uname -r' on device and fill here  
-	EXTRA_DIR="/lib/modules/5.15.32+g663184199df6/extra/"
-	MODULE_DIR="/lib/modules/5.15.32+g663184199df6/"
+	EXTRA_DIR="/lib/modules/5.15.32+g7ba5d3e4f/extra/"
+	MODULE_DIR="/lib/modules/5.15.32+g7ba5d3e4f/"
 
 	HOME_DIR="/home/root/"
 	REX_USB_DIR="/home/root/rexusb/"
@@ -63,6 +79,19 @@ do_install () {
 	done
 
 	# Influx Technology
+	install -m 0644 ${WORKDIR}/rexusb/libusb.so ${D}${REX_USB_DIR}/libusb.so
+	install -m 0644 ${WORKDIR}/rexusb/rexgen ${D}${REX_USB_DIR}/rexgen
+	install -m 0644 ${WORKDIR}/rexusb/rexgen_stream ${D}${REX_USB_DIR}/rexgen_stream
+	install -m 0644 ${WORKDIR}/rexusb/rexgen_data.service ${D}/etc/systemd/system/rexgen_data.service	
+	install -m 0644 ${WORKDIR}/rexusb/config/Structure_v7.rxc ${D}${REX_CFG_DIR}/Structure_v7.rxc
+	install -m 0644 ${WORKDIR}/rexusb/config/Structure_v7.xml ${D}${REX_CFG_DIR}/Structure_v7.xml
+	install -m 0644 ${WORKDIR}/rexusb/config/Structure_v7_gnss.rxc ${D}${REX_CFG_DIR}/Structure_v7_gnss.rxc
+	install -m 0644 ${WORKDIR}/rexusb/config/Structure_v7_gnss.xml ${D}${REX_CFG_DIR}/Structure_v7_gnss.xml
+	install -m 0644 ${WORKDIR}/rexusb/demo/canreader.js ${D}${REX_USB_DIR}/demo/canreader.js
+	install -m 0644 ${WORKDIR}/rexusb/demo/canreader.py ${D}${REX_USB_DIR}/demo/canreader.py
+	install -m 0644 ${WORKDIR}/rexusb/demo/cansend.py ${D}${REX_USB_DIR}/demo/cansend.py
+	install -m 0644 ${WORKDIR}/rexusb/demo/gnss2can.js ${D}${REX_USB_DIR}/demo/gnss2can.js
+	install -m 0644 ${WORKDIR}/rexusb/firmware/firmware_3.26.bin ${D}${REX_FRM_DIR}/firmware_3.26.bin
 	
 	# RexGen support
 
@@ -75,6 +104,7 @@ do_install () {
 	# crypto support
 
 	# wireless
+	install -m 0755 ${WORKDIR}/other/VERSION ${D}${INFLUX_DIR}/VERSION
 	install -m 0644 ${WORKDIR}/wireless/wpa_supplicant@wlan0.service ${D}${systemd_system_unitdir}
 	install -m 0644 ${WORKDIR}/wireless/20-wireless-wlan0.network ${D}${sysconfdir}/systemd/network/
 	install -m 0644 ${WORKDIR}/wireless/hostapd@wlan1.service ${D}${systemd_system_unitdir}
@@ -85,6 +115,8 @@ do_install () {
 
 	# other
 	install -m 0755 ${WORKDIR}/other/firststart.sh ${D}/etc/profile.d/firststart.sh
+	install -m 0755 ${WORKDIR}/other/autostart.sh ${D}${INFLUX_DIR}/autostart.sh
+	install -m 0644 ${WORKDIR}/other/autostart.service ${D}/etc/systemd/system/autostart.service
     
 	# cmake
 

@@ -1,19 +1,19 @@
-# Copyright (C) 2017 Embedded Artists AB
+# Copyright (C) 2022 Influx Technology LTD
 # Released under the MIT license (see COPYING.MIT for the terms)
 
-SUMMARY = "Linux Kernel provided by Embedded Artists but based on NXP's kernel"
-DESCRIPTION = "Linux Kernel for Embedded Artists i.MX based COM boards. \
+SUMMARY = "Linux Kernel provided by Influx Technology is based on NXP's kernel"
+DESCRIPTION = "Linux Kernel for Influx Technology Redge RedgeAIR boards. \
 The kernel is based on the kernel provided by NXP."
 
 require recipes-kernel/linux/linux-imx.inc
 
 SRC_URI = "git://github.com/InfluxTechnology/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
+SRCREV = "c78808ba97ce2ba2f6d0d24a9247f176050f12f9"
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 
 LOCALVERSION = "-lts-5.15.32"
 SRCBRANCH = "ea_5.15.y"
-SRCREV = "dda97955ba2b3191ddb5981f432f7dd1c7e35d95"
 DEPENDS += "lzop-native bc-native"
 
 SRC_URI += "file://0001-uapi-Add-ion.h-to-userspace.patch"

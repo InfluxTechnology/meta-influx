@@ -1,0 +1,11 @@
+[Unit]
+Description= Start send/receive CAN messages
+After=basic.target
+
+[Service]
+Type=simple
+ExecStart=/home/root/rexusb/rexgen_stream &
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
