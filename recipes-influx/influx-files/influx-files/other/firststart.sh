@@ -39,15 +39,32 @@ if [ "$as_enabled" != "enabled" ];
 then
     systemctl enable autostart.service
     systemctl start autostart.service
+    /bin/sed -i "s/####//" /opt/influx/autostart.sh
 fi
 
 # enable send/receiveCAN messages service
-if test -f /home/root/rexusb/rexgen_stream; then
-    chmod +x /home/root/rexusb/rexgen_stream
+#if test -f /home/root/rexusb/rexgen_stream; then
+#    chmod +x /home/root/rexusb/rexgen_stream
+#fi
+#rd_enabled=$(systemctl is-enabled rexgen_data.service)
+#if [ "$rd_enabled" != "enabled" ];
+#then
+#    systemctl enable rexgen_data.service
+#    systemctl start rexgen_data.service
+#fi
+
+
+
+
+
+
+# editing this service unit with timeout 10s (default is 2 mins).
+SNWOS="/lib/systemd/system/systemd-networkd-wait-online.service"
+TIME_OUT=$(cat "$SNWOS" | grep 'ExecStart=/lib/systemd/systemd-networkd-wait-online --timeout=10')
+if [[ "$TIME_OUT" == "" ]]; then
+    /bin/sed -i "s/systemd-networkd-wait-online.service/systemd_networkd_wait_online.service/" "$SNWOS"
+    /bin/sed -i "s/systemd-networkd-wait-online/systemd-networkd-wait-online --timeout=10/" "$SNWOS"
 fi
-rd_enabled=$(systemctl is-enabled rexgen_data.service)
-if [ "$rd_enabled" != "enabled" ];
-then
-    systemctl enable rexgen_data.service
-    systemctl start rexgen_data.service
-fi
+
+ # check for new firmware version
+ /opt/influx/check_firmware_version.sh 1

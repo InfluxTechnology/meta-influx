@@ -10,5 +10,5 @@ EDITOR=nano	# crontab uses this editor
 
 
 # load to RexGen proper configuration
-/home/root/rexusb/rexgen configure /home/root/rexusb/config/Structure_v7_gnss.rxc
+####/home/root/rexusb/rexgen configure /home/root/rexusb/config/Structure_v7_gnss.rxc
 

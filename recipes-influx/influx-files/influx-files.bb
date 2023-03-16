@@ -9,6 +9,7 @@ SRC_URI = "file://LICENSE \
 	file://other/firststart.sh \
 	file://other/autostart.sh \
 	file://other/autostart.service \
+	file://other/check_firmware_version.sh \
 	file://wireless/wpa_supplicant@wlan0.service \
 	file://wireless/20-wireless-wlan0.network \
 	file://wireless/hostapd@wlan1.service \
@@ -117,7 +118,8 @@ do_install () {
 	install -m 0755 ${WORKDIR}/other/firststart.sh ${D}/etc/profile.d/firststart.sh
 	install -m 0755 ${WORKDIR}/other/autostart.sh ${D}${INFLUX_DIR}/autostart.sh
 	install -m 0644 ${WORKDIR}/other/autostart.service ${D}/etc/systemd/system/autostart.service
-    
+	install -m 0755 ${WORKDIR}/other/check_firmware_version.sh ${D}${INFLUX_DIR}/check_firmware_version.sh    
+
 	# cmake
 
 	# load kernel modules at start
