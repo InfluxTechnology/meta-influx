@@ -13,6 +13,7 @@ SRC_URI = "file://LICENSE \
 	file://wireless/wpa_supplicant@wlan0.service \
 	file://wireless/20-wireless-wlan0.network \
 	file://wireless/hostapd@wlan1.service \
+	file://wireless/wlan_check.sh \
 	file://rexusb/libusb.so \
 	file://rexusb/rexgen \
 	file://rexusb/rexgen_stream \
@@ -105,10 +106,11 @@ do_install () {
 	# crypto support
 
 	# wireless
-	install -m 0755 ${WORKDIR}/other/VERSION ${D}${INFLUX_DIR}/VERSION
+	install -m 0644 ${WORKDIR}/other/VERSION ${D}${INFLUX_DIR}/VERSION
 	install -m 0644 ${WORKDIR}/wireless/wpa_supplicant@wlan0.service ${D}${systemd_system_unitdir}
 	install -m 0644 ${WORKDIR}/wireless/20-wireless-wlan0.network ${D}${sysconfdir}/systemd/network/
 	install -m 0644 ${WORKDIR}/wireless/hostapd@wlan1.service ${D}${systemd_system_unitdir}
+	install -m 0755 ${WORKDIR}/wireless/wlan_check.sh ${D}/etc/profile.d/wlan_check.sh
 
 	# LTE
 

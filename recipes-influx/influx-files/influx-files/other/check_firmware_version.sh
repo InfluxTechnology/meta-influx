@@ -68,8 +68,8 @@ if [[ $OLD_FRM -lt $NEW_FRM ]] && [[ $OLD_FRM -ne 0 ]]; then
 	fi
 
 	if [[ $1 == "1" ]] && [[ $ACTION == "ask" ]]; then
-		echo -e "\e[33;1mWarning:\e[0m \e[33m New version $NEW_FN detected. \e[0m"
-		echo -e "\e[33m	  Start /opt/influx/check_firmware_version.sh script to apply it. \e[0m"
+		echo -e "\e[32;1mInfo:\e[0m \e[32m New version $NEW_FN detected. \e[0m"
+		echo -e "\e[32m	  Start /opt/influx/check_firmware_version.sh script to apply it. \e[0m"
 		echo ""	
 	fi
 fi
