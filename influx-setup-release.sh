@@ -165,7 +165,7 @@ fi
 echo >> conf/local.conf
 echo "# Switch to Debian packaging and include package-management in the image" >> conf/local.conf
 echo "PACKAGE_CLASSES = \"package_deb\"" >> conf/local.conf
-echo "EXTRA_IMAGE_FEATURES += \"package-management\"" >> conf/local.conf
+echo "EXTRA_IMAGE_FEATURES += \"package-management debug-tweaks\"" >> conf/local.conf
 
 # Removing 3g since mobile-broadband-provide-info package fails (fetch error).
 # The mobile-broadband package is included by the ofono package which in turn
@@ -217,17 +217,16 @@ if [ -d ../sources/meta-freescale ]; then
     sed -e "s,\$.BSPDIR./sources/meta-fsl-arm-extra\s,,g" -i conf/bblayers.conf
 fi
 
-#echo "#Embedded Artists Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
-#echo "BBLAYERS += \" \${BSPDIR}/sources/meta-ea \"" >> $BUILD_DIR/conf/bblayers.conf
+#Influx Technology layer
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-murata-wireless \"" >> $BUILD_DIR/conf/bblayers.conf
-
 echo "" >> $BUILD_DIR/conf/bblayers.conf
 echo "#Influx Technology Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-influx/ \"" >> $BUILD_DIR/conf/bblayers.conf
 
-cd  $BUILD_DIR
+cat ../sources/meta-influx/conf/local.conf.default >>  $BUILD_DIR/conf/local.conf
 
-# coscript for deploy
+cd  $BUILD_DIR
+# cp script for deploy
 cp ../sources/meta-influx/conf/deploy/deploy-image.sh ./
 
 clean_up
