@@ -1,0 +1,10 @@
+
+IMAGE_INSTALL:append = " ppp "
+##IMAGE_INSTALL:append += " caam-keygen "
+IMAGE_INSTALL:append = " git "
+IMAGE_INSTALL:append = " rsync "
+IMAGE_INSTALL:append = " curl "
+IMAGE_INSTALL:append = " cronie "	
+IMAGE_INSTALL:append = " minicom "
+IMAGE_INSTALL:append = " wvdial "	
+IMAGE_INSTALL:append = " fsl-rc-local "

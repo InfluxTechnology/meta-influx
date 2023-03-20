@@ -45,6 +45,18 @@ fi
 #fi
 
 
+# kernel modules
+if ls /opt/influx/etc/*.ko 1> /dev/null 2>&1; then
+    if [ ! -d /lib/modules/$(uname -r)/extra ]; then 
+	mkdir /lib/modules/$(uname -r)/extra/
+    fi
+        mv /opt/influx/etc/*.ko /lib/modules/$(uname -r)/extra/
+        depmod -a
+fi
+
+# crontab uses this editor
+EDITOR=nano	
+
 
 
 
