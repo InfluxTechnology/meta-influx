@@ -45,21 +45,12 @@ fi
 #fi
 
 
-# kernel modules
-if ls /opt/influx/etc/*.ko 1> /dev/null 2>&1; then
-    if [ ! -d /lib/modules/$(uname -r)/extra ]; then 
-	mkdir /lib/modules/$(uname -r)/extra/
-    fi
-        mv /opt/influx/etc/*.ko /lib/modules/$(uname -r)/extra/
-        depmod -a
-fi
-
 # crontab uses this editor
 EDITOR=nano	
 
-
-
-
+if test -f /usr/local/bin/uhubctl; then 
+    chmod +x /usr/local/bin/uhubctl
+fi
 
 # editing this service unit with timeout 10s (default is 2 mins).
 SNWOS="/lib/systemd/system/systemd-networkd-wait-online.service"

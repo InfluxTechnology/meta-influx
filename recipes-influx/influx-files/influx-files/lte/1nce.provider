@@ -1,0 +1,11 @@
+hide-password
+noauth
+debug
+defaultroute
+noipdefault
+persist
+usepeerdns
+/dev/ttymxc2 115200
+crtscts
+replacedefaultroute
+connect 'chat -v -f /etc/chatscripts/1nce-new.chat'
