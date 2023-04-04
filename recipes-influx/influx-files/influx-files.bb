@@ -17,26 +17,11 @@ SRC_URI = "file://LICENSE \
 	file://wireless/wlan_check.sh \
         file://wireless/wakeup_BT.sh \
 	file://wireless/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
-	file://rexusb/libusb.so \
-	file://rexusb/rexgen \
-	file://rexusb/rexgen_stream \
 	file://rexusb/rexgen_data.service \
-	file://rexusb/config/Structure_v7.rxc \
-	file://rexusb/config/Structure_v7.xml \
-	file://rexusb/config/Structure_v7_gnss.rxc \
-	file://rexusb/config/Structure_v7_gnss.xml \
 	file://rexusb/etc/escape.minicom \
-	file://rexusb/etc/GNSS.v3.dbc \
-	file://rexusb/etc/AccelGyro.dbc \
-	file://rexusb/etc/DigitalADC.dbc \
 	file://rexusb/etc/gnssdata_start.sh \
 	file://rexusb/etc/minirc.dfl \
 	file://rexusb/etc/gnssinit.py \
-	file://rexusb/demo/canreader.js \
-	file://rexusb/demo/canreader.py \
-	file://rexusb/demo/cansend.py \
-	file://rexusb/demo/gnss2can.js \
-	file://rexusb/firmware/firmware_3.26.bin \
 	file://rexusb/usb/uhubctl \
 	file://rexusb/usb/rexgen_usb.conf \
 	file://rexusb/usb/rexgen_usb \
@@ -68,10 +53,6 @@ SRC_URI = "file://LICENSE \
 
 S = "${WORKDIR}"
 
-INFLUX_FILES_644 ?= ""
-INFLUX_FILES_755 ?= ""
-INFLUX_FILES_DIRS ?= ""
-
 do_install () {
 	install -m 0755 -d ${D}${sysconfdir}/systemd/network
 	install -m 0755 -d ${D}${systemd_system_unitdir}
@@ -84,15 +65,9 @@ do_install () {
 
 	HOME_DIR="/home/root/"
 	REX_USB_DIR="/home/root/rexusb/"
-	REX_FRM_DIR="/home/root/rexusb/firmware"
-	REX_CFG_DIR="/home/root/rexusb/config"
 	INFLUX_DIR="/opt/influx/"
 
 	install -m 0755 -d ${D}${REX_USB_DIR}
-	install -m 0755 -d ${D}${REX_USB_DIR}/demo/
-	install -m 0755 -d ${D}${REX_FRM_DIR}
-	install -m 0755 -d ${D}${REX_CFG_DIR}
-	install -m 0755 -d ${D}${INFLUX_DIR}
 	install -m 0755 -d ${D}${INFLUX_DIR}/etc/
 	install -m 0755 -d ${D}${INFLUX_DIR}/ko/
 	install -m 0755 -d ${D}${INFLUX_DIR}/cmake/
@@ -112,33 +87,12 @@ do_install () {
 #	install -m 0755 -d ${D}/usr/share/mender/modules/v3/
 	install -m 0755 -d ${D}/usr/local/bin/
 
-
-	for d in ${INFLUX_FILES_DIRS}; do
-		install -m 0755 -d ${D}${d}
-	done
-
 	# Influx Technology
-	install -m 0644 ${WORKDIR}/rexusb/libusb.so ${D}${REX_USB_DIR}/libusb.so
-	install -m 0644 ${WORKDIR}/rexusb/rexgen ${D}${REX_USB_DIR}/rexgen
-	install -m 0644 ${WORKDIR}/rexusb/rexgen_stream ${D}${REX_USB_DIR}/rexgen_stream
 	install -m 0644 ${WORKDIR}/rexusb/rexgen_data.service ${D}/etc/systemd/system/rexgen_data.service	
-	install -m 0644 ${WORKDIR}/rexusb/config/Structure_v7.rxc ${D}${REX_CFG_DIR}/Structure_v7.rxc
-	install -m 0644 ${WORKDIR}/rexusb/config/Structure_v7.xml ${D}${REX_CFG_DIR}/Structure_v7.xml
-	install -m 0644 ${WORKDIR}/rexusb/config/Structure_v7_gnss.rxc ${D}${REX_CFG_DIR}/Structure_v7_gnss.rxc
-	install -m 0644 ${WORKDIR}/rexusb/config/Structure_v7_gnss.xml ${D}${REX_CFG_DIR}/Structure_v7_gnss.xml
-	install -m 0644 ${WORKDIR}/rexusb/etc/GNSS.v3.dbc ${D}${INFLUX_DIR}/etc/GNSS.v3.dbc
-	install -m 0644 ${WORKDIR}/rexusb/etc/AccelGyro.dbc ${D}${INFLUX_DIR}/etc/AccelGyro.dbc
-	install -m 0644 ${WORKDIR}/rexusb/etc/DigitalADC.dbc ${D}${INFLUX_DIR}/etc/DigitalADC.dbc
 	install -m 0644 ${WORKDIR}/rexusb/etc/escape.minicom ${D}${INFLUX_DIR}/escape.minicom
 	install -m 0755 ${WORKDIR}/rexusb/etc/gnssdata_start.sh ${D}${INFLUX_DIR}/gnssdata_start.sh
 	install -m 0644 ${WORKDIR}/rexusb/etc/minirc.dfl ${D}/etc/minirc.dfl
 	install -m 0755 ${WORKDIR}/rexusb/etc/gnssinit.py ${D}${INFLUX_DIR}/gnssinit.py	
-	install -m 0644 ${WORKDIR}/rexusb/demo/canreader.js ${D}${REX_USB_DIR}/demo/canreader.js
-	install -m 0644 ${WORKDIR}/rexusb/demo/canreader.py ${D}${REX_USB_DIR}/demo/canreader.py
-	install -m 0644 ${WORKDIR}/rexusb/demo/cansend.py ${D}${REX_USB_DIR}/demo/cansend.py
-	install -m 0644 ${WORKDIR}/rexusb/demo/gnss2can.js ${D}${REX_USB_DIR}/demo/gnss2can.js
-	install -m 0644 ${WORKDIR}/rexusb/firmware/firmware_3.26.bin ${D}${REX_FRM_DIR}/firmware_3.26.bin
-	
 
 	# rexgen_usb driver
 	install -m 0644 ${WORKDIR}/rexusb/usb/uhubctl ${D}/usr/local/bin/uhubctl
@@ -195,28 +149,6 @@ do_install () {
 	install -m 0644 ${WORKDIR}/ppp/ppp_async.conf ${D}/etc/modules-load.d/ppp_async.conf
 	install -m 0644 ${WORKDIR}/ppp/bsd_comp.conf ${D}/etc/modules-load.d/bsd_comp.conf
 	install -m 0644 ${WORKDIR}/ppp/crc-ccitt.conf ${D}/etc/modules-load.d/crc-ccitt.conf
-
-	for d in ${INFLUX_FILES_644}; do
-		f_in=$(echo "${d}" | cut -d":" -f1)
-		f_out=$(echo "$d" | cut -d":" -f2)
-		if [ "${f_in#/}" = "${f_in}" ]] ;
-		then
-			install -m 0644 ${TOPDIR}/${f_in} ${D}${f_out}
-		else
-			install -m 0644 ${f_in} ${D}${f_out}
-		fi
-	done
-	
-	for d in ${INFLUX_FILES_755}; do
-		f_in=$(echo "${d}" | cut -d":" -f1)
-		f_out=$(echo "$d" | cut -d":" -f2)
-		if [ "${f_in#/}" = "${f_in}" ]] ;
-		then
-			install -m 0755 ${TOPDIR}/${f_in} ${D}${f_out}
-		else
-			install -m 0755 ${f_in} ${D}${f_out}
-		fi
-	done
 }
 
 PACKAGES = "${PN}"
