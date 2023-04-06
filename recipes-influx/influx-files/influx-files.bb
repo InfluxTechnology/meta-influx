@@ -24,7 +24,6 @@ SRC_URI = "file://LICENSE \
 	file://rexusb/etc/gnssdata_start.sh \
 	file://rexusb/etc/minirc.dfl \
 	file://rexusb/etc/gnssinit.py \
-	file://rexusb/usb/uhubctl \
 	file://rexusb/usb/rexgen_usb.conf \
 	file://rexusb/usb/rexgen_usb \
 	file://rexusb/usb/driver_reconnect.sh \
@@ -180,8 +179,8 @@ do_install () {
 	install -m 0644 ${WORKDIR}/ppp/crc-ccitt.conf ${D}/etc/modules-load.d/crc-ccitt.conf
 }
 
-#INHIBIT_PACKAGE_STRIP = "1"
-#INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
+INHIBIT_PACKAGE_STRIP = "1"
+INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 
 PACKAGES = "${PN}"
 FILES:${PN} = "/"
