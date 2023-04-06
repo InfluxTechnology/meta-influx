@@ -25,7 +25,7 @@ CC:append = " -fcommon -w "
 
 do_compile () {
 	${CC} -o rexgen_stream rexgen-stream.c pipes.c commands.c communication.c -I./ -lusb-1.0 -pthread ${LDFLAGS}
-	${CC} -o rexgen rexusb.c commands.c communication.c -I./ -lusb-1.0 ${LDFLAGS}
+#	${CC} -o rexgen rexusb.c commands.c communication.c -I./ -lusb-1.0 ${LDFLAGS}
 }
 
 # these folders will be created
@@ -56,7 +56,7 @@ do_install () {
 	done
 
 	install -m 0755 ${S}/rexgen_stream ${D}${REX_USB_DIR}/rexgen_stream
-	install -m 0755 ${S}/rexgen ${D}${REX_USB_DIR}/rexgen
+#	install -m 0755 ${S}/rexgen ${D}${REX_USB_DIR}/rexgen
 }
 
 INHIBIT_PACKAGE_STRIP = "1"
