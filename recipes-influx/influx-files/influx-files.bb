@@ -6,15 +6,12 @@ LIC_FILES_CHKSUM="file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI = "file://LICENSE \
 	file://other/VERSION \
-	file://other/firststart.sh \
-	file://other/ko_check.sh \
 	file://other/autostart.sh \
 	file://other/autostart.service \
 	file://other/check_firmware_version.sh \
 	file://wireless/wpa_supplicant@wlan0.service \
 	file://wireless/20-wireless-wlan0.network \
 	file://wireless/hostapd@wlan1.service \
-	file://wireless/wlan_check.sh \
         file://wireless/wakeup_BT.sh \
 	file://wireless/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
 	file://rexusb/rexgen_data.service \
@@ -50,22 +47,37 @@ SRC_URI = "file://LICENSE \
 	file://lte/lte_start_ppp.sh \
 	file://lte/lte_start_wvdial.sh \
 "
+#	file://profile.d/firststart.sh 
+#	file://profile.d/ko_check.sh 
+#	file://profile.d/wlan_check.sh 
 
 S = "${WORKDIR}"
 
+REX_USB_DIR="/home/root/rexusb/"
+INFLUX_DIR="/opt/influx/"
+
+INFLUX_DIRS = "/etc/profile.d/ /etc/modules-load.d/ ${REX_USB_DIR} ${INFLUX_DIR}"
+INFLUX_FILES = "${S}/etc/profile.d/ "
+
 do_install () {
+	echo "" > ${S}/debug.txt
+
 	install -m 0755 -d ${D}${sysconfdir}/systemd/network
 	install -m 0755 -d ${D}${systemd_system_unitdir}
 	install -m 0755 -d ${D}/opt
 
 	# Influx Technology
+	for d in ${INFLUX_DIRS}; do
+		fold="${d#${S}}"
+#echo  ${fold} >> ${S}/debug.txt
+		install -m 0755 -d ${D}${fold}
+	done
+
 	# to find kernel release, type 'uname -r' on device and fill here  
 #	EXTRA_DIR="/lib/modules/5.15.32+g1bee87d20/extra/"
 #	MODULE_DIR="/lib/modules/5.15.32+g1bee87d20/"
 
 	HOME_DIR="/home/root/"
-	REX_USB_DIR="/home/root/rexusb/"
-	INFLUX_DIR="/opt/influx/"
 
 	install -m 0755 -d ${D}${REX_USB_DIR}
 	install -m 0755 -d ${D}${INFLUX_DIR}/etc/
@@ -73,19 +85,39 @@ do_install () {
 	install -m 0755 -d ${D}${INFLUX_DIR}/cmake/
 	install -m 0755 -d ${D}/etc/modules-load.d/
 	install -m 0755 -d ${D}/home/root/
-	install -m 0755 -d ${D}/etc/profile.d/
+#	install -m 0755 -d ${D}/etc/profile.d/
 	install -m 0755 -d ${D}/etc/ppp/
 	install -m 0755 -d ${D}/etc/ppp/peers/
 	install -m 0755 -d ${D}/etc/chatscripts/
 	install -m 0755 -d ${D}/etc/systemd/system/
 	install -m 0755 -d ${D}/etc/firmware/
 	install -m 0755 -d ${D}/etc/firmware/murata-master/
-#	install -m 0755 -d ${D}/etc/mender/
+##	install -m 0755 -d ${D}/etc/mender/
 	install -m 0755 -d ${D}/etc/network/
-#	install -m 0755 -d ${D}/etc/mender/scripts/
-#	install -m 0755 -d ${D}/usr/share/mender/
-#	install -m 0755 -d ${D}/usr/share/mender/modules/v3/
-	install -m 0755 -d ${D}/usr/local/bin/
+##	install -m 0755 -d ${D}/etc/mender/scripts/
+##	install -m 0755 -d ${D}/usr/share/mender/
+##	install -m 0755 -d ${D}/usr/share/mender/modules/v3/
+#	install -m 0755 -d ${D}/usr/local/bin/
+
+
+#echo  ${sysconfdir} >> ${S}/debug.txt
+#echo  ${systemd_system_unitdir} >> ${S}/debug.txt
+
+#echo  ${INFLUX_FILES} >> ${S}/debug.txt
+#echo  ${D} >> ${S}/debug.txt
+#echo "" >> ${S}/debug.txt
+
+	for d in $(find ${INFLUX_FILES}); do
+		# skip folders
+		if [ -d ${d} ]; then
+			fold="${d#${S}}"
+			t=${d}
+			continue
+		fi
+		
+		file="${d#${t}}"
+		install -m 0755 ${S}${fold}${file} ${D}${fold}${file}
+	done
 
 	# Influx Technology
 	install -m 0644 ${WORKDIR}/rexusb/rexgen_data.service ${D}/etc/systemd/system/rexgen_data.service	
@@ -95,7 +127,7 @@ do_install () {
 	install -m 0755 ${WORKDIR}/rexusb/etc/gnssinit.py ${D}${INFLUX_DIR}/gnssinit.py	
 
 	# rexgen_usb driver
-	install -m 0644 ${WORKDIR}/rexusb/usb/uhubctl ${D}/usr/local/bin/uhubctl
+#	install -m 0644 ${WORKDIR}/rexusb/usb/uhubctl ${D}/usr/local/bin/uhubctl
 	install -m 0755 ${WORKDIR}/rexusb/usb/driver_reconnect.sh ${D}${INFLUX_DIR}/driver_reconnect.sh
 	install -m 0755 ${WORKDIR}/rexusb/usb/pipes_reconnect.sh ${D}${INFLUX_DIR}/pipes_reconnect.sh
 
@@ -106,7 +138,7 @@ do_install () {
 	install -m 0644 ${WORKDIR}/wireless/wpa_supplicant@wlan0.service ${D}${systemd_system_unitdir}
 	install -m 0644 ${WORKDIR}/wireless/20-wireless-wlan0.network ${D}${sysconfdir}/systemd/network/
 	install -m 0644 ${WORKDIR}/wireless/hostapd@wlan1.service ${D}${systemd_system_unitdir}
-	install -m 0755 ${WORKDIR}/wireless/wlan_check.sh ${D}/etc/profile.d/wlan_check.sh
+#	install -m 0755 ${WORKDIR}/wireless/wlan_check.sh ${D}/etc/profile.d/wlan_check.sh
 	install -m 0755 ${WORKDIR}/wireless/wakeup_BT.sh ${D}${INFLUX_DIR}/wakeup_BT.sh
 	install -m 0755 ${WORKDIR}/wireless/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd ${D}/etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd
 
@@ -125,8 +157,8 @@ do_install () {
 	# mender
 
 	# other
-	install -m 0755 ${WORKDIR}/other/firststart.sh ${D}/etc/profile.d/firststart.sh
-	install -m 0755 ${WORKDIR}/other/ko_check.sh ${D}/etc/profile.d/ko_check.sh
+#	install -m 0755 ${WORKDIR}/other/firststart.sh ${D}/etc/profile.d/firststart.sh
+#	install -m 0755 ${WORKDIR}/other/ko_check.sh ${D}/etc/profile.d/ko_check.sh
 	install -m 0755 ${WORKDIR}/other/autostart.sh ${D}${INFLUX_DIR}/autostart.sh
 	install -m 0644 ${WORKDIR}/other/autostart.service ${D}/etc/systemd/system/autostart.service
 	install -m 0755 ${WORKDIR}/other/check_firmware_version.sh ${D}${INFLUX_DIR}/check_firmware_version.sh    
@@ -150,6 +182,9 @@ do_install () {
 	install -m 0644 ${WORKDIR}/ppp/bsd_comp.conf ${D}/etc/modules-load.d/bsd_comp.conf
 	install -m 0644 ${WORKDIR}/ppp/crc-ccitt.conf ${D}/etc/modules-load.d/crc-ccitt.conf
 }
+
+#INHIBIT_PACKAGE_STRIP = "1"
+#INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 
 PACKAGES = "${PN}"
 FILES:${PN} = "/"

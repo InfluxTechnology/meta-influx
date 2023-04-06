@@ -53,6 +53,7 @@ IMAGE_INSTALL = "\
    hostap-conf \
    hostap-utils \
    backporttool-linux \
+    uhubctl \
     influx-files \
     rexgen-stream \
 "
@@ -78,3 +79,6 @@ PASSWD = '\$6\$qwerty123456\$FbXWy3i5PyuYYvNR.X1c4BbJ8zTcVEv7i9Di9erLRDTiIBiswLS
 EXTRA_USERS_PARAMS = " \
   usermod -p '${PASSWD}' root; \
 "
+
+#  useradd -p '' tester; 
+#  usermod -s /bin/sh tester; 

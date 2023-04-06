@@ -4,4 +4,4 @@
 /sbin/modprobe -r can_raw
 /sbin/modprobe -r can
 
-/home/root/rexusb/rexgen configure /home/root/rexusb/config/PaveStructure_v5.rxc
+/home/root/rexusb/rexgen configure /home/root/rexusb/config/Structure_v7_gnss.rxc

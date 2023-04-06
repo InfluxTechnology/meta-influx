@@ -1,0 +1,26 @@
+VERSION ""
+
+NS_ : 
+
+BS_: 
+
+BU_: GNSS
+
+BO_ 298 LatitudeLongitude: 8 GNSS
+ SG_ Longitude : 39|32@0- (1,0) [-180|180] "deg" Vector__XXX
+ SG_ Latitude : 7|32@0- (1,0) [-90|90] "deg" Vector__XXX
+
+BO_ 299 AltitudeSatelites: 8 GNSS
+ SG_ NumberOfSatelitesUsed : 39|32@0- (1,0) [0|12] "-" Vector__XXX
+ SG_ AltitudeAboveMeanSeaLevel : 7|32@0- (1,0) [0|100000] "m" Vector__XXX
+
+BO_ 300 SpeedCourse: 8 GNSS
+ SG_ SpeedOverGround : 7|32@0- (1,0) [0|15550.75] "knots" Vector__XXX
+ SG_ CourseOverGround : 39|32@0- (1,0) [0|360] "deg" Vector__XXX
+
+SIG_VALTYPE_ 298 Longitude : 1;
+SIG_VALTYPE_ 298 Latitude : 1;
+SIG_VALTYPE_ 299 NumberOfSatelitesUsed : 1;
+SIG_VALTYPE_ 299 AltitudeAboveMeanSeaLevel : 1;
+SIG_VALTYPE_ 300 SpeedOverGround : 1;
+SIG_VALTYPE_ 300 CourseOverGround : 1;
