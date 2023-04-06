@@ -5,6 +5,11 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM="file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI = "file://LICENSE \
+	file://etc/profile.d/enable_services.sh \
+	file://etc/profile.d/ko_check.sh \
+	file://etc/profile.d/login.sh \
+	file://etc/profile.d/wlan_check.sh \
+	file://home/root/rexusb/rexgen \
 	file://other/VERSION \
 	file://other/autostart.sh \
 	file://other/autostart.service \
@@ -47,17 +52,17 @@ SRC_URI = "file://LICENSE \
 	file://lte/lte_start_ppp.sh \
 	file://lte/lte_start_wvdial.sh \
 "
-#	file://profile.d/firststart.sh 
-#	file://profile.d/ko_check.sh 
-#	file://profile.d/wlan_check.sh 
 
 S = "${WORKDIR}"
+
+RDEPENDS:influx-files = "libusb1"
 
 REX_USB_DIR="/home/root/rexusb/"
 INFLUX_DIR="/opt/influx/"
 
 INFLUX_DIRS = "/etc/profile.d/ /etc/modules-load.d/ ${REX_USB_DIR} ${INFLUX_DIR}"
-INFLUX_FILES = "${S}/etc/profile.d/ "
+INFLUX_FILES_755 = "${S}/etc/profile.d/ ${S}/home/root/rexusb/ "
+INFLUX_FILES_644 = ""
 
 do_install () {
 	echo "" > ${S}/debug.txt
@@ -79,12 +84,12 @@ do_install () {
 
 	HOME_DIR="/home/root/"
 
-	install -m 0755 -d ${D}${REX_USB_DIR}
+#	install -m 0755 -d ${D}${REX_USB_DIR}
 	install -m 0755 -d ${D}${INFLUX_DIR}/etc/
 	install -m 0755 -d ${D}${INFLUX_DIR}/ko/
 	install -m 0755 -d ${D}${INFLUX_DIR}/cmake/
-	install -m 0755 -d ${D}/etc/modules-load.d/
-	install -m 0755 -d ${D}/home/root/
+#	install -m 0755 -d ${D}/etc/modules-load.d/
+#	install -m 0755 -d ${D}/home/root/
 #	install -m 0755 -d ${D}/etc/profile.d/
 	install -m 0755 -d ${D}/etc/ppp/
 	install -m 0755 -d ${D}/etc/ppp/peers/
@@ -97,17 +102,12 @@ do_install () {
 ##	install -m 0755 -d ${D}/etc/mender/scripts/
 ##	install -m 0755 -d ${D}/usr/share/mender/
 ##	install -m 0755 -d ${D}/usr/share/mender/modules/v3/
-#	install -m 0755 -d ${D}/usr/local/bin/
-
-
-#echo  ${sysconfdir} >> ${S}/debug.txt
-#echo  ${systemd_system_unitdir} >> ${S}/debug.txt
 
 #echo  ${INFLUX_FILES} >> ${S}/debug.txt
 #echo  ${D} >> ${S}/debug.txt
 #echo "" >> ${S}/debug.txt
 
-	for d in $(find ${INFLUX_FILES}); do
+	for d in $(find ${INFLUX_FILES_755}); do
 		# skip folders
 		if [ -d ${d} ]; then
 			fold="${d#${S}}"
@@ -117,6 +117,7 @@ do_install () {
 		
 		file="${d#${t}}"
 		install -m 0755 ${S}${fold}${file} ${D}${fold}${file}
+#echo  ${file} >> ${S}/debug.txt
 	done
 
 	# Influx Technology
@@ -127,7 +128,6 @@ do_install () {
 	install -m 0755 ${WORKDIR}/rexusb/etc/gnssinit.py ${D}${INFLUX_DIR}/gnssinit.py	
 
 	# rexgen_usb driver
-#	install -m 0644 ${WORKDIR}/rexusb/usb/uhubctl ${D}/usr/local/bin/uhubctl
 	install -m 0755 ${WORKDIR}/rexusb/usb/driver_reconnect.sh ${D}${INFLUX_DIR}/driver_reconnect.sh
 	install -m 0755 ${WORKDIR}/rexusb/usb/pipes_reconnect.sh ${D}${INFLUX_DIR}/pipes_reconnect.sh
 
@@ -138,7 +138,6 @@ do_install () {
 	install -m 0644 ${WORKDIR}/wireless/wpa_supplicant@wlan0.service ${D}${systemd_system_unitdir}
 	install -m 0644 ${WORKDIR}/wireless/20-wireless-wlan0.network ${D}${sysconfdir}/systemd/network/
 	install -m 0644 ${WORKDIR}/wireless/hostapd@wlan1.service ${D}${systemd_system_unitdir}
-#	install -m 0755 ${WORKDIR}/wireless/wlan_check.sh ${D}/etc/profile.d/wlan_check.sh
 	install -m 0755 ${WORKDIR}/wireless/wakeup_BT.sh ${D}${INFLUX_DIR}/wakeup_BT.sh
 	install -m 0755 ${WORKDIR}/wireless/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd ${D}/etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd
 
@@ -157,8 +156,6 @@ do_install () {
 	# mender
 
 	# other
-#	install -m 0755 ${WORKDIR}/other/firststart.sh ${D}/etc/profile.d/firststart.sh
-#	install -m 0755 ${WORKDIR}/other/ko_check.sh ${D}/etc/profile.d/ko_check.sh
 	install -m 0755 ${WORKDIR}/other/autostart.sh ${D}${INFLUX_DIR}/autostart.sh
 	install -m 0644 ${WORKDIR}/other/autostart.service ${D}/etc/systemd/system/autostart.service
 	install -m 0755 ${WORKDIR}/other/check_firmware_version.sh ${D}${INFLUX_DIR}/check_firmware_version.sh    
