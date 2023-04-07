@@ -35,6 +35,7 @@ v.2.8
     Network resolving issue when using ppp0 and wlan0 together
 v.3.0
     Added docker package
-    rexgen tool version 1.12
+    rexgen tool version 1.13
         option to get/set date
+	show version of rexgen_stream tool
     Detection of new firmware for ReXgen device
