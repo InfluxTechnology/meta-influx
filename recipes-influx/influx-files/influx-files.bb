@@ -6,21 +6,21 @@ LIC_FILES_CHKSUM="file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI = "file://LICENSE \
 	file://etc/minirc.dfl \
+	file://etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
 	file://etc/profile.d/enable_services.sh \
 	file://etc/profile.d/ko_check.sh \
 	file://etc/profile.d/login.sh \
 	file://etc/profile.d/wlan_check.sh \
+	file://etc/systemd/network/20-wireless-wlan0.network \
 	file://etc/systemd/system/rexgen_data.service \
 	file://etc/systemd/system/autostart.service \
 	file://home/root/rexusb/rexgen \
+	file://lib/systemd/system/wpa_supplicant@wlan0.service \
+	file://lib/systemd/system/hostapd@wlan1.service \
 	file://other/VERSION \
 	file://other/autostart.sh \
 	file://other/check_firmware_version.sh \
-	file://wireless/wpa_supplicant@wlan0.service \
-	file://wireless/20-wireless-wlan0.network \
-	file://wireless/hostapd@wlan1.service \
         file://wireless/wakeup_BT.sh \
-	file://wireless/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
 	file://rexusb/etc/escape.minicom \
 	file://rexusb/etc/gnssdata_start.sh \
 	file://rexusb/etc/gnssinit.py \
@@ -60,26 +60,35 @@ REX_USB_DIR="/home/root/rexusb/"
 INFLUX_DIR="/opt/influx/"
 
 # these folders will be created
-INFLUX_DIRS = "/etc/profile.d/ /etc/modules-load.d/ /etc/systemd/system/ ${REX_USB_DIR} ${INFLUX_DIR}"
+INFLUX_DIRS = "/etc/profile.d/ /etc/modules-load.d/ /etc/systemd/system/ /etc/firmware/ \
+	/etc/systemd/network/ /lib/systemd/system/ \
+	${REX_USB_DIR} ${INFLUX_DIR}"
 
 # content of these folders will be installed with 755 permisions
 INFLUX_FILES_755 = "${S}/etc/ ${S}/home/root/rexusb/ "
 
 # these files installed with 644 permisions
-INFLUX_FILES_644 = "minirc.dfl rexgen_data.service autostart.service"
+INFLUX_FILES_644 = "\
+	minirc.dfl \
+	rexgen_data.service \
+	autostart.service \
+	20-wireless-wlan0.network \
+	hostapd@wlan1.service \
+	wpa_supplicant@wlan0.service"
 
 do_install () {
 	echo "" > ${S}/debug.txt
-echo ${sysconfdir}/systemd/network >> ${S}/debug.txt
-echo ${systemd_system_unitdir} >> ${S}/debug.txt
-	install -m 0755 -d ${D}${sysconfdir}/systemd/network
-	install -m 0755 -d ${D}${systemd_system_unitdir}
-	install -m 0755 -d ${D}/opt
+#echo ${sysconfdir}/systemd/network >> ${S}/debug.txt
+#echo ${systemd_system_unitdir} >> ${S}/debug.txt
+#	install -m 0755 -d ${D}${sysconfdir}/systemd/network
+#	install -m 0755 -d ${D}${systemd_system_unitdir}
+#	install -m 0755 -d ${D}/opt
 
 	# Influx Technology
 	for d in ${INFLUX_DIRS}; do
 		fold="${d#${S}}"
 		install -m 0755 -d ${D}${fold}
+echo ${d} >> ${S}/debug.txt
 	done
 
 	# to find kernel release, type 'uname -r' on device and fill here  
@@ -99,8 +108,8 @@ echo ${systemd_system_unitdir} >> ${S}/debug.txt
 	install -m 0755 -d ${D}/etc/ppp/peers/
 	install -m 0755 -d ${D}/etc/chatscripts/
 #	install -m 0755 -d ${D}/etc/systemd/system/
-	install -m 0755 -d ${D}/etc/firmware/
-	install -m 0755 -d ${D}/etc/firmware/murata-master/
+#	install -m 0755 -d ${D}/etc/firmware/
+#	install -m 0755 -d ${D}/etc/firmware/murata-master/
 ##	install -m 0755 -d ${D}/etc/mender/
 	install -m 0755 -d ${D}/etc/network/
 ##	install -m 0755 -d ${D}/etc/mender/scripts/
@@ -142,11 +151,11 @@ echo ${systemd_system_unitdir} >> ${S}/debug.txt
 
 	# wireless
 	install -m 0644 ${WORKDIR}/other/VERSION ${D}${INFLUX_DIR}/VERSION
-	install -m 0644 ${WORKDIR}/wireless/wpa_supplicant@wlan0.service ${D}${systemd_system_unitdir}
-	install -m 0644 ${WORKDIR}/wireless/20-wireless-wlan0.network ${D}${sysconfdir}/systemd/network/
-	install -m 0644 ${WORKDIR}/wireless/hostapd@wlan1.service ${D}${systemd_system_unitdir}
+#	install -m 0644 ${WORKDIR}/wireless/wpa_supplicant@wlan0.service ${D}${systemd_system_unitdir}
+#	install -m 0644 ${WORKDIR}/wireless/20-wireless-wlan0.network ${D}${sysconfdir}/systemd/network/
+#	install -m 0644 ${WORKDIR}/wireless/hostapd@wlan1.service ${D}${systemd_system_unitdir}
 	install -m 0755 ${WORKDIR}/wireless/wakeup_BT.sh ${D}${INFLUX_DIR}/wakeup_BT.sh
-	install -m 0755 ${WORKDIR}/wireless/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd ${D}/etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd
+#	install -m 0755 ${WORKDIR}/wireless/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd ${D}/etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd
 
 	# LTE
 	install -m 0644 ${WORKDIR}/lte/SARA-R510M8S-00B-01_FW02.06_A00.01_IP.upd ${D}${INFLUX_DIR}/SARA-R510M8S-00B-01_FW02.06_A00.01_IP.upd
