@@ -5,24 +5,24 @@ LICENSE = "MIT"
 LIC_FILES_CHKSUM="file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 SRC_URI = "file://LICENSE \
+	file://etc/minirc.dfl \
 	file://etc/profile.d/enable_services.sh \
 	file://etc/profile.d/ko_check.sh \
 	file://etc/profile.d/login.sh \
 	file://etc/profile.d/wlan_check.sh \
+	file://etc/systemd/system/rexgen_data.service \
+	file://etc/systemd/system/autostart.service \
 	file://home/root/rexusb/rexgen \
 	file://other/VERSION \
 	file://other/autostart.sh \
-	file://other/autostart.service \
 	file://other/check_firmware_version.sh \
 	file://wireless/wpa_supplicant@wlan0.service \
 	file://wireless/20-wireless-wlan0.network \
 	file://wireless/hostapd@wlan1.service \
         file://wireless/wakeup_BT.sh \
 	file://wireless/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
-	file://rexusb/rexgen_data.service \
 	file://rexusb/etc/escape.minicom \
 	file://rexusb/etc/gnssdata_start.sh \
-	file://rexusb/etc/minirc.dfl \
 	file://rexusb/etc/gnssinit.py \
 	file://rexusb/usb/rexgen_usb.conf \
 	file://rexusb/usb/rexgen_usb \
@@ -59,13 +59,19 @@ RDEPENDS:influx-files = "libusb1"
 REX_USB_DIR="/home/root/rexusb/"
 INFLUX_DIR="/opt/influx/"
 
-INFLUX_DIRS = "/etc/profile.d/ /etc/modules-load.d/ ${REX_USB_DIR} ${INFLUX_DIR}"
-INFLUX_FILES_755 = "${S}/etc/profile.d/ ${S}/home/root/rexusb/ "
-INFLUX_FILES_644 = ""
+# these folders will be created
+INFLUX_DIRS = "/etc/profile.d/ /etc/modules-load.d/ /etc/systemd/system/ ${REX_USB_DIR} ${INFLUX_DIR}"
+
+# content of these folders will be installed with 755 permisions
+INFLUX_FILES_755 = "${S}/etc/ ${S}/home/root/rexusb/ "
+
+# these files installed with 644 permisions
+INFLUX_FILES_644 = "minirc.dfl rexgen_data.service autostart.service"
 
 do_install () {
 	echo "" > ${S}/debug.txt
-
+echo ${sysconfdir}/systemd/network >> ${S}/debug.txt
+echo ${systemd_system_unitdir} >> ${S}/debug.txt
 	install -m 0755 -d ${D}${sysconfdir}/systemd/network
 	install -m 0755 -d ${D}${systemd_system_unitdir}
 	install -m 0755 -d ${D}/opt
@@ -73,7 +79,6 @@ do_install () {
 	# Influx Technology
 	for d in ${INFLUX_DIRS}; do
 		fold="${d#${S}}"
-#echo  ${fold} >> ${S}/debug.txt
 		install -m 0755 -d ${D}${fold}
 	done
 
@@ -93,7 +98,7 @@ do_install () {
 	install -m 0755 -d ${D}/etc/ppp/
 	install -m 0755 -d ${D}/etc/ppp/peers/
 	install -m 0755 -d ${D}/etc/chatscripts/
-	install -m 0755 -d ${D}/etc/systemd/system/
+#	install -m 0755 -d ${D}/etc/systemd/system/
 	install -m 0755 -d ${D}/etc/firmware/
 	install -m 0755 -d ${D}/etc/firmware/murata-master/
 ##	install -m 0755 -d ${D}/etc/mender/
@@ -102,28 +107,31 @@ do_install () {
 ##	install -m 0755 -d ${D}/usr/share/mender/
 ##	install -m 0755 -d ${D}/usr/share/mender/modules/v3/
 
-#echo  ${INFLUX_FILES} >> ${S}/debug.txt
-#echo  ${D} >> ${S}/debug.txt
-#echo "" >> ${S}/debug.txt
-
 	for d in $(find ${INFLUX_FILES_755}); do
 		# skip folders
 		if [ -d ${d} ]; then
-			fold="${d#${S}}"
-			t=${d}
 			continue
 		fi
-		
-		file="${d#${t}}"
+
+		t="${d#${S}}"
+		for c in $(echo ${t} | tr "/" "\n"); do
+			file=${c}
+		done
+
+		fold="${t%${file}}"
+
 		install -m 0755 ${S}${fold}${file} ${D}${fold}${file}
-#echo  ${file} >> ${S}/debug.txt
+
+		if [ $(echo ${INFLUX_FILES_644} | grep  ${file}) != "" ]; then 
+			chmod 644 ${D}${fold}${file}   		
+		fi
 	done
 
 	# Influx Technology
-	install -m 0644 ${WORKDIR}/rexusb/rexgen_data.service ${D}/etc/systemd/system/rexgen_data.service	
+#	install -m 0644 ${WORKDIR}/rexusb/rexgen_data.service ${D}/etc/systemd/system/rexgen_data.service	
 	install -m 0644 ${WORKDIR}/rexusb/etc/escape.minicom ${D}${INFLUX_DIR}/escape.minicom
 	install -m 0755 ${WORKDIR}/rexusb/etc/gnssdata_start.sh ${D}${INFLUX_DIR}/gnssdata_start.sh
-	install -m 0644 ${WORKDIR}/rexusb/etc/minirc.dfl ${D}/etc/minirc.dfl
+#	install -m 0644 ${WORKDIR}/rexusb/etc/minirc.dfl ${D}/etc/minirc.dfl
 	install -m 0755 ${WORKDIR}/rexusb/etc/gnssinit.py ${D}${INFLUX_DIR}/gnssinit.py	
 
 	# rexgen_usb driver
@@ -156,7 +164,7 @@ do_install () {
 
 	# other
 	install -m 0755 ${WORKDIR}/other/autostart.sh ${D}${INFLUX_DIR}/autostart.sh
-	install -m 0644 ${WORKDIR}/other/autostart.service ${D}/etc/systemd/system/autostart.service
+#	install -m 0644 ${WORKDIR}/other/autostart.service ${D}/etc/systemd/system/autostart.service
 	install -m 0755 ${WORKDIR}/other/check_firmware_version.sh ${D}${INFLUX_DIR}/check_firmware_version.sh    
 
 	# cmake
