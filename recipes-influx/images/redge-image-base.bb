@@ -56,6 +56,7 @@ IMAGE_INSTALL = "\
     uhubctl \
     influx-files \
     rexgen-stream \
+    rexgen-usb \
 "
 
 IMAGE_INSTALL:append:imx8mmea-ucom = "\

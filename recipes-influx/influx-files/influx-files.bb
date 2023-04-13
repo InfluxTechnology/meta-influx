@@ -33,8 +33,6 @@ SRC_URI = "file://LICENSE \
 	file://opt/influx/ublox-up-down-pin.sh \
 	file://opt/influx/lte_start_ppp.sh \
 	file://opt/influx/lte_start_wvdial.sh \
-	file://rexusb/usb/rexgen_usb.conf \
-	file://rexusb/usb/rexgen_usb \
 	file://ppp/ppp_generic \
 	file://ppp/ppp_generic.conf \
 	file://ppp/slhc \
@@ -150,7 +148,7 @@ do_install () {
 	install -m 0644 ${WORKDIR}/ppp/ppp_async ${D}${INFLUX_DIR}/ko/ppp_async
 	install -m 0644 ${WORKDIR}/ppp/bsd_comp ${D}${INFLUX_DIR}/ko/bsd_comp
 	install -m 0644 ${WORKDIR}/ppp/crc-ccitt ${D}${INFLUX_DIR}/ko/crc-ccitt
-	install -m 0644 ${WORKDIR}/rexusb/usb/rexgen_usb ${D}${INFLUX_DIR}/ko/rexgen_usb
+#	install -m 0644 ${WORKDIR}/rexusb/usb/rexgen_usb ${D}${INFLUX_DIR}/ko/rexgen_usb
 
 	# modules load 
 	install -m 0644 ${WORKDIR}/ppp/ppp_generic.conf ${D}/etc/modules-load.d/ppp_generic.conf
