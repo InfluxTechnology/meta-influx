@@ -8,8 +8,7 @@ SRC_URI = "git://github.com/InfluxTechnology/rexgen-socketcan.git;protocol=https
 	file://LICENSE \
 	file://Fix-Makefile-build-recipe.patch \
 "
-SRCREV = "bb8075d1d3e7adb4943f041bd9ef58f6bac5b991"
-S = "${WORKDIR}/git"
+SRCREV = "871890899d6df0ac3df0e1e5c03e726dd5458dd8"
 
 S = "${WORKDIR}"
 
