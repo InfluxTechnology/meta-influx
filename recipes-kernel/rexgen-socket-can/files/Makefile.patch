@@ -1,11 +1,8 @@
---- Makefile	2023-04-13 06:02:43.841997105 +0000
-+++ Makefile.recipe	2023-04-13 06:09:29.848415697 +0000
-@@ -1,31 +1,16 @@
+--- a/Makefile	2023-04-20 11:43:08.704027255 +0000
++++ b/Makefile	2023-04-20 11:46:54.307572256 +0000
+@@ -1,31 +1,13 @@
 -#.PHONY: all clean install load uninstall
 -.PHONY: all clean install uninstall
-+# SPDX-License-Identifier: GPL-2.0-only
-+obj-m += rexgen_usb.o 
-+rexgen_usb-y =  rexgen_socketcan.o rexgen_usb_func.o
  
 -# Choose which module to build
 -MODULE_NAME ?= rexgen_usb
@@ -16,7 +13,7 @@
 -REXGEN_SRC_DIR = `pwd`/src
 -
 -$(info Selected module $(MODULE_NAME))
-+SRC := $(shell pwd)
++SRC := $(shell pwd)/src
  
  all:
 -#	@echo $(REXGEN_SRC_DIR)

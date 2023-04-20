@@ -6,11 +6,11 @@ LIC_FILES_CHKSUM="file://LICENSE;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
 SRC_URI = "git://github.com/InfluxTechnology/rexgen-socketcan.git;protocol=https;branch=main \
 	file://LICENSE \
-	file://Fix-Makefile-build-recipe.patch \
+	file://Makefile.patch \
 "
-SRCREV = "871890899d6df0ac3df0e1e5c03e726dd5458dd8"
+SRCREV = "80127e0976539b9d7a0a4a82855eb534b01db3e7"
 
-S = "${WORKDIR}"
+S = "${WORKDIR}/git"
 
 inherit module
 
