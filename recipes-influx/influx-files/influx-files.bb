@@ -8,6 +8,12 @@ SRC_URI = "file://LICENSE \
 	file://etc/minirc.dfl \
 	file://etc/wvdial.conf \
 	file://etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
+	file://etc/modules-load.d/bsd_comp.conf \
+	file://etc/modules-load.d/crc-ccitt.conf \
+	file://etc/modules-load.d/ppp_async.conf \
+	file://etc/modules-load.d/ppp_deflate.conf \
+	file://etc/modules-load.d/ppp_generic.conf \
+	file://etc/modules-load.d/slhc.conf \
 	file://etc/profile.d/enable_services.sh \
 	file://etc/profile.d/ko_check.sh \
 	file://etc/profile.d/login.sh \
@@ -33,18 +39,6 @@ SRC_URI = "file://LICENSE \
 	file://opt/influx/ublox-up-down-pin.sh \
 	file://opt/influx/lte_start_ppp.sh \
 	file://opt/influx/lte_start_wvdial.sh \
-	file://ppp/ppp_generic \
-	file://ppp/ppp_generic.conf \
-	file://ppp/slhc \
-	file://ppp/slhc.conf \
-	file://ppp/ppp_deflate \
-	file://ppp/ppp_deflate.conf \
-	file://ppp/ppp_async \
-	file://ppp/ppp_async.conf \
-	file://ppp/bsd_comp \
-	file://ppp/bsd_comp.conf \
-	file://ppp/crc-ccitt \
-	file://ppp/crc-ccitt.conf \
 	file://lte/1nce.provider \
 	file://lte/pap-secrets \
 	file://lte/1nce-new.chat \
@@ -90,6 +84,7 @@ INFLUX_FILES_644 = "\
 	SARA-R510M8S-00B-01_FW02.06_A00.01_IP.upd \
 	SARA-R510M8S-01B-00_FW03.03_A00.01_PT.dof \
 	options \
+	bsd_comp.conf  crc-ccitt.conf  ppp_async.conf  ppp_deflate.conf  ppp_generic.conf  slhc.conf \
 "
 
 do_install () {
@@ -100,10 +95,6 @@ do_install () {
 		fold="${d#${S}}"
 		install -m 0755 -d ${D}${fold}
 	done
-
-	# to find kernel release, type 'uname -r' on device and fill here  
-#	EXTRA_DIR="/lib/modules/5.15.32+g1bee87d20/extra/"
-#	MODULE_DIR="/lib/modules/5.15.32+g1bee87d20/"
 
 	install -m 0755 -d ${D}${INFLUX_DIR}/etc/
 	install -m 0755 -d ${D}${INFLUX_DIR}/ko/
@@ -140,23 +131,6 @@ do_install () {
 	install -m 0644 ${WORKDIR}/lte/1nce.provider ${D}/etc/ppp/peers/1nce.provider
 	install -m 0644 ${WORKDIR}/lte/pap-secrets ${D}${INFLUX_DIR}/pap-secrets	
 	install -m 0644 ${WORKDIR}/lte/1nce-new.chat ${D}/etc/chatscripts/1nce-new.chat
-
-	# kernel objects
-	install -m 0644 ${WORKDIR}/ppp/ppp_generic ${D}${INFLUX_DIR}/ko/ppp_generic
-	install -m 0644 ${WORKDIR}/ppp/slhc ${D}${INFLUX_DIR}/ko/slhc
-	install -m 0644 ${WORKDIR}/ppp/ppp_deflate ${D}${INFLUX_DIR}/ko/ppp_deflate
-	install -m 0644 ${WORKDIR}/ppp/ppp_async ${D}${INFLUX_DIR}/ko/ppp_async
-	install -m 0644 ${WORKDIR}/ppp/bsd_comp ${D}${INFLUX_DIR}/ko/bsd_comp
-	install -m 0644 ${WORKDIR}/ppp/crc-ccitt ${D}${INFLUX_DIR}/ko/crc-ccitt
-#	install -m 0644 ${WORKDIR}/rexusb/usb/rexgen_usb ${D}${INFLUX_DIR}/ko/rexgen_usb
-
-	# modules load 
-	install -m 0644 ${WORKDIR}/ppp/ppp_generic.conf ${D}/etc/modules-load.d/ppp_generic.conf
-	install -m 0644 ${WORKDIR}/ppp/slhc.conf ${D}/etc/modules-load.d/slhc.conf
-	install -m 0644 ${WORKDIR}/ppp/ppp_deflate.conf ${D}/etc/modules-load.d/ppp_deflate.conf
-	install -m 0644 ${WORKDIR}/ppp/ppp_async.conf ${D}/etc/modules-load.d/ppp_async.conf
-	install -m 0644 ${WORKDIR}/ppp/bsd_comp.conf ${D}/etc/modules-load.d/bsd_comp.conf
-	install -m 0644 ${WORKDIR}/ppp/crc-ccitt.conf ${D}/etc/modules-load.d/crc-ccitt.conf
 }
 
 INHIBIT_PACKAGE_STRIP = "1"
