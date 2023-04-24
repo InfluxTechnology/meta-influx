@@ -8,14 +8,7 @@ SRC_URI = "file://LICENSE \
 	file://etc/minirc.dfl \
 	file://etc/wvdial.conf \
 	file://etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
-	file://etc/modules-load.d/bsd_comp.conf \
-	file://etc/modules-load.d/crc-ccitt.conf \
-	file://etc/modules-load.d/ppp_async.conf \
-	file://etc/modules-load.d/ppp_deflate.conf \
-	file://etc/modules-load.d/ppp_generic.conf \
-	file://etc/modules-load.d/slhc.conf \
 	file://etc/profile.d/enable_services.sh \
-	file://etc/profile.d/ko_check.sh \
 	file://etc/profile.d/login.sh \
 	file://etc/profile.d/wlan_check.sh \
 	file://etc/systemd/network/20-wireless-wlan0.network \
@@ -54,13 +47,27 @@ INFLUX_DIR="/opt/influx/"
 # these folders will be created in the image
 INFLUX_DIRS = "\
 	/etc/profile.d/ \
-	/etc/modules-load.d/ \
-	/etc/systemd/system/ /etc/firmware/ \
+	/etc/systemd/system/ \
+	/etc/firmware/ \
+	/etc/ppp/ \
+	/etc/ppp/peers/ \
+	/etc/chatscripts/ \
 	/etc/systemd/network/ \
 	/lib/systemd/system/ \
 	${REX_USB_DIR} \
 	${INFLUX_DIR} \
+	${INFLUX_DIR}/etc/ \
+	${INFLUX_DIR}/cmake/ \
 "
+
+# must uncomment for mender support
+#INFLUX_DIRS += "\
+#	/etc/mender/
+#	/etc/mender/scripts/
+#	/usr/share/mender/
+#	/usr/share/mender/modules/v3/
+#"
+
 
 # content of these folders will be installed with 755 permisions
 INFLUX_FILES_755 = "\
@@ -84,28 +91,13 @@ INFLUX_FILES_644 = "\
 	SARA-R510M8S-00B-01_FW02.06_A00.01_IP.upd \
 	SARA-R510M8S-01B-00_FW03.03_A00.01_PT.dof \
 	options \
-	bsd_comp.conf  crc-ccitt.conf  ppp_async.conf  ppp_deflate.conf  ppp_generic.conf  slhc.conf \
 "
 
 do_install () {
-	echo "" > ${S}/debug.txt
-
-	# Influx Technology
 	for d in ${INFLUX_DIRS}; do
 		fold="${d#${S}}"
 		install -m 0755 -d ${D}${fold}
 	done
-
-	install -m 0755 -d ${D}${INFLUX_DIR}/etc/
-	install -m 0755 -d ${D}${INFLUX_DIR}/ko/
-	install -m 0755 -d ${D}${INFLUX_DIR}/cmake/
-	install -m 0755 -d ${D}/etc/ppp/
-	install -m 0755 -d ${D}/etc/ppp/peers/
-	install -m 0755 -d ${D}/etc/chatscripts/
-##	install -m 0755 -d ${D}/etc/mender/
-##	install -m 0755 -d ${D}/etc/mender/scripts/
-##	install -m 0755 -d ${D}/usr/share/mender/
-##	install -m 0755 -d ${D}/usr/share/mender/modules/v3/
 
 	for d in $(find ${INFLUX_FILES_755}); do
 		# skip folders
