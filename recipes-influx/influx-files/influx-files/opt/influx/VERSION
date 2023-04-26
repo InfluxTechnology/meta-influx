@@ -1,41 +1,32 @@
 ### Release notes ###
-v.2.0
-    Add files or folders in /data/mender/preserved-files, to preserve it on next Mender full image update.   
-v.2.2
-    Added rexgen_data tool for send/receive CAN messages. It uses pipes in /var/rum/rexgen/ folder 
-    Added example nodejs scripts to communicate with rexgen_data tool through pipes
-v.2.4
-    Added Python 3.7.8 
-    New feature of rexgen_data tool to send accelerometer and gyroscope data. 
-v.2.5
-    Included rexgen_usb.ko
-	Driver for RexGen device, providing SocketCAN concept 
-    Included uhubctl tool
-	To control USB power per-port on smart USB hubs
-    Included cmake v 3.23.0
-	An open-source, cross-platform family of tools designed to build, test and package software 
-v.2.6
-    RexGen tool version 1.9
-	Option to check NFC hardware
-    Renamed tool rexgen_data to rexgen_stream
-	Fixed missing CAN1 data issue
-	Fixed CAN data duplication and missing issue
-	Fixed missing IMU data
-v.2.7
-    Installed package fsl-rc-local.
-    Fixed issue wlan0 interface goes down after sometime.
-v.2.8
-    rexgen tool version 1.10
-	option to shutdown the device
-    rexgen_stream tool vesrion 1.7
-        Read GNSS data 
+v.3.0
+    Installed image packages
+    ------------------------
+    python3, i2c-tools-misc, i2c-tools, pciutils, can-utils, iproute2, evtest, alsa-utils, wget, nano,
+    gdbserver, openssh-sftp-server, sqlite3, v4l-utils, packagegroup-fsl-gstreamer1.0, packagegroup-fsl-gstreamer1.0-full,
+    bluez5, bluez5-noinst-tools, bluez5-obex, openobex, obexftp, glibc-gconv-utf-16, glibc-utils, iperf3,
+    tslib, tslib-tests, tslib-calibrate, tslib-dev, mtdev, mmc-utils, memtester, screen, u-boot-fw-utils,
+    libgpiod, libgpiod-tools, firmwared, hostapd, murata-binaries, cyw-supplicant, cyw-hostapd,
+    hostap-conf, hostap-utils, backporttool-linux, uhubctl,
+    git, sync, curl, cronie, minicom, wvdial, ppp, fsl-rc-local, uhubctl,
+    influx-files, rexgen-stream, rexgen-usb
+
+    Influx features
+    --------------
+    Driver for RexGen device, providing SocketCAN concept 
+	CAN FD support for CAN 0,1,2,3
+	Loopback mode for CAN 0,1
+	Silent Mode for CAN 0,1,2,3
+    RexGen device features
+        Up to 4 CAN channels support
+	Read GNSS data 
+	Read accelerometer and gyroscope data
 	CANFD support
 	Two analog and digital channels support
-    Fixed network wait online to 10 sec (default was 2 mins)
-    Network resolving issue when using ppp0 and wlan0 together
-v.3.0
-    Added docker package
-    rexgen tool version 1.13
-        option to get/set date
-	show version of rexgen_stream tool
+	Read NFC card
+        Option to get/set date
+    Example scripts
     Detection of new firmware for ReXgen device
+
+
+

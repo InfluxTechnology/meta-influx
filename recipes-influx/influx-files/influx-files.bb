@@ -7,7 +7,9 @@ LIC_FILES_CHKSUM="file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 SRC_URI = "file://LICENSE \
 	file://etc/minirc.dfl \
 	file://etc/wvdial.conf \
+	file://etc/chatscripts/1nce-new.chat \
 	file://etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
+	file://etc/ppp/peers/1nce.provider \
 	file://etc/profile.d/enable_services.sh \
 	file://etc/profile.d/login.sh \
 	file://etc/profile.d/wlan_check.sh \
@@ -32,9 +34,7 @@ SRC_URI = "file://LICENSE \
 	file://opt/influx/ublox-up-down-pin.sh \
 	file://opt/influx/lte_start_ppp.sh \
 	file://opt/influx/lte_start_wvdial.sh \
-	file://lte/1nce.provider \
-	file://lte/pap-secrets \
-	file://lte/1nce-new.chat \
+	file://opt/influx/pap-secrets \
 "
 
 S = "${WORKDIR}"
@@ -56,8 +56,6 @@ INFLUX_DIRS = "\
 	/lib/systemd/system/ \
 	${REX_USB_DIR} \
 	${INFLUX_DIR} \
-	${INFLUX_DIR}/etc/ \
-	${INFLUX_DIR}/cmake/ \
 "
 
 # must uncomment for mender support
@@ -67,7 +65,6 @@ INFLUX_DIRS = "\
 #	/usr/share/mender/
 #	/usr/share/mender/modules/v3/
 #"
-
 
 # content of these folders will be installed with 755 permisions
 INFLUX_FILES_755 = "\
@@ -91,6 +88,9 @@ INFLUX_FILES_644 = "\
 	SARA-R510M8S-00B-01_FW02.06_A00.01_IP.upd \
 	SARA-R510M8S-01B-00_FW03.03_A00.01_PT.dof \
 	options \
+	pap-secrets \
+	1nce-new.chat \
+	1nce.provider \
 "
 
 do_install () {
@@ -114,15 +114,14 @@ do_install () {
 
 		install -m 0755 ${S}${fold}${file} ${D}${fold}${file}
 
-		if [ $(echo ${INFLUX_FILES_644} | grep  ${file}) != "" ]; then 
-			chmod 644 ${D}${fold}${file}   		
-		fi
+		for e in ${INFLUX_FILES_644}; do
+			if [ "${e}" != "${file}" ]; then 
+				continue
+			else
+				chmod 644 ${D}${fold}${file}
+			fi
+		done
 	done
-
-	# LTE
-	install -m 0644 ${WORKDIR}/lte/1nce.provider ${D}/etc/ppp/peers/1nce.provider
-	install -m 0644 ${WORKDIR}/lte/pap-secrets ${D}${INFLUX_DIR}/pap-secrets	
-	install -m 0644 ${WORKDIR}/lte/1nce-new.chat ${D}/etc/chatscripts/1nce-new.chat
 }
 
 INHIBIT_PACKAGE_STRIP = "1"
