@@ -16,7 +16,6 @@ SRC_URI = "file://LICENSE \
 	file://etc/systemd/network/20-wireless-wlan0.network \
 	file://etc/systemd/system/rexgen_data.service \
 	file://etc/systemd/system/autostart.service \
-	file://home/root/rexusb/rexgen \
 	file://lib/systemd/system/wpa_supplicant@wlan0.service \
 	file://lib/systemd/system/hostapd@wlan1.service \
 	file://opt/influx/escape.minicom \
@@ -70,7 +69,6 @@ INFLUX_DIRS = "\
 INFLUX_FILES_755 = "\
 	${S}/etc/ \
 	${S}/lib/systemd/system \
-	${S}/home/root/rexusb/ \
 	${S}/opt/influx/ \
 "
 

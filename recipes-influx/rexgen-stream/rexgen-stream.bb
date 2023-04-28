@@ -14,7 +14,7 @@ SRC_URI = "git://github.com/InfluxTechnology/rexgen-linux-stream.git;protocol=ht
 	file://LICENSE \	
 "
 
-SRCREV = "2f5bbb4ea7729071857a8dc89bca2c10e903f43e"
+SRCREV = "e9fcf2c9ff5fb41e5cd5c1986b5d22d078e11655"
 SRC_URI[sha256sum] = "3cc71d3fd6b1db43035f5ab5699ce2b17e1b6eaeee43fb8c26e158cdd637ea37"
 
 S = "${WORKDIR}/git"
@@ -25,7 +25,7 @@ CC:append = " -fcommon -w "
 
 do_compile () {
 	${CC} -o rexgen_stream rexgen-stream.c pipes.c commands.c communication.c -I./ -lusb-1.0 -pthread ${LDFLAGS}
-#	${CC} -o rexgen rexusb.c commands.c communication.c -I./ -lusb-1.0 ${LDFLAGS}
+	${CC} -o rexgen rexusb.c commands.c communication.c -I./ -lusb-1.0 ${LDFLAGS}
 }
 
 # these folders will be created
@@ -56,14 +56,11 @@ do_install () {
 	done
 
 	install -m 0755 ${S}/rexgen_stream ${D}${REX_USB_DIR}/rexgen_stream
-#	install -m 0755 ${S}/rexgen ${D}${REX_USB_DIR}/rexgen
+	install -m 0755 ${S}/rexgen ${D}${REX_USB_DIR}/rexgen
 }
 
 INHIBIT_PACKAGE_STRIP = "1"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
-
-#PACKAGE_BEFORE_PN += "rexgen_stream"
-#FILES:rexgen_stream = "${REX_USB_DIR}/rexgen_stream"
 
 PACKAGES = "${PN}"
 FILES:${PN} = "/"
