@@ -17,6 +17,7 @@ PPP_SRC = "${STAGING_KERNEL_DIR}/drivers/net/ppp/"
 SLIP_SRC = "${STAGING_KERNEL_DIR}/drivers/net/slip/"
 CRC_SRC = "${STAGING_KERNEL_DIR}/lib/"
 
+do_fetch[depends] += "virtual/kernel:do_compile_kernelmodules"
 do_fetch () {
 	cp ${PPP_SRC}/*.h ${S}
 	cp ${PPP_SRC}/*.c ${S}
