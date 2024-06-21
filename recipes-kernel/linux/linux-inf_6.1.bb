@@ -1,11 +1,11 @@
-# Copyright (C) 2017-2023 Embedded Artists AB
+# Copyright (C) 2017-2023 Influx Technology
 # Released under the MIT license (see COPYING.MIT for the terms)
 #
 # SPDX-License-Identifier: MIT
 #
 
-SUMMARY = "Linux Kernel provided by Embedded Artists but based on NXP's kernel"
-DESCRIPTION = "Linux Kernel for Embedded Artists i.MX based COM boards. \
+SUMMARY = "Linux Kernel provided by Influx Technology but based on NXP's kernel"
+DESCRIPTION = "Linux Kernel for Influx Technology i.MX based COM boards. \
 The kernel is based on the kernel provided by NXP."
 
 require recipes-kernel/linux/linux-imx.inc
@@ -15,13 +15,13 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 
 DEPENDS += "lzop-native bc-native"
 
-SRCBRANCH = "ea_6.1.y"
+SRCBRANCH = "influx_6.1.y"
 LOCALVERSION = "-lts-next"
-KERNEL_SRC ?= "git://github.com/embeddedartists/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
+KERNEL_SRC ?= "https://github.com/InfluxTechnology/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
 KBRANCH = "${SRCBRANCH}"
 SRC_URI = "${KERNEL_SRC}"
 
-SRCREV = "0c1d6cfe64e7eec55a96c4c379449a9c5b6de03d"
+SRCREV = "c0526efcc867ee91e5ad2e45b6a1264257b3b2fc"
 
 # PV is defined in the base in linux-imx.inc file and uses the LINUX_VERSION definition
 # required by kernel-yocto.bbclass.
@@ -34,15 +34,15 @@ KERNEL_CONFIG_COMMAND = "oe_runmake_call -C ${S} CC="${KERNEL_CC}" O=${B} olddef
 
 DEFAULT_PREFERENCE = "1"
 
-DO_CONFIG_EA_IMX_COPY = "no"
-DO_CONFIG_EA_IMX_COPY:mx6-nxp-bsp = "yes"
-DO_CONFIG_EA_IMX_COPY:mx7-nxp-bsp = "yes"
-DO_CONFIG_EA_IMX_COPY:mx8-nxp-bsp = "no"
-DO_CONFIG_EA_IMX_COPY:mx9-nxp-bsp = "no"
+DO_CONFIG_INF_IMX_COPY = "no"
+DO_CONFIG_INF_IMX_COPY:mx6-nxp-bsp = "yes"
+DO_CONFIG_INF_IMX_COPY:mx7-nxp-bsp = "yes"
+DO_CONFIG_INF_IMX_COPY:mx8-nxp-bsp = "no"
+DO_CONFIG_INF_IMX_COPY:mx9-nxp-bsp = "no"
 
 # Add setting for LF Mainline build
 IMX_KERNEL_CONFIG_AARCH32 = "ea_imx_defconfig"
-IMX_KERNEL_CONFIG_AARCH64 = "ea_imx8_defconfig"
+IMX_KERNEL_CONFIG_AARCH64 = "influx_imx8mm_defconfig"
 KBUILD_DEFCONFIG ?= ""
 KBUILD_DEFCONFIG:mx6-nxp-bsp = "${IMX_KERNEL_CONFIG_AARCH32}"
 KBUILD_DEFCONFIG:mx7-nxp-bsp = "${IMX_KERNEL_CONFIG_AARCH32}"
