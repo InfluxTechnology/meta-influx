@@ -1,4 +1,4 @@
-require u-boot-ea-common_${PV}.inc
+require u-boot-inf-common_${PV}.inc
 DEPENDS = "u-boot-mkimage-native"
 
 SRC_URI += " \
@@ -15,7 +15,7 @@ inherit deploy
 
 do_mkimage () {
     uboot-mkimage -A arm -O linux -T script -C none -a 0 -e 0 \
-                  -n "EA BootScript" -d ${BOOTSCRIPT} \
+                  -n "INF BootScript" -d ${BOOTSCRIPT} \
                   ${S}/boot.scr
 }
 

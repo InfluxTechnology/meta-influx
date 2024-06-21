@@ -1,4 +1,4 @@
-# Copyright (C) 2017 Embedded Artists
+# Copyright (C) 2017 Influx Technology
 
 require recipes-bsp/u-boot/u-boot.inc
 require recipes-bsp/u-boot/u-boot-inf-common_${PV}.inc

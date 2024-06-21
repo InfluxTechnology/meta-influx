@@ -1,6 +1,6 @@
-# Copyright (C) 2017 Embedded Artists
+# Copyright (C) 2017 Influx Technology
 
-DESCRIPTION = "U-Boot for Embedded Artists i.MX based boards."
+DESCRIPTION = "U-Boot for Influx Technology i.MX based boards."
 
 DEPENDS += "flex-native bison-native"
 
@@ -8,9 +8,9 @@ LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://Licenses/gpl-2.0.txt;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
 SRCBRANCH = "ea_v2020.04"
-SRC_URI = "git://github.com/embeddedartists/uboot-imx.git;protocol=https;branch=${SRCBRANCH} \
+SRC_URI = "https://github.com/InfluxTechnology/uboot-imx.git;protocol=https;branch=${SRCBRANCH} \
            "
-SRCREV = "f844127b296cb60963bebf75dc0feb7409e8fb38"
+SRCREV = "5e246a7a63a5805e811ce3ee2d6521b5e4d2112f"
 
 S = "${WORKDIR}/git"
 

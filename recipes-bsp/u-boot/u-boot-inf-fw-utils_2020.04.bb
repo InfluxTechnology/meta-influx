@@ -1,4 +1,4 @@
-require u-boot-ea-common_${PV}.inc
+require u-boot-inf-common_${PV}.inc
 
 SUMMARY = "U-Boot bootloader fw_printenv/setenv utilities"
 DEPENDS:append = " mtd-utils bison-native"

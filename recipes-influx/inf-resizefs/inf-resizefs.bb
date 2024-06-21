@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM="file://${WORKDIR}/LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302
 
 RDEPENDS:${PN} = "e2fsprogs-resize2fs parted"
 
-SRC_URI = "file://ea-resizefs.sh \
+SRC_URI = "file://inf-resizefs.sh \
            file://resizefs.service \
            file://LICENSE \
            "
