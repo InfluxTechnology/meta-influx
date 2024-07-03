@@ -17,7 +17,7 @@ DEPENDS += "lzop-native bc-native"
 
 SRCBRANCH = "influx_6.1.y"
 LOCALVERSION = "-lts-next"
-KERNEL_SRC ?= "https://github.com/InfluxTechnology/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
+KERNEL_SRC ?= "git://github.com/InfluxTechnology/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
 KBRANCH = "${SRCBRANCH}"
 SRC_URI = "${KERNEL_SRC}"
 

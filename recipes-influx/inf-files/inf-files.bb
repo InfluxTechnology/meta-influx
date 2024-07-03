@@ -1,5 +1,5 @@
 SUMMARY = "Miscellaneous files for the base system"
-DESCRIPTION = "The ea-files package adds some files referenced in documentation."
+DESCRIPTION = "The inf-files package adds some files referenced in documentation."
 SECTION = "base"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM="file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
@@ -21,9 +21,9 @@ SRC_URI = "file://10-wired.network \
 
 S = "${WORKDIR}"
 
-EA_FILES_644 ?= ""
-EA_FILES_755 ?= ""
-EA_FILES_DIRS ?= ""
+INF_FILES_644 ?= ""
+INF_FILES_755 ?= ""
+INF_FILES_DIRS ?= ""
 
 do_install () {
 	install -m 0755 -d ${D}${sysconfdir}/systemd/network
@@ -42,7 +42,7 @@ do_install () {
 	# Each folder in the list is created with the mode 755
 	# meaning rwx-r-xr-x
 	#
-	for d in ${EA_FILES_DIRS}; do
+	for d in ${INF_FILES_DIRS}; do
 		install -m 0755 -d ${D}${d}
 	done
 
@@ -77,7 +77,7 @@ do_install () {
 	#       mode of the created file where 644 is rw-r--r-- and
 	#       755 is rwxr-xr-x
 	#
-	for d in ${EA_FILES_644}; do
+	for d in ${INF_FILES_644}; do
 		f_in=$(echo "${d}" | cut -d":" -f1)
 		f_out=$(echo "$d" | cut -d":" -f2)
 		if [ "${f_in#/}" = "${f_in}" ]] ;
@@ -87,7 +87,7 @@ do_install () {
 			install -m 0644 ${f_in} ${D}${f_out}
 		fi
 	done
-	for d in ${EA_FILES_755}; do
+	for d in ${INF_FILES_755}; do
 		f_in=$(echo "${d}" | cut -d":" -f1)
 		f_out=$(echo "$d" | cut -d":" -f2)
 		if [ "${f_in#/}" = "${f_in}" ]] ;
