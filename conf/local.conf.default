@@ -7,3 +7,5 @@ IMAGE_INSTALL:append = " cronie "
 IMAGE_INSTALL:append = " minicom "
 IMAGE_INSTALL:append = " wvdial "	
 IMAGE_INSTALL:append = " fsl-rc-local "
+
+PACKAGE_EXCLUDE:pn-target_image = " packagegroup-fsl-gstreamer1.0  packagegroup-fsl-gstreamer1.0-full "
