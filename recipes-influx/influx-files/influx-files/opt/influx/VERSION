@@ -1,32 +1,31 @@
 ### Release notes ###
-v.3.0
+v.2.0.rc
+
+    Linux kernel 5.15.32
+    
     Installed image packages
-    ------------------------
-    python3, i2c-tools-misc, i2c-tools, pciutils, can-utils, iproute2, evtest, alsa-utils, wget, nano,
-    gdbserver, openssh-sftp-server, sqlite3, v4l-utils, packagegroup-fsl-gstreamer1.0, packagegroup-fsl-gstreamer1.0-full,
-    bluez5, bluez5-noinst-tools, bluez5-obex, openobex, obexftp, glibc-gconv-utf-16, glibc-utils, iperf3,
-    tslib, tslib-tests, tslib-calibrate, tslib-dev, mtdev, mmc-utils, memtester, screen, u-boot-fw-utils,
-    libgpiod, libgpiod-tools, firmwared, hostapd, murata-binaries, cyw-supplicant, cyw-hostapd,
-    hostap-conf, hostap-utils, backporttool-linux, uhubctl,
-    git, sync, curl, cronie, minicom, wvdial, ppp, fsl-rc-local, uhubctl,
-    influx-files, rexgen-stream, rexgen-usb
+	python3.10.4, i2c-tools-misc, i2c-tools, pciutils, can-utils, iproute2, evtest, alsa-utils, wget, nano,
+	gdbserver, openssh-sftp-server, sqlite3, v4l-utils, packagegroup-fsl-gstreamer1.0, packagegroup-fsl-gstreamer1.0-full,
+	bluez5, bluez5-noinst-tools, bluez5-obex, openobex, obexftp, glibc-gconv-utf-16, glibc-utils, iperf3,
+	tslib, tslib-tests, tslib-calibrate, tslib-dev, mtdev, mmc-utils, memtester, screen, u-boot-fw-utils,
+	libgpiod, libgpiod-tools, firmwared, hostapd, murata-binaries, cyw-supplicant, cyw-hostapd,
+	hostap-conf, hostap-utils, backporttool-linux, uhubctl,
+	git, sync, curl, cronie, minicom, wvdial, ppp, fsl-rc-local, uhubctl,
+	influx-files, rexgen-stream, rexgen-usb
 
     Influx features
-    --------------
-    Driver for RexGen device, providing SocketCAN concept 
-	CAN FD support for CAN 0,1,2,3
-	Loopback mode for CAN 0,1
-	Silent Mode for CAN 0,1,2,3
-    RexGen device features
-        Up to 4 CAN channels support
-	Read GNSS data 
-	Read accelerometer and gyroscope data
-	CANFD support
-	Two analog and digital channels support
-	Read NFC card
-        Option to get/set date
-    Example scripts
-    Detection of new firmware for ReXgen device
-
-
+        Driver for RexGen device, providing SocketCAN concept 
+	    CAN FD support for CAN 0,1,2,3
+	    Loopback mode for CAN 0,1
+	    Silent Mode for CAN 0,1,2,3
+	RexGen device features
+    	    Up to 4 CAN channels support
+	    Read GNSS data 
+	    Read accelerometer and gyroscope data
+	    CANFD support
+	    Two analog and digital channels support
+	    Read NFC card
+    	    Option to get/set date
+	Example scripts
+	Detection of new firmware for ReXgen device
 

@@ -1,0 +1,31 @@
+--- a/meta-bsp/recipes-kernel/linux/linux-imx_5.15.bb	2024-07-03 06:20:33.491408336 +0000
++++ b/meta-bsp/recipes-kernel/linux/linux-imx_5.15.bb	2024-07-02 13:31:56.794691046 +0000
+@@ -16,14 +16,23 @@
+ 
+ DEPENDS += "lzop-native bc-native"
+ 
+-SRCBRANCH = "lf-5.15.y"
+-LOCALVERSION = "-lts-next"
+-KERNEL_SRC ?= "git://github.com/nxp-imx/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
++KERNEL_SRC ?= "git://github.com/InfluxTechnology/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
++SRCREV = "c78808ba97ce2ba2f6d0d24a9247f176050f12f9"
++LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
++#LOCALVERSION = "-lts-5.15.32"
++LOCALVERSION = ""
++SRCBRANCH = "ea_5.15.y"
++
++#SRCBRANCH = "lf-5.15.y"
++#LOCALVERSION = "-lts-next"
++#KERNEL_SRC ?= "git://github.com/nxp-imx/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
++#SRCREV = "fa6c3168595c02bd9d5366fcc28c9e7304947a3d"
++#SRCREV = "50912be386017c8d2ca7f0c9c0a32fa7ac84a283"
++
++
+ KBRANCH = "${SRCBRANCH}"
+ SRC_URI = "${KERNEL_SRC}"
+ 
+-SRCREV = "fa6c3168595c02bd9d5366fcc28c9e7304947a3d"
+-
+ # PV is defined in the base in linux-imx.inc file and uses the LINUX_VERSION definition
+ # required by kernel-yocto.bbclass.
+ #

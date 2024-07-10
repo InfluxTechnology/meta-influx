@@ -55,8 +55,13 @@ clean_up()
 #
 # Apply patches to recipes
 #
-patch -Np1 -r - sources/meta-imx/meta-sdk/conf/distro/include/fsl-imx-preferred-env.inc < sources/meta-influx/patches/0001-remove-fsl-preferred-provider.patch
-patch -Np1 -r - sources/meta-murata-wireless/recipes-connectivity/murata-binaries/murata-binaries_1.0.bb < sources/meta-influx/patches/0002-add-redge-machine.patch
+LPF="sources/meta-influx/patches"
+patch -Np1 -r - sources/meta-imx/meta-sdk/conf/distro/include/fsl-imx-preferred-env.inc < $LPF/0001-remove-fsl-preferred-provider.patch
+patch -Np1 -r - sources/meta-freescale/conf/machine/include/imx-base.inc < $LPF/0001-imx-base.patch
+patch -Np1 -r - sources/meta-freescale/recipes-kernel/linux/linux-imx.inc < $LPF/0001-linux-imx.patch
+patch -Np1 -r - sources/meta-imx/meta-bsp/recipes-kernel/linux/linux-imx_5.15.bb < $LPF/0001-linux-imx_5.15.patch
+patch -Np1 -r - sources/meta-imx/meta-bsp/recipes-kernel/linux/linux-imx-headers_5.15.bb < $LPF/0001-linux-imx-headers.patch
+patch -Np1 -r - sources/meta-murata-wireless/recipes-connectivity/murata-binaries/murata-binaries_1.0.bb < $LPF/0001-murata-binaries.patch
 
 # get command line options
 OLD_OPTIND=$OPTIND

@@ -1,0 +1,20 @@
+--- a/conf/machine/include/imx-base.inc		2024-07-03 06:20:33.391406777 +0000
++++ b/conf/machine/include/imx-base.inc		2024-07-02 10:56:35.960541422 +0000
+@@ -12,7 +12,7 @@
+ # Two values are considered valid: mainline, nxp
+ IMX_DEFAULT_BSP ?= "mainline"
+ 
+-# Those are SoC families we'd like to force the use of mainline BSP.
++# Those are SoC families wed like to force the use of mainline BSP.
+ IMX_DEFAULT_BSP:mxs ?= "mainline"
+ IMX_DEFAULT_BSP:mx5 ?= "mainline"
+ 
+@@ -252,7 +252,7 @@
+ MACHINE_SOCARCH_SUFFIX:mx8dx-nxp-bsp  = "-mx8"
+ MACHINE_SOCARCH_SUFFIX:mx8dxl-nxp-bsp = "-mx8xl"
+ 
+-# For Mainline we use a single SoC suffix as we don't have different build options
++# For Mainline we use a single SoC suffix as we dont have different build options
+ MACHINE_SOCARCH_SUFFIX:imx-mainline-bsp = "-imx"
+ 
+ MACHINE_ARCH_FILTER = "virtual/kernel"

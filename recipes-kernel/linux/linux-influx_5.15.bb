@@ -12,7 +12,7 @@ SRCREV = "c78808ba97ce2ba2f6d0d24a9247f176050f12f9"
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 
-LOCALVERSION = "-lts-5.15.32"
+LOCALVERSION = ""
 SRCBRANCH = "ea_5.15.y"
 DEPENDS += "lzop-native bc-native"
 

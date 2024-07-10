@@ -1,0 +1,23 @@
+--- a/meta-bsp/recipes-kernel/linux/linux-imx-headers_5.15.bb	2024-07-03 08:33:26.883916502 +0000
++++ b/meta-bsp/recipes-kernel/linux/linux-imx-headers_5.15.bb	2024-07-03 08:31:24.286097589 +0000
+@@ -7,14 +7,15 @@
+ LICENSE = "GPL-2.0-only"
+ LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
+ 
+-SRCBRANCH = "lf-5.15.y"
+-LOCALVERSION = "-lts-next"
+-KERNEL_SRC ?= "git://github.com/nxp-imx/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
++KERNEL_SRC ?= "git://github.com/InfluxTechnology/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
++SRCREV = "c78808ba97ce2ba2f6d0d24a9247f176050f12f9"
++LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
++LOCALVERSION = ""
++SRCBRANCH = "ea_5.15.y"
++
+ KBRANCH = "${SRCBRANCH}"
+ SRC_URI = "${KERNEL_SRC}"
+ 
+-SRCREV = "fa6c3168595c02bd9d5366fcc28c9e7304947a3d"
+-
+ S = "${WORKDIR}/git"
+ 
+ do_compile[noexec] = "1"

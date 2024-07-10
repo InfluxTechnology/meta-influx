@@ -1,0 +1,16 @@
+--- a/recipes-kernel/linux/linux-imx.inc	2024-07-03 06:20:33.427407338 +0000
++++ b/recipes-kernel/linux/linux-imx.inc	2024-07-02 13:33:42.386061836 +0000
+@@ -14,9 +14,10 @@
+ # Set the PV to the correct kernel version to satisfy the kernel version sanity check
+ PV = "${LINUX_VERSION}+git${SRCPV}"
+ 
+-SRC_URI = "git://source.codeaurora.org/external/imx/linux-imx;protocol=https;branch=${SRCBRANCH} \
+-    file://defconfig \
+-"
++#SRC_URI = "git://source.codeaurora.org/external/imx/linux-imx;protocol=https;branch=${SRCBRANCH} \
++#    file://defconfig \
++#
++SRC_URI = "git://github.com/InfluxTechnology/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
+ 
+ S = "${WORKDIR}/git"
+ 
