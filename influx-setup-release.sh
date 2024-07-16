@@ -62,6 +62,7 @@ patch -Np1 -r - sources/meta-freescale/recipes-kernel/linux/linux-imx.inc < $LPF
 patch -Np1 -r - sources/meta-imx/meta-bsp/recipes-kernel/linux/linux-imx_5.15.bb < $LPF/0001-linux-imx_5.15.patch
 patch -Np1 -r - sources/meta-imx/meta-bsp/recipes-kernel/linux/linux-imx-headers_5.15.bb < $LPF/0001-linux-imx-headers.patch
 patch -Np1 -r - sources/meta-murata-wireless/recipes-connectivity/murata-binaries/murata-binaries_1.0.bb < $LPF/0001-murata-binaries.patch
+patch -Np1 -r - sources/base/setup-environment < $LPF/0001-setup-environment.patch
 
 # get command line options
 OLD_OPTIND=$OPTIND
