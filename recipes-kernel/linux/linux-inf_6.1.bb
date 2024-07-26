@@ -21,7 +21,7 @@ KERNEL_SRC ?= "git://github.com/InfluxTechnology/linux-imx.git;protocol=https;br
 KBRANCH = "${SRCBRANCH}"
 SRC_URI = "${KERNEL_SRC}"
 
-SRCREV = "91f1570fbf63ab5f5a187283ad7e8007d9358bba"
+SRCREV = "240e13306057e9d3e97a3cf736817bcd1572fa3c"
 
 # PV is defined in the base in linux-imx.inc file and uses the LINUX_VERSION definition
 # required by kernel-yocto.bbclass.
@@ -41,7 +41,7 @@ DO_CONFIG_INF_IMX_COPY:mx8-nxp-bsp = "no"
 DO_CONFIG_INF_IMX_COPY:mx9-nxp-bsp = "no"
 
 # Add setting for LF Mainline build
-IMX_KERNEL_CONFIG_AARCH32 = "ea_imx_defconfig"
+IMX_KERNEL_CONFIG_AARCH32 = "influx_imx8mm_defconfig"
 IMX_KERNEL_CONFIG_AARCH64 = "influx_imx8mm_defconfig"
 KBUILD_DEFCONFIG ?= ""
 KBUILD_DEFCONFIG:mx6-nxp-bsp = "${IMX_KERNEL_CONFIG_AARCH32}"
@@ -57,7 +57,7 @@ KBUILD_DEFCONFIG:mx9-nxp-bsp = "${IMX_KERNEL_CONFIG_AARCH64}"
 #do_copy_defconfig () {
 #    install -d ${B}
 #
-#    if [ ${DO_CONFIG_EA_IMX_COPY} = "yes" ]; then
+#    if [ ${DO_CONFIG_INF_IMX_COPY} = "yes" ]; then
 #        # copy latest ea_imx_defconfig to use
 #        mkdir -p ${B}
 #        cp ${S}/arch/arm/configs/${IMX_KERNEL_CONFIG_AARCH32} ${B}/.config
