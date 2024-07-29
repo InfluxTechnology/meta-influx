@@ -9,4 +9,5 @@ IMAGE_INSTALL:append = " wvdial "
 IMAGE_INSTALL:append = " fsl-rc-local "
 IMAGE_INSTALL:append = " python3-pyserial python3-pyserial-asyncio python3-pip"
 
-PACKAGE_EXCLUDE:pn-target_image = " packagegroup-fsl-gstreamer1.0  packagegroup-fsl-gstreamer1.0-full "
+PACKAGE_EXCLUDE:pn-target_image += " packagegroup-fsl-gstreamer1.0-commercial packagegroup-fsl-gstreamer1.0  packagegroup-fsl-gstreamer1.0-full "
+PACKAGE_EXCLUDE:pn-target_image += " gstreamer1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad "
