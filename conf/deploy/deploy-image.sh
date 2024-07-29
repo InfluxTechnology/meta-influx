@@ -23,8 +23,8 @@ fi
 #echo "Copying deploying files ..."
 
 cp "$TMP_DIR"/imx-boot-"$MACHINE"-sd.bin-flash_evk "$UUU_FILES_DIR"/imx-boot-redge-sd.bin
-#cp "$TMP_DIR"/imx8mm-influx-redge-1mw.dtb "$UUU_FILES_DIR"/
-cp "$TMP_DIR"/imx8mm-ea-ucom-kit_v2-1mw.dtb "$UUU_FILES_DIR"/
+cp "$TMP_DIR"/imx8mm-influx-redge-1mw.dtb "$UUU_FILES_DIR"/
+№cp "$TMP_DIR"/imx8mm-ea-ucom-kit_v2-1mw.dtb "$UUU_FILES_DIR"/
 
 #if [ "$WIC_FLAG" = true ]; 
 #then
