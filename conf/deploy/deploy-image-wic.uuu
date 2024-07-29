@@ -13,8 +13,8 @@ FB: ucmd setenv bootdelay 0
 FB: ucmd setenv extra_bootargs quiet
 FB: ucmd setenv bootcmd 'mmc dev ${mmcdev};if run loadimage; then run mmcboot; fi;'
 FB: ucmd setenv args_from_script quiet
-#FB: ucmd setenv fdt_file "imx8mm-influx-redge-1mw.dtb"
-FB: ucmd setenv fdt_file "imx8mm-ea-ucom-kit_v2-1mw.dtb"
+FB: ucmd setenv fdt_file "imx8mm-influx-redge-1mw.dtb"
+#FB: ucmd setenv fdt_file "imx8mm-ea-ucom-kit_v2-1mw.dtb"
 FB: ucmd saveenv
 
 # Flash file systems and then the bootloader
