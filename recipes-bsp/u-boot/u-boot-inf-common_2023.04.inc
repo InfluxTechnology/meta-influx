@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = "file://Licenses/gpl-2.0.txt;md5=b234ee4d69f5fce4486a80fdaf4a
 
 SRCBRANCH = "inf_v2023.04"
 SRC_URI = "git://github.com/InfluxTechnology/uboot-imx.git;protocol=https;branch=${SRCBRANCH}"
-SRCREV = "7c61e95d95e749bf65b45381a9c20b362e0d30fe"
+SRCREV = "aa460f5deca85f2b66ad7ee1b55cc8ba804149ad"
 
 S = "${WORKDIR}/git"
 
