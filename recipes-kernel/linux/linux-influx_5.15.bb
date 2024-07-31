@@ -8,7 +8,7 @@ The kernel is based on the kernel provided by NXP."
 require recipes-kernel/linux/linux-imx.inc
 
 SRC_URI = "git://github.com/InfluxTechnology/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
-SRCREV = "c78808ba97ce2ba2f6d0d24a9247f176050f12f9"
+SRCREV = "d19bbd0e9a0b6a707bc69fa59cdca48aabcb704b"
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 
