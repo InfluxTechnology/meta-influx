@@ -1,0 +1,11 @@
+--- a/recipes-connectivity/murata-binaries/murata-binaries/switch_module_imx8mmea-ucom.sh	2024-08-01 13:40:05.085451082 +0000
++++ b/recipes-connectivity/murata-binaries/murata-binaries/switch_module_imx8mmea-ucom.sh	2024-08-01 13:49:47.591468322 +0000
+@@ -352,7 +352,7 @@
+   echo ""
+   echo "Setting up for 1DX, 1LV, 1MW, 1WZ, 1YN, 2AE, 2BC, 2BZ, 2EA (Cypress - SDIO)"
+   echo "Please wait for 15 seconds (one-time only)..."
+-  fw_setenv fdt_file imx8mm-ea-ucom-kit_${DTB_VER}.dtb 2>/dev/null
++  fw_setenv fdt_file imx8mm-influx-redge.dtb 2>/dev/null
+   fw_setenv bt_hint cypress
+   prepare_for_cypress
+   echo "Setup complete."
