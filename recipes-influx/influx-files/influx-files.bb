@@ -23,7 +23,7 @@ SRC_URI = "file://LICENSE \
 	file://opt/influx/gnssinit.py \
 	file://opt/influx/driver_reconnect.sh \
 	file://opt/influx/pipes_reconnect.sh \
-	file://opt/influx/VERSION \
+	file://opt/influx/Release-notes \
 	file://opt/influx/autostart.sh \
 	file://opt/influx/check_firmware_version.sh \
         file://opt/influx/wakeup_BT.sh \
@@ -82,7 +82,7 @@ INFLUX_FILES_644 = "\
 	hostapd@wlan1.service \
 	wpa_supplicant@wlan0.service \
 	escape.minicom \ 
-	VERSION \
+	Release-notes \
 	SARA-R510M8S-00B-01_FW02.06_A00.01_IP.upd \
 	SARA-R510M8S-01B-00_FW03.03_A00.01_PT.dof \
 	options \
