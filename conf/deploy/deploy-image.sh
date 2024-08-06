@@ -17,7 +17,7 @@ UUU_FILES_DIR=$PWD"/uuu-deploy/files/"
 if [[ ! -d $UUU_FILES_DIR ]]; then
     mkdir -p $UUU_FILES_DIR
     cp ../sources/meta-influx/conf/deploy/deploy-image-wic.uuu $UUU_DIR/
-    cp ../sources/meta-influx/conf/deploy/uuu $UUU_DIR/
+    cp ../sources/meta-influx/conf/deploy/uuu* $UUU_DIR/
 fi
 
 #echo "Copying deploying files ..."
