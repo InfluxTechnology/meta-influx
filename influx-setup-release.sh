@@ -220,6 +220,11 @@ echo "BBLAYERS += \" \${BSPDIR}/sources/meta-influx \"" >> $BUILD_DIR/conf/bblay
 
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-murata-wireless \"" >> $BUILD_DIR/conf/bblayers.conf
 
+cat ../sources/meta-influx/conf/local.conf.default >>  $BUILD_DIR/conf/local.conf
+cd  $BUILD_DIR
+# cp script for deploy
+cp ../sources/meta-influx/conf/deploy/deploy-image.sh ./
+
 cd  $BUILD_DIR
 clean_up
 unset FSLDISTRO
