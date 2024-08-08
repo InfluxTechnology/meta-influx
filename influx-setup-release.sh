@@ -88,8 +88,9 @@ fi
 
 
 if [ -z "$DISTRO" ]; then
+    DISTRO='fsl-imx-wayland'
     if [ -z "$FSLDISTRO" ]; then
-        FSLDISTRO='fsl-imx-xwayland'
+        FSLDISTRO='fsl-imx-wayland'
     fi
 else
     FSLDISTRO="$DISTRO"
@@ -101,7 +102,7 @@ fi
 
 if [ -z "$MACHINE" ]; then
     echo setting to default machine
-    MACHINE='imx6qpsabresd'
+    MACHINE='imx8mm-influx-rex-smart'
 fi
 
 case $MACHINE in
