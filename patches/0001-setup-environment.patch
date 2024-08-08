@@ -9,7 +9,7 @@
 -    meta-toolchain-sdk
 -    adt-installer
 -    meta-ide-support
-+    redge-image-base
++    influx-image-base
  
  EOF
  
