@@ -1,0 +1,15 @@
+--- sources/base/setup-environment      2024-07-16 05:50:03.896939238 +0000
++++ ../setup-environment        2024-07-16 06:29:37.893942796 +0000
+@@ -250,11 +250,7 @@
+ You can now run 'bitbake <target>'
+ 
+ Common targets are:
+-    core-image-minimal
+-    meta-toolchain
+-    meta-toolchain-sdk
+-    adt-installer
+-    meta-ide-support
++    redge-image-base
+ 
+ EOF
+ 
