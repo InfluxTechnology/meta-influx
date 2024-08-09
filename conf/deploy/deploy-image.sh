@@ -26,6 +26,7 @@ cp "$TMP_DIR"/imx-boot-"$MACHINE"-sd.bin-flash_evk "$UUU_FILES_DIR"/imx-boot-red
 cp "$TMP_DIR"/imx8mm-influx-smart-1mw.dtb "$UUU_FILES_DIR"/
 #cp "$TMP_DIR"/imx8mm-influx-rex-smart_v2-1mw.dtb "$UUU_FILES_DIR"/
 
+: << 'COMMENT'
 #if [ "$WIC_FLAG" = true ]; 
 #then
     if [ -f $TMP_DIR/"$BUILD"-"$MACHINE"".wic.bz2" ]; then
@@ -43,6 +44,16 @@ cp "$TMP_DIR"/imx8mm-influx-smart-1mw.dtb "$UUU_FILES_DIR"/
     bunzip2 -d -k "$UUU_FILES_DIR"/"$BUILD"-"$MACHINE".wic.bz2 
     rm "$UUU_FILES_DIR"/"$BUILD"-"$MACHINE".wic.bz2    
 #fi
+COMMENT
+
+ZST_FILE=$(ls $TMP_DIR/*.rootfs.wic.zst)
+if [ -v $ZST_FILES ]; then
+    cp $ZST_FILE "$UUU_FILES_DIR"
+    zstd -d $UUU_FILES_DIR/*.rootfs.wic.zst
+    mv $UUU_FILES_DIR/*.rootfs.wic $UUU_FILES_DIR/"$MACHINE".wic
+    rm $UUU_FILES_DIR/*.rootfs.wic.zst
+fi
+
 
 # uncomment this when using local machine for build
 #echo "Deploying ..."
