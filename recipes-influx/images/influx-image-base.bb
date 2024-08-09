@@ -25,8 +25,6 @@ IMAGE_INSTALL = "\
    openssh-sftp-server \
    sqlite3 \
    v4l-utils \
-   packagegroup-fsl-gstreamer1.0 \
-   packagegroup-fsl-gstreamer1.0-full \
    bluez5 \
    bluez5-noinst-tools \
    bluez5-obex \
