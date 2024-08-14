@@ -1,6 +1,7 @@
 [Unit]
 Description= Start send/receive CAN messages
-After=basic.target
+After=network.target
+Wants=autostart.service
 
 [Service]
 Type=simple
