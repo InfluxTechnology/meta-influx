@@ -4,38 +4,6 @@ SECTION = "base"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM="file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-SRC_URI = "file://LICENSE \
-	file://etc/minirc.dfl \
-	file://etc/wvdial.conf \
-	file://etc/chatscripts/1nce-new.chat \
-	file://etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
-	file://etc/ppp/peers/1nce.provider \
-	file://etc/profile.d/enable_services.sh \
-	file://etc/profile.d/login.sh \
-	file://etc/profile.d/wlan_check.sh \
-	file://etc/systemd/network/20-wireless-wlan0.network \
-	file://etc/systemd/system/rexgen_data.service \
-	file://etc/systemd/system/autostart.service \
-	file://lib/systemd/system/wpa_supplicant@wlan0.service \
-	file://lib/systemd/system/hostapd@wlan1.service \
-	file://opt/influx/escape.minicom \
-	file://opt/influx/gnssdata_start.sh \
-	file://opt/influx/gnssinit.py \
-	file://opt/influx/driver_reconnect.sh \
-	file://opt/influx/pipes_reconnect.sh \
-	file://opt/influx/Release-notes \
-	file://opt/influx/autostart.sh \
-	file://opt/influx/check_firmware_version.sh \
-        file://opt/influx/wakeup_BT.sh \
-	file://opt/influx/SARA-R510M8S-00B-01_FW02.06_A00.01_IP.upd \
-	file://opt/influx/SARA-R510M8S-01B-00_FW03.03_A00.01_PT.dof \
-	file://opt/influx/options \
-	file://opt/influx/ublox-up-down-pin.sh \
-	file://opt/influx/lte_start_ppp.sh \
-	file://opt/influx/lte_start_wvdial.sh \
-	file://opt/influx/pap-secrets \
-"
-
 S = "${WORKDIR}"
 
 RDEPENDS:influx-files = "libusb1"
@@ -76,6 +44,7 @@ INFLUX_FILES_755 = "\
 INFLUX_FILES_644 = "\
 	minirc.dfl \
 	wvdial.conf \
+	wpa_supplicant.conf.cust \
 	rexgen_data.service \
 	autostart.service \
 	20-wireless-wlan0.network \
