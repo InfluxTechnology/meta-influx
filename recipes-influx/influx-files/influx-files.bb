@@ -4,6 +4,7 @@ SECTION = "base"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM="file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
+# these files will be installed in image
 SRC_URI = "file://LICENSE \
 	file://etc/minirc.dfl \
 	file://etc/wvdial.conf \
@@ -20,7 +21,6 @@ SRC_URI = "file://LICENSE \
 	file://lib/systemd/system/wpa_supplicant@wlan0.service \
 	file://lib/systemd/system/hostapd@wlan1.service \
 	file://opt/influx/escape.minicom \
-	file://opt/influx/gnssdata_start.sh \
 	file://opt/influx/gnssinit.py \
 	file://opt/influx/driver_reconnect.sh \
 	file://opt/influx/pipes_reconnect.sh \
@@ -28,15 +28,14 @@ SRC_URI = "file://LICENSE \
 	file://opt/influx/autostart.sh \
 	file://opt/influx/check_firmware_version.sh \
         file://opt/influx/wakeup_BT.sh \
-	file://opt/influx/SARA-R510M8S-00B-01_FW02.06_A00.01_IP.upd \
-	file://opt/influx/SARA-R510M8S-01B-00_FW03.03_A00.01_PT.dof \
 	file://opt/influx/options \
-	file://opt/influx/ublox-up-down-pin.sh \
+	file://opt/influx/quectel_start.sh \
 	file://opt/influx/lte_start_ppp.sh \
 	file://opt/influx/lte_start_wvdial.sh \
 	file://opt/influx/pap-secrets \
 	file://opt/influx/wpa_supplicant.conf.cust \
 "
+#	file://opt/influx/gnssdata_start.sh 
 
 S = "${WORKDIR}"
 
@@ -59,14 +58,6 @@ INFLUX_DIRS = "\
 	${INFLUX_DIR} \
 "
 
-# must uncomment for mender support
-#INFLUX_DIRS += "\
-#	/etc/mender/
-#	/etc/mender/scripts/
-#	/usr/share/mender/
-#	/usr/share/mender/modules/v3/
-#"
-
 # content of these folders will be installed with 755 permisions
 INFLUX_FILES_755 = "\
 	${S}/etc/ \
@@ -86,8 +77,6 @@ INFLUX_FILES_644 = "\
 	wpa_supplicant@wlan0.service \
 	escape.minicom \ 
 	Release-notes \
-	SARA-R510M8S-00B-01_FW02.06_A00.01_IP.upd \
-	SARA-R510M8S-01B-00_FW03.03_A00.01_PT.dof \
 	options \
 	pap-secrets \
 	1nce-new.chat \
@@ -113,15 +102,21 @@ do_install () {
 
 		fold="${t%${file}}"
 
-		install -m 0755 ${S}${fold}${file} ${D}${fold}${file}
+		if echo ${SRC_URI} | grep -q ${file}; then
+			install -m 0755 ${S}${fold}${file} ${D}${fold}${file}
+		fi
 
-		for e in ${INFLUX_FILES_644}; do
-			if [ "${e}" != "${file}" ]; then 
-				continue
-			else
-				chmod 644 ${D}${fold}${file}
-			fi
-		done
+		if echo ${INFLUX_FILES_644} | grep -q ${file}; then
+			chmod 644 ${D}${fold}${file}
+		fi
+
+#		for e in ${INFLUX_FILES_644}; do
+#			if [ "${e}" != "${file}" ]; then 
+#				continue
+#			else
+#				chmod 644 ${D}${fold}${file}
+#			fi
+#		done
 	done
 }
 

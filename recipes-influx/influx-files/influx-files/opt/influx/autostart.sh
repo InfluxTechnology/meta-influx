@@ -2,8 +2,8 @@
 
 EDITOR=nano	# crontab uses this editor
 
-# Set some GPIO pins like outputs
-#/opt/influx/set_gpio.sh
+# Power up the Quectel chip
+/opt/influx/quectel_start.sh
 
 # start LTE connection by wvdial
 #/opt/influx/lte_start_wvdial.sh
