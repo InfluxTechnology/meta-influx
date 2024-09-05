@@ -104,7 +104,7 @@ fi
 
 if [ -z "$MACHINE" ]; then
     echo setting to default machine
-    MACHINE='imx8mm-influx-rex-smart'
+    MACHINE='imx8mm-smart'
 fi
 
 case $MACHINE in
