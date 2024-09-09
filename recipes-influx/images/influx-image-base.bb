@@ -59,14 +59,13 @@ IMAGE_INSTALL = "\
    hostap-utils \
    kernel-module-nxp-wlan \
    linux-firmware \
-   backporttool-linux \
 "
+#backporttool-linux 
 
 
-
-IMAGE_INSTALL:append:imx8mn-influx-rex-smart = "\
-   inf-resizefs \
-"
+#IMAGE_INSTALL:append:imx8mn-influx-rex-smart = "\
+#   inf-resizefs \
+#"
 
 inherit core-image
 
