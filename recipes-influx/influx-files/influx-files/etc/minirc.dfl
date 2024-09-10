@@ -1,0 +1,2 @@
+pu port             /dev/ttymxc2
+pu rtscts           No

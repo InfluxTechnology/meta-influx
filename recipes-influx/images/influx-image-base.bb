@@ -38,7 +38,6 @@ IMAGE_INSTALL = "\
    tslib-calibrate \
    tslib-dev \
    mtdev \
-   inf-files \
    mmc-utils \
    memtester \
    screen \
@@ -59,6 +58,9 @@ IMAGE_INSTALL = "\
    hostap-utils \
    kernel-module-nxp-wlan \
    linux-firmware \
+    influx-files \
+    rexgen-stream \
+    rexgen-usb \
 "
 #backporttool-linux 
 

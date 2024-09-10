@@ -1,0 +1,11 @@
+[Unit]
+Description=Launch my application
+After=basic.target
+
+[Service]
+Type=simple
+ExecStart=/opt/influx/autostart.sh
+
+[Install]
+WantedBy=multi-user.target
+
