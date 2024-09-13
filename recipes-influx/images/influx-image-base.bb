@@ -61,9 +61,8 @@ IMAGE_INSTALL = "\
     influx-files \
     rexgen-stream \
     rexgen-usb \
+    backporttool-linux \
 "
-#backporttool-linux 
-
 
 #IMAGE_INSTALL:append:imx8mn-influx-rex-smart = "\
 #   inf-resizefs \
