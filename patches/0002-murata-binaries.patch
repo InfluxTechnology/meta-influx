@@ -1,0 +1,11 @@
+--- a/recipes-connectivity/murata-binaries/murata-binaries/switch_module_imx8mmea-ucom.sh	2024-09-13 13:58:55.874632579 +0300
++++ b/recipes-connectivity/murata-binaries/murata-binaries/switch_module_imx8mmea-ucom.sh	2024-09-13 14:55:57.432878793 +0300
+@@ -525,7 +525,7 @@
+      fw_setenv cmd_custom
+      move_ko
+   else
+-     fw_setenv fdt_file imx8mm-ea-ucom-kit_${DTB_VER}.dtb 2>/dev/null
++     fw_setenv fdt_file imx8mm-influx-rex-smart_v2.dtb 2>/dev/null
+      fw_setenv bt_hint cypress
+      fw_setenv cmd_custom
+      restore_ko
