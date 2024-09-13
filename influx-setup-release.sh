@@ -59,6 +59,10 @@ LPF="sources/meta-influx/patches"
 patch -Np1 -r - sources/meta-imx/meta-sdk/conf/distro/include/fsl-imx-preferred-env.inc < $LPF/0001-remove-fsl-preferred-provider.patch
 patch -Np1 -r - sources/meta-imx/meta-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb < $LPF/0002-mx93-soc-rev0.patch
 patch -Np1 -r - sources/base/setup-environment < $LPF/0001-setup-environment.patch
+MMK="sources/meta-murata-wireless/recipes-kernel/linux/"
+mv $MMK/linux-ea_%.bbappend $MMK/linux-inf_%.bbappend
+patch -Np1 -r - sources/meta-murata-wireless/recipes-connectivity/murata-binaries/murata-binaries_1.0.bb < $LPF/0001-murata-binaries.patch
+patch -Np1 -r - sources/meta-murata-wireless/recipes-connectivity/murata-binaries/murata-binaries/switch_module_imx8mmea-ucom.sh < $LPF/0002-murata-binaries.patch
 
 # get command line options
 OLD_OPTIND=$OPTIND
