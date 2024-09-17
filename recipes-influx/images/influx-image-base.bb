@@ -58,10 +58,11 @@ IMAGE_INSTALL = "\
    hostap-utils \
    kernel-module-nxp-wlan \
    linux-firmware \
+   backporttool-linux \
+    uhubctl \
     influx-files \
     rexgen-stream \
     rexgen-usb \
-    backporttool-linux \
 "
 
 #IMAGE_INSTALL:append:imx8mn-influx-rex-smart = "\

@@ -51,6 +51,7 @@ clean_up()
     exit_message clean_up
 }
 
+cp .repo/manifests/Release-notes sources/meta-influx/recipes-influx/influx-files/influx-files/opt/influx/
 
 #
 # Apply patches to recipes
