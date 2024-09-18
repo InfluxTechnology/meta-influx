@@ -9,7 +9,7 @@ require recipes-kernel/linux/linux-imx.inc
 
 SRC_URI = "git://github.com/InfluxTechnology/linux-imx.git;protocol=https;branch=${SRCBRANCH}"
 #SRCREV = "6b94db51d8282c651bb738693225adcd29a5abff"
-SRCREV = "3c1f45e2222c128f88e51a6015eaaba5ef661582"
+SRCREV = "05411daab566f34ee13c0a731921dd33829cb28f"
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 
