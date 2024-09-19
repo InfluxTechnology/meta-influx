@@ -14,7 +14,7 @@
  SRC_URI = "${KERNEL_SRC}"
  
 -SRCREV = "fa6c3168595c02bd9d5366fcc28c9e7304947a3d"
-+SRCREV = "3c1f45e2222c128f88e51a6015eaaba5ef661582"
++SRCREV = "05411daab566f34ee13c0a731921dd33829cb28f"
  
  # PV is defined in the base in linux-imx.inc file and uses the LINUX_VERSION definition
  # required by kernel-yocto.bbclass.
