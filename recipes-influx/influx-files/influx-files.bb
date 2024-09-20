@@ -11,6 +11,9 @@ SRC_URI = "file://LICENSE \
 	file://etc/chatscripts/1nce-new.chat \
 	file://etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
 	file://etc/ppp/peers/1nce.provider \
+	file://etc/ppp/peers/quectel-chat-connect \
+	file://etc/ppp/peers/quectel-chat-disconnect \
+	file://etc/ppp/peers/quectel-ppp \
 	file://etc/profile.d/enable_services.sh \
 	file://etc/profile.d/login.sh \
 	file://etc/profile.d/wlan_check.sh \
@@ -36,6 +39,7 @@ SRC_URI = "file://LICENSE \
 	file://opt/influx/lte_start_wvdial.sh \
 	file://opt/influx/pap-secrets \
 	file://opt/influx/wpa_supplicant.conf.cust \
+	file://opt/influx/start_ppp0.sh \
 "
 
 S = "${WORKDIR}"
@@ -82,6 +86,9 @@ INFLUX_FILES_644 = "\
 	pap-secrets \
 	1nce-new.chat \
 	1nce.provider \
+	quectel-chat-connect \
+	quectel-chat-disconnect \
+	quectel-ppp \
 "
 
 do_install () {
