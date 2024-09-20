@@ -1,5 +1,12 @@
 #!/bin/sh
 
-/usr/bin/crontab -u root -l |  /bin/grep -v "* /opt/influx/gnssdata_start.sh" |  /usr/bin/crontab -
-/opt/influx/gnssinit.py
+LSUSB=$(lsusb)
+
+if echo $LSUSB  | grep -q "Quectel"; then
+        /opt/influx/gnssinit_quectel.py
+fi
+
+if echo $LSUSB  | grep -q "U-Blox"; then
+        /opt/influx/gnssinit_ublox.py
+fi
 

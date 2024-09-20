@@ -2,7 +2,7 @@
 
 # start LTE connection by ppp
 
-/opt/influx/ublox-up-down-pin.sh
+/opt/influx/cellular_module_start.sh
 /usr/bin/killall pppd 2> /dev/null
 /usr/bin/pon 1nce.provider
 

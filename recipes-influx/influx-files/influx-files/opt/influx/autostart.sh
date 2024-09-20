@@ -3,7 +3,7 @@
 EDITOR=nano	# crontab uses this editor
 
 # Power up the Quectel chip
-/opt/influx/quectel_start.sh
+/opt/influx/cellular_module_start.sh
 
 # start LTE connection by wvdial
 #/opt/influx/lte_start_wvdial.sh

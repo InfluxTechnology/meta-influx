@@ -2,7 +2,7 @@
 
 # start LTE connection by wvdial
 
-/opt/influx/ublox-up-down-pin.sh
+/opt/influx/cellular_module_start.sh
 wvdial '1nce' 2> '/tmp/3G_1nce.log' &
 
 # NOTE: we can view process of the connection with: tail -f /tmp/3G_1nce.log

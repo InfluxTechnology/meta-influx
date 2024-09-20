@@ -11,6 +11,9 @@ SRC_URI = "file://LICENSE \
 	file://etc/chatscripts/1nce-new.chat \
 	file://etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
 	file://etc/ppp/peers/1nce.provider \
+	file://etc/ppp/peers/quectel-chat-connect \
+	file://etc/ppp/peers/quectel-chat-disconnect \
+	file://etc/ppp/peers/quectel-ppp \
 	file://etc/profile.d/enable_services.sh \
 	file://etc/profile.d/login.sh \
 	file://etc/profile.d/wlan_check.sh \
@@ -21,7 +24,9 @@ SRC_URI = "file://LICENSE \
 	file://lib/systemd/system/wpa_supplicant@wlan0.service \
 	file://lib/systemd/system/hostapd@wlan1.service \
 	file://opt/influx/escape.minicom \
-	file://opt/influx/gnssinit.py \
+	file://opt/influx/gnssdata_start.sh \
+	file://opt/influx/gnssinit_quectel.py \
+	file://opt/influx/gnssinit_ublox.py \
 	file://opt/influx/driver_reconnect.sh \
 	file://opt/influx/pipes_reconnect.sh \
 	file://opt/influx/Release-notes \
@@ -29,11 +34,12 @@ SRC_URI = "file://LICENSE \
 	file://opt/influx/check_firmware_version.sh \
         file://opt/influx/wakeup_BT.sh \
 	file://opt/influx/options \
-	file://opt/influx/quectel_start.sh \
+	file://opt/influx/cellular_module_start.sh \
 	file://opt/influx/lte_start_ppp.sh \
 	file://opt/influx/lte_start_wvdial.sh \
 	file://opt/influx/pap-secrets \
 	file://opt/influx/wpa_supplicant.conf.cust \
+	file://opt/influx/start_ppp0.sh \
 "
 
 S = "${WORKDIR}"
@@ -80,6 +86,9 @@ INFLUX_FILES_644 = "\
 	pap-secrets \
 	1nce-new.chat \
 	1nce.provider \
+	quectel-chat-connect \
+	quectel-chat-disconnect \
+	quectel-ppp \
 "
 
 do_install () {
