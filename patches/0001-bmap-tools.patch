@@ -1,0 +1,17 @@
+--- a/meta/recipes-support/bmap-tools/bmap-tools_git.bb		2024-10-23 06:12:25.630345995 +0000
++++ b/meta/recipes-support/bmap-tools/bmap-tools_git.bb		2024-10-22 13:53:51.408561315 +0000
+@@ -7,11 +7,11 @@
+ HOMEPAGE = "https://github.com/01org/bmap-tools"
+ SECTION = "console/utils"
+ LICENSE = "GPL-2.0-only"
+-LIC_FILES_CHKSUM = "file://COPYING;md5=b234ee4d69f5fce4486a80fdaf4a4263"
++LIC_FILES_CHKSUM = "file://LICENSE;md5=b234ee4d69f5fce4486a80fdaf4a4263"
+ 
+-SRC_URI = "git://github.com/intel/${BPN};branch=master;protocol=https"
++SRC_URI = "git://github.com/intel/${BPN};branch=main;protocol=https"
+ 
+-SRCREV = "c0673962a8ec1624b5189dc1d24f33fe4f06785a"
++SRCREV = "7106093031ee7211a6e4dab8a7ca1b76e0940b0b"
+ S = "${WORKDIR}/git"
+ BASEVER = "3.6"
+ PV = "${BASEVER}+git${SRCPV}"

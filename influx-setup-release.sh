@@ -52,6 +52,7 @@ clean_up()
 }
 
 cp .repo/manifests/Release-notes sources/meta-influx/recipes-influx/influx-files/influx-files/opt/influx/
+cp sources/meta-influx/recipes-extended/cracklib/*.patch sources/poky/meta/recipes-extended/cracklib/cracklib/
 
 #
 # Apply patches to recipes
@@ -65,6 +66,8 @@ patch -Np1 -r - sources/meta-imx/meta-bsp/recipes-kernel/linux/linux-imx-headers
 patch -Np1 -r - sources/meta-murata-wireless/recipes-connectivity/murata-binaries/murata-binaries_1.0.bb < $LPF/0001-murata-binaries.patch
 patch -Np1 -r - sources/meta-murata-wireless/recipes-connectivity/murata-binaries/murata-binaries/switch_module_imx8mmea-ucom.sh < $LPF/0002-murata-binaries.patch
 patch -Np1 -r - sources/base/setup-environment < $LPF/0001-setup-environment.patch
+patch -Np1 -r - sources/poky/meta/recipes-support/bmap-tools/bmap-tools_git.bb < $LPF/0001-bmap-tools.patch
+patch -Np1 -r - sources/poky/meta/recipes-extended/cracklib/cracklib_2.9.7.bb < $LPF/0001-cracklib.patch
 
 # get command line options
 OLD_OPTIND=$OPTIND
