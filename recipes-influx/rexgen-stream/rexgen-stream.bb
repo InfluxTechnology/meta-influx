@@ -24,8 +24,8 @@ DEPENDS += "libusb1"
 CC:append = " -fcommon -w "
 
 do_compile () {
-	${CC} -o rexgen_stream rexgen-stream.c pipes.c commands.c communication.c -I./ -lusb-1.0 -pthread ${LDFLAGS}
-	${CC} -o rexgen rexusb.c commands.c communication.c -I./ -lusb-1.0 ${LDFLAGS}
+	${CC} -o rexgen_stream rexgen-stream.c pipes.c comm*.c -I./ -lusb-1.0 -pthread ${LDFLAGS}
+	${CC} -o rexgen rexusb.c comm*.c -I./ -lusb-1.0 ${LDFLAGS}
 }
 
 # these folders will be created
