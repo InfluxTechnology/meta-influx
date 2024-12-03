@@ -14,7 +14,7 @@ SRC_URI = "git://github.com/InfluxTechnology/rexgen-linux-stream.git;protocol=ht
 	file://LICENSE \	
 "
 
-SRCREV = "3a55739849632e147dee8920ce8666aef96d71e6"
+SRCREV = "5447316208ebcf2badfeba6d63f65d04792b27b1"
 SRC_URI[sha256sum] = "3cc71d3fd6b1db43035f5ab5699ce2b17e1b6eaeee43fb8c26e158cdd637ea37"
 
 S = "${WORKDIR}/git"

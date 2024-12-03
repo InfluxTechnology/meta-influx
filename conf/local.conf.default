@@ -1,4 +1,7 @@
 
+WKS_FILE = "influx-image-base.wks.in" 
+IMAGE_FSTYPES = "wic"
+
 IMAGE_INSTALL:append = " ppp "
 IMAGE_INSTALL:append = " git "
 IMAGE_INSTALL:append = " rsync "
