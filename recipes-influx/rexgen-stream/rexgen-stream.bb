@@ -52,6 +52,13 @@ do_install () {
 		if [ "${d}" = "README.md" ]; then 
 			continue
 		fi
+
+		# 755 permissions for *.sh files
+                if [ $(echo "${d}" | grep '.sh') != "" ]; then 
+                        install -m 0755 ${S}${F}${d} ${D}${REX_USB_DIR}${F}${d}
+                        continue
+                fi
+
 		install -m 0644 ${S}${F}${d} ${D}${REX_USB_DIR}${F}${d}
 	done
 
