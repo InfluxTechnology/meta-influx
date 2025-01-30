@@ -117,9 +117,6 @@ do_install() {
         install -m 0755 -d ${D}${d}
     done
 
-    # Ensure the systemd multi-user.target.wants directory exists
-    install -d ${D}/lib/systemd/system/multi-user.target.wants
-
     # Install files with 755 permissions
     for f in ${INFLUX_FILES_755}; do
         if [ -f ${f} ]; then
@@ -137,13 +134,6 @@ do_install() {
             echo "Warning: Skipping missing file ${f}"
         fi
     done
-
-    # Enable services manually
-    ln -sf /etc/systemd/system/wifi_monitor.service ${D}/lib/systemd/system/multi-user.target.wants/wifi_monitor.service
-    ln -sf /etc/systemd/system/wifi_monitor.timer ${D}/lib/systemd/system/multi-user.target.wants/wifi_monitor.timer
-    # Disable wpa_supplicant@wlan0.service from automatic startup
-    #ln -sf /dev/null ${D}/etc/systemd/system/wpa_supplicant@wlan0.service
-    
 }
 
 # Enable systemd services

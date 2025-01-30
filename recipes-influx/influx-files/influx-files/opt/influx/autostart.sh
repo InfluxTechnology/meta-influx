@@ -12,3 +12,6 @@ EDITOR=nano	# crontab uses this editor
 # load to RexGen proper configuration
 /home/root/rexusb/rexgen configure /home/root/rexusb/config/Smart_v1.rxc
 
+#start AP_FLASK AP MODE for this device
+systemctl enable wifi_monitor.service wifi_monitor.timer
+systemctl start wifi_monitor.service wifi_monitor.timer

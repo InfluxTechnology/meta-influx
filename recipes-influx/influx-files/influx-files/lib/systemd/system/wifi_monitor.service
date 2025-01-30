@@ -1,0 +1,11 @@
+[Unit]
+Description=WiFi Monitor Service
+After=network.target
+
+[Service]
+ExecStart=/bin/bash /opt/influx/ap_flask/wifi_monitor.sh
+Restart=always
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
