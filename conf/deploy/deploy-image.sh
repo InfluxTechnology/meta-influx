@@ -24,6 +24,7 @@ echo "Copying deploying files ..."
 
 cp "$TMP_DIR"/imx-boot-"$MACHINE"-sd.bin-flash_evk "$UUU_FILES_DIR"/imx-boot-redge-sd.bin
 cp "$TMP_DIR"/imx8mm-influx-rex-smart_v2.dtb "$UUU_FILES_DIR"/
+cp "$TMP_DIR"/imx8mm-influx-rex-smart_v2-1mw.dtb "$UUU_FILES_DIR"/
 cp "$TMP_DIR"/"$BUILD"-"$MACHINE".wic "$UUU_FILES_DIR""$MACHINE".wic
 
 # uncomment this when using local machine for build
