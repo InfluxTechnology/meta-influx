@@ -1,0 +1,21 @@
+--- a/common/autoboot.c		2024-08-15 13:36:31.545793414 +0000
++++ b/common/autoboot.c		2024-08-16 06:10:03.367805259 +0000
+@@ -375,7 +375,7 @@
+ 	int abort = 0;
+ 	unsigned long ts;
+ 
+-	printf("Hit any key to stop autoboot: %2d ", bootdelay);
++//	printf("Hit any key to stop autoboot: %2d ", bootdelay);
+ 
+ 	/*
+ 	 * Check if key already pressed
+@@ -383,7 +383,7 @@
+ 	if (tstc()) {	/* we got a key press	*/
+ 		getchar();	/* consume input	*/
+ 		puts("\b\b\b 0");
+-		abort = 1;	/* don't auto boot	*/
++		abort = 0;	/* abort key pressing	*/
+ 	}
+ 
+ 	while ((bootdelay > 0) && (!abort)) {
+
