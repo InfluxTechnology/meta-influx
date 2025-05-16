@@ -51,11 +51,15 @@ clean_up()
     exit_message clean_up
 }
 
+cp .repo/manifests/Release-notes sources/meta-influx/recipes-influx/influx-files/influx-files/opt/influx/
 
 #
 # Apply patches to recipes
 #
-patch -Np1 -r - sources/meta-imx/meta-sdk/conf/distro/include/fsl-imx-preferred-env.inc < sources/meta-influx/patches/0001-remove-fsl-preferred-provider.patch
+LPF="sources/meta-influx/patches"
+patch -Np1 -r - sources/meta-imx/meta-sdk/conf/distro/include/fsl-imx-preferred-env.inc < $LPF/0001-remove-fsl-preferred-provider.patch
+patch -Np1 -r - sources/meta-imx/meta-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb < $LPF/0002-mx93-soc-rev0.patch
+patch -Np1 -r - sources/base/setup-environment < $LPF/0001-setup-environment.patch
 
 # get command line options
 OLD_OPTIND=$OPTIND
@@ -87,8 +91,9 @@ fi
 
 
 if [ -z "$DISTRO" ]; then
+    DISTRO='fsl-imx-wayland'
     if [ -z "$FSLDISTRO" ]; then
-        FSLDISTRO='fsl-imx-xwayland'
+        FSLDISTRO='fsl-imx-wayland'
     fi
 else
     FSLDISTRO="$DISTRO"
@@ -100,7 +105,7 @@ fi
 
 if [ -z "$MACHINE" ]; then
     echo setting to default machine
-    MACHINE='imx6qpsabresd'
+    MACHINE='imx8mm-smart'
 fi
 
 case $MACHINE in
@@ -134,7 +139,7 @@ fi
 cd -
 
 # Override the click-through in meta-freescale/EULA
-FSL_EULA_FILE=$CWD/sources/meta-imx/EULA.txt
+FSL_EULA_FILE=$CWD/sources/meta-imx/LICENSE.txt
 
 # Set up the basic yocto environment
 if [ -z "$DISTRO" ]; then
@@ -184,25 +189,21 @@ echo "# i.MX Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
 hook_in_layer meta-imx/meta-bsp
 hook_in_layer meta-imx/meta-sdk
 hook_in_layer meta-imx/meta-ml
+hook_in_layer meta-imx/meta-v2x
 hook_in_layer meta-nxp-demo-experience
 
 echo "" >> $BUILD_DIR/conf/bblayers.conf
+echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm\"" >> $BUILD_DIR/conf/bblayers.conf
+echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm-toolchain\"" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \"\${BSPDIR}/sources/meta-browser/meta-chromium\"" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \"\${BSPDIR}/sources/meta-clang\"" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-networking\"" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-filesystems\"" >> $BUILD_DIR/conf/bblayers.conf
-
 echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qt6\"" >> $BUILD_DIR/conf/bblayers.conf
-echo "BBLAYERS += \"\${BSPDIR}/sources/meta-python2\"" >> $BUILD_DIR/conf/bblayers.conf
-
-if [ -d ../sources/meta-ivi ]; then
-    echo -e "\n## Genivi layers" >> $BUILD_DIR/conf/bblayers.conf
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-gplv2\"" >> $BUILD_DIR/conf/bblayers.conf
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-ivi/meta-ivi\"" >> $BUILD_DIR/conf/bblayers.conf
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-ivi/meta-ivi-bsp\"" >> $BUILD_DIR/conf/bblayers.conf
-    echo "BBLAYERS += \"\${BSPDIR}/sources/meta-ivi/meta-ivi-test\"" >> $BUILD_DIR/conf/bblayers.conf
-fi
+echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security/meta-parsec\"" >> $BUILD_DIR/conf/bblayers.conf
+echo "BBLAYERS += \"\${BSPDIR}/sources/meta-security/meta-tpm\"" >> $BUILD_DIR/conf/bblayers.conf
+echo "BBLAYERS += \"\${BSPDIR}/sources/meta-virtualization\"" >> $BUILD_DIR/conf/bblayers.conf
 
 echo BSPDIR=$BSPDIR
 echo BUILD_DIR=$BUILD_DIR
@@ -219,6 +220,11 @@ echo "#Influx Technology Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-influx \"" >> $BUILD_DIR/conf/bblayers.conf
 
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-murata-wireless \"" >> $BUILD_DIR/conf/bblayers.conf
+
+cat ../sources/meta-influx/conf/local.conf.default >>  $BUILD_DIR/conf/local.conf
+cd  $BUILD_DIR
+# cp script for deploy
+cp ../sources/meta-influx/conf/deploy/deploy-image.sh ./
 
 cd  $BUILD_DIR
 clean_up

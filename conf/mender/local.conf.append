@@ -1,0 +1,33 @@
+MENDER_FEATURES_ENABLE_append = " mender-uboot mender-image-sd"
+MENDER_FEATURES_DISABLE_append = " mender-grub mender-image-uefi"
+
+PREFERRED_PROVIDER_u-boot-fw-utils = "u-boot-fw-utils-mender-auto-provided"
+IMAGE_FSTYPES_remove = "tar.bz2 ext4 sdcard.bz2"
+
+# dummy value as the WIC plugin requires an entry but this will not be used
+# for anything beside to satisfy the build dependency
+IMAGE_BOOT_FILES_append = "u-boot-${MACHINE}.bin"
+
+MENDER_IMAGE_BOOTLOADER_FILE = "imx-boot"
+
+# offset to bootloader in number of sectors (512 bytes)
+# for imx8mm it is 33K -> 66 sectors
+MENDER_IMAGE_BOOTLOADER_BOOTSECTOR_OFFSET_imx8mmea-ucom = "66"
+MENDER_IMAGE_BOOTLOADER_BOOTSECTOR_OFFSET_imx8mnea-ucom = "64"
+MENDER_IMAGE_BOOTLOADER_BOOTSECTOR_OFFSET_imx8mqea-com = "66"
+
+do_image_sdimg[depends] += "imx-boot:do_deploy"
+
+# Storage device name
+MENDER_STORAGE_DEVICE_imx8mmea-ucom = "/dev/mmcblk2"
+MENDER_STORAGE_DEVICE_imx8mnea-ucom = "/dev/mmcblk2"
+MENDER_STORAGE_DEVICE_imx8mqea-ucom = "/dev/mmcblk0"
+
+# size of the boot partition
+MENDER_BOOT_PART_SIZE_MB = "32"
+
+# The eMMC is normally larger than 2G, but we are setting
+# the default value to 2G to limit the size of the sdimg
+# file. The data partition will be increased to fill up
+# the remaining free area at first boot
+MENDER_STORAGE_TOTAL_SIZE_MB = "6144"
