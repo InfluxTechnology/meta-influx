@@ -1,4 +1,4 @@
-diff --git a/meta-sdk/conf/distro/include/fsl-imx-preferred-env.inc b/meta-sdk/conf/distro/include$
+diff --git a/meta-imx-sdk/conf/distro/include/fsl-imx-preferred-env.inc b/meta-imx-sdk/conf/distro/include$
 index 3bdbaf5bc..b95abaafc 100644
 --- a/meta-imx-sdk/conf/distro/include/fsl-imx-preferred-env.inc
 +++ b/meta-imx-sdk/conf/distro/include/fsl-imx-preferred-env.inc
