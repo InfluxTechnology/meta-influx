@@ -52,6 +52,8 @@ clean_up()
 }
 
 cp .repo/manifests/Release-notes sources/meta-influx/recipes-influx/influx-files/influx-files/opt/influx/
+rm sources/meta-imx/meta-imx-bsp/recipes-graphics/xwayland/xwayland_23.1.1.imx.bbappend
+rm -fr sources/meta-imx/meta-imx-bsp/recipes-kernel/cryptodev/
 
 #
 # Apply patches to recipes
