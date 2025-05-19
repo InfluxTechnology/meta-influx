@@ -1,0 +1,59 @@
+--- a/meta-influx/recipes-influx/influx-files/influx-files.bb	2025-05-19 08:03:20.259463711 +0000
++++ b/meta-influx/recipes-influx/influx-files/influx-files.bb	2025-05-19 12:26:07.357309259 +0000
+@@ -21,8 +21,6 @@
+ 	file://etc/systemd/network/20-wireless-wlan0.network \
+ 	file://etc/systemd/system/rexgen_data.service \
+ 	file://etc/systemd/system/autostart.service \
+-	file://lib/systemd/system/wpa_supplicant@wlan0.service \
+-	file://lib/systemd/system/hostapd@wlan1.service \
+ 	file://opt/influx/escape.minicom \
+ 	file://opt/influx/gnssdata_start.sh \
+ 	file://opt/influx/gnssinit_quectel.py \
+@@ -41,7 +39,8 @@
+ 	file://opt/influx/wpa_supplicant.conf.cust \
+ 	file://opt/influx/start_ppp0.sh \
+ "
+-
++#	file://lib/systemd/system/wpa_supplicant@wlan0.service 
++#	file://lib/systemd/system/hostapd@wlan1.service 
+ S = "${WORKDIR}"
+ 
+ RDEPENDS:influx-files = "libusb1"
+@@ -58,17 +57,17 @@
+ 	/etc/ppp/peers/ \
+ 	/etc/chatscripts/ \
+ 	/etc/systemd/network/ \
+-	/lib/systemd/system/ \
+ 	${REX_USB_DIR} \
+ 	${INFLUX_DIR} \
+ "
++#	/lib/systemd/system/ 
+ 
+ # content of these folders will be installed with 755 permisions
+ INFLUX_FILES_755 = "\
+ 	${S}/etc/ \
+-	${S}/lib/systemd/system \
+ 	${S}/opt/influx/ \
+ "
++#	${S}/lib/systemd/system 
+ 
+ # these files will be installed with 644 permisions
+ INFLUX_FILES_644 = "\
+@@ -78,8 +77,6 @@
+ 	rexgen_data.service \
+ 	autostart.service \
+ 	20-wireless-wlan0.network \
+-	hostapd@wlan1.service \
+-	wpa_supplicant@wlan0.service \
+ 	escape.minicom \ 
+ 	Release-notes \
+ 	options \
+@@ -90,6 +87,8 @@
+ 	quectel-chat-disconnect \
+ 	quectel-ppp \
+ "
++#	hostapd@wlan1.service 
++#	wpa_supplicant@wlan0.service 
+ 
+ do_install () {
+ 	for d in ${INFLUX_DIRS}; do

@@ -1,0 +1,28 @@
+--- a/meta-influx/recipes-influx/images/influx-image-base.bb	2025-05-19 08:03:20.255463675 +0000
++++ b/meta-influx/recipes-influx/images/influx-image-base.bb	2025-05-19 10:16:25.770444438 +0000
+@@ -51,19 +51,19 @@
+    python3-dev\
+    auditd \
+    hostapd \
+-   murata-binaries \
+-   cyw-supplicant \
+-   cyw-hostapd \
+-   hostap-conf \
+-   hostap-utils \
+    kernel-module-nxp-wlan \
+    linux-firmware \
+-   backporttool-linux \
+     uhubctl \
+     influx-files \
+     rexgen-stream \
+     rexgen-usb \
+ "
++#   murata-binaries 
++#   cyw-supplicant 
++#   cyw-hostapd 
++#   hostap-conf 
++#   hostap-utils 
++#   backporttool-linux 
+ 
+ #IMAGE_INSTALL:append:imx8mn-influx-rex-smart = "\
+ #   inf-resizefs \
