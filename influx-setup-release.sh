@@ -57,8 +57,8 @@ cp .repo/manifests/Release-notes sources/meta-influx/recipes-influx/influx-files
 # Apply patches to recipes
 #
 LPF="sources/meta-influx/patches"
-patch -Np1 -r - sources/meta-imx/meta-sdk/conf/distro/include/fsl-imx-preferred-env.inc < $LPF/0001-remove-fsl-preferred-provider.patch
-patch -Np1 -r - sources/meta-imx/meta-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb < $LPF/0002-mx93-soc-rev0.patch
+patch -Np1 -r - sources/meta-imx/meta-imx-sdk/conf/distro/include/fsl-imx-preferred-env.inc < $LPF/0001-remove-fsl-preferred-provider.patch
+patch -Np1 -r - sources/meta-imx/meta-imx-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb < $LPF/0002-mx93-soc-rev0.patch
 patch -Np1 -r - sources/base/setup-environment < $LPF/0001-setup-environment.patch
 
 # get command line options
