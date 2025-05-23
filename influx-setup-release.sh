@@ -226,7 +226,7 @@ fi
 echo "#Influx Technology Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-influx \"" >> $BUILD_DIR/conf/bblayers.conf
 
-##echo "BBLAYERS += \" \${BSPDIR}/sources/meta-murata-wireless \"" >> $BUILD_DIR/conf/bblayers.conf
+echo "BBLAYERS += \" \${BSPDIR}/sources/meta-murata-wireless \"" >> $BUILD_DIR/conf/bblayers.conf
 
 cat ../sources/meta-influx/conf/local.conf.default >>  $BUILD_DIR/conf/local.conf
 cd  $BUILD_DIR
