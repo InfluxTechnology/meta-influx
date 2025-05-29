@@ -58,7 +58,6 @@ IMAGE_INSTALL = "\
    hostap-utils \
    kernel-module-nxp-wlan \
    linux-firmware \
-   backporttool-linux \
     uhubctl \
     influx-files \
     rexgen-stream \

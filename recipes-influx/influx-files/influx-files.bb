@@ -21,8 +21,8 @@ SRC_URI = "file://LICENSE \
 	file://etc/systemd/network/20-wireless-wlan0.network \
 	file://etc/systemd/system/rexgen_data.service \
 	file://etc/systemd/system/autostart.service \
-	file://lib/systemd/system/wpa_supplicant@wlan0.service \
-	file://lib/systemd/system/hostapd@wlan1.service \
+	file://usr/lib/systemd/system/wpa_supplicant@wlan0.service \
+	file://usr/lib/systemd/system/hostapd@wlan1.service \
 	file://opt/influx/escape.minicom \
 	file://opt/influx/gnssdata_start.sh \
 	file://opt/influx/gnssinit_quectel.py \
@@ -58,7 +58,7 @@ INFLUX_DIRS = "\
 	/etc/ppp/peers/ \
 	/etc/chatscripts/ \
 	/etc/systemd/network/ \
-	/lib/systemd/system/ \
+	/usr/lib/systemd/system/ \
 	${REX_USB_DIR} \
 	${INFLUX_DIR} \
 "
@@ -66,7 +66,7 @@ INFLUX_DIRS = "\
 # content of these folders will be installed with 755 permisions
 INFLUX_FILES_755 = "\
 	${S}/etc/ \
-	${S}/lib/systemd/system \
+	${S}/usr/lib/systemd/system \
 	${S}/opt/influx/ \
 "
 
@@ -92,6 +92,7 @@ INFLUX_FILES_644 = "\
 "
 
 do_install () {
+	# Create necessary directories
 	for d in ${INFLUX_DIRS}; do
 		fold="${d#${S}}"
 		install -m 0755 -d ${D}${fold}
@@ -109,11 +110,13 @@ do_install () {
 		done
 
 		fold="${t%${file}}"
-
+		
+		# default file permisions is 755
 		if echo ${SRC_URI} | grep -q ${file}; then
 			install -m 0755 ${S}${fold}${file} ${D}${fold}${file}
 		fi
 
+		# check file in 644 permision list
 		if echo ${INFLUX_FILES_644} | grep -q ${file}; then
 			chmod 644 ${D}${fold}${file}
 		fi
