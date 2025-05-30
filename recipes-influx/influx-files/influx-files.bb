@@ -16,6 +16,7 @@ SRC_URI = "file://LICENSE \
 	file://etc/ppp/peers/quectel-ppp \
 	file://etc/profile.d/enable_services.sh \
 	file://etc/profile.d/login.sh \
+	file://etc/profile.d/networkd-wait-timeout.sh \
 	file://etc/profile.d/wlan_check.sh \
 	file://etc/profile.d/wpa_supplicant_check.sh \
 	file://etc/systemd/network/20-wireless-wlan0.network \

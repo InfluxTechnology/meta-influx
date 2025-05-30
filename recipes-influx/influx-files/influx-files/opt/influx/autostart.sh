@@ -1,6 +1,6 @@
 #!/bin/sh
 
-EDITOR=nano	# crontab uses this editor
+EDITOR=mcedit	# crontab uses this editor
 
 # Power up the Quectel chip
 /opt/influx/cellular_module_start.sh
