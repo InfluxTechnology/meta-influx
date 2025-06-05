@@ -41,8 +41,10 @@ DO_CONFIG_EA_IMX_COPY:mx8-nxp-bsp = "no"
 DO_CONFIG_EA_IMX_COPY:mx9-nxp-bsp = "no"
 
 # Add setting for LF Mainline build
-IMX_KERNEL_CONFIG_AARCH32 = "ea_imx_defconfig"
-IMX_KERNEL_CONFIG_AARCH64 = "ea_imx8_defconfig"
+#IMX_KERNEL_CONFIG_AARCH32 = "ea_imx_defconfig"
+#IMX_KERNEL_CONFIG_AARCH64 = "ea_imx8_defconfig"
+IMX_KERNEL_CONFIG_AARCH32 = "influx_imx8mm_defconfig"
+IMX_KERNEL_CONFIG_AARCH64 = "influx_imx8mm_defconfig"
 KBUILD_DEFCONFIG ?= ""
 KBUILD_DEFCONFIG:mx6-nxp-bsp = "${IMX_KERNEL_CONFIG_AARCH32}"
 KBUILD_DEFCONFIG:mx7-nxp-bsp = "${IMX_KERNEL_CONFIG_AARCH32}"
