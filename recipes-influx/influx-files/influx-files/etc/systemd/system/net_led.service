@@ -1,0 +1,13 @@
+[Unit]
+Description=Network LED Monitor
+After=network.target
+
+[Service]
+ExecStart=/opt/influx/ap_flask/net_led.sh
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

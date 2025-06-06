@@ -1,0 +1,8 @@
+[Unit]
+Description=Network failover script
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/influx/net_failover.sh

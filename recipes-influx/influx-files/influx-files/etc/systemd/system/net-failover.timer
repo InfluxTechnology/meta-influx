@@ -1,0 +1,9 @@
+[Unit]
+Description=Run network failover script every 30 seconds
+
+[Timer]
+OnBootSec=20
+OnUnitActiveSec=20
+
+[Install]
+WantedBy=timers.target

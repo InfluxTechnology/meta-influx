@@ -1,6 +1,7 @@
 #/etc/ppp/peers/quectel-ppp
 # Usage:root>pppd call quectel-ppp
 # Hide password in debug messages
+logfile /var/log/lte_ppp.log
 hide-password
 # The phone is not required to authenticate
 noauth

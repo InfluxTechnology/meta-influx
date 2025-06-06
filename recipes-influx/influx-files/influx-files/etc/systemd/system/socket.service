@@ -1,0 +1,14 @@
+[Unit]
+Description=Socket Application Service
+After=network.target
+
+[Service]
+ExecStart=/opt/influx/socket/socket
+Restart=always
+User=root
+WorkingDirectory=/opt/influx/socket
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

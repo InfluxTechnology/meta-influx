@@ -15,7 +15,8 @@ OK ATZ
 # Connection to the network
 # Set LTE_APN variable before executing chat -E ...
 # Check with service provider for required details
-OK AT+CGDCONT=1,"IP","\T",,0,0
+#OK AT+CGDCONT=1,"IP","\T",,0,0
+OK AT+CGDCONT=1,"IP",""
 # Dial the number
 OK ATDT*99#
 CONNECT
