@@ -19,8 +19,8 @@ SRC_URI = "file://LICENSE \
            file://etc/profile.d/wpa_supplicant_check.sh \
            file://etc/systemd/network/20-wireless-wlan0.network \
            file://etc/systemd/system/autostart.service \
-           file://lib/systemd/system/wpa_supplicant@wlan0.service \
-           file://lib/systemd/system/hostapd@wlan1.service \
+           file://usr/lib/systemd/system/wpa_supplicant@wlan0.service \
+           file://usr/lib/systemd/system/hostapd@wlan1.service \
            file://opt/influx/escape.minicom \
            file://opt/influx/gnssdata_start.sh \
            file://opt/influx/gnssinit_quectel.py \
@@ -71,7 +71,7 @@ INFLUX_DIRS = "\
     /etc/ppp/peers/ \
     /etc/chatscripts/ \
     /etc/systemd/network/ \
-    /lib/systemd/system/ \
+    /usr/lib/systemd/system/ \
     ${REX_USB_DIR} \
     ${INFLUX_DIR} \
     ${INFLUX_DIR}/ap_flask/ \
@@ -111,8 +111,8 @@ INFLUX_FILES_644 = "\
     ${S}/etc/profile.d/wpa_supplicant_check.sh \
     ${S}/etc/systemd/network/20-wireless-wlan0.network \
     ${S}/etc/systemd/system/autostart.service \
-    ${S}/lib/systemd/system/wpa_supplicant@wlan0.service \
-    ${S}/lib/systemd/system/hostapd@wlan1.service \
+    ${S}/usr/lib/systemd/system/wpa_supplicant@wlan0.service \
+    ${S}/usr/lib/systemd/system/hostapd@wlan1.service \
     ${S}/opt/influx/Release-notes \
     ${S}/opt/influx/options \
     ${S}/opt/influx/pap-secrets \
@@ -139,7 +139,7 @@ do_install() {
     done
 
     # Ensure the systemd multi-user.target.wants directory exists
-    install -d ${D}/lib/systemd/system/multi-user.target.wants
+    install -d ${D}/usr/lib/systemd/system/multi-user.target.wants
 
     # Install files with 755 permissions
     for f in ${INFLUX_FILES_755}; do
@@ -160,13 +160,13 @@ do_install() {
     done
 
     # Enable services manually
-    ln -sf /etc/systemd/system/wifi_monitor.service ${D}/lib/systemd/system/multi-user.target.wants/wifi_monitor.service
-    ln -sf /etc/systemd/system/wifi_monitor.timer ${D}/lib/systemd/system/multi-user.target.wants/wifi_monitor.timer
-    ln -sf /etc/systemd/system/socket.service ${D}/lib/systemd/system/multi-user.target.wants/socket.service
-    ln -sf /etc/systemd/system/lte-ppp.service ${D}/lib/systemd/system/multi-user.target.wants/lte-ppp.service
-    ln -sf /etc/systemd/system/net_led.service ${D}/lib/systemd/system/multi-user.target.wants/net_led.service
-    ln -sf /etc/systemd/system/net-failover.service ${D}/lib/systemd/system/multi-user.target.wants/net-failover.service
-    ln -sf /etc/systemd/system/net-failover.timer ${D}/lib/systemd/system/multi-user.target.wants/net-failover.timer
+    ln -sf /etc/systemd/system/wifi_monitor.service ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.service
+    ln -sf /etc/systemd/system/wifi_monitor.timer ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.timer
+    ln -sf /etc/systemd/system/socket.service ${D}/usr/lib/systemd/system/multi-user.target.wants/socket.service
+    ln -sf /etc/systemd/system/lte-ppp.service ${D}/usr/lib/systemd/system/multi-user.target.wants/lte-ppp.service
+    ln -sf /etc/systemd/system/net_led.service ${D}/usr/lib/systemd/system/multi-user.target.wants/net_led.service
+    ln -sf /etc/systemd/system/net-failover.service ${D}/usr/lib/systemd/system/multi-user.target.wants/net-failover.service
+    ln -sf /etc/systemd/system/net-failover.timer ${D}/usr/lib/systemd/system/multi-user.target.wants/net-failover.timer
 
 }
 
