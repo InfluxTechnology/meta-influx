@@ -7,7 +7,8 @@ PROVIDES += "u-boot u-boot-mfgtool"
 
 BOOT_TOOLS = "imx-boot-tools"
 
-#
+EXTRA_OEMAKE += "O=${B}"
+
 # Got build errors when using 'devtool modify u-boot-inf'.
 # In poky/scripts/lib/devtool/standard.py there is a do_configure:append
 # that will copy .config if KCONFIG_CONFIG_ENABLE_MENUCONFIG is true
