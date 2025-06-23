@@ -41,7 +41,7 @@ IMAGE_INSTALL = "\
    mmc-utils \
    memtester \
    screen \
-   u-boot-fw-utils \
+   u-boot-inf-fw-utils \
    u-boot-script-inf \
    libgpiod \
    libgpiod-tools \
