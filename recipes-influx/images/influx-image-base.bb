@@ -64,10 +64,6 @@ IMAGE_INSTALL = "\
    rexgen-usb \
 "
 
-#IMAGE_INSTALL:append:imx8mn-influx-rex-smart = "\
-#   inf-resizefs \
-#"
-
 inherit core-image
 
 # User/Group modifications"
