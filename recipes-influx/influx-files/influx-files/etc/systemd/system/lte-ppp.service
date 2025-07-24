@@ -5,9 +5,11 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+ExecStartPre=/bin/mkdir -p /var/run/pppd/lock
 ExecStart=/usr/sbin/pppd call quectel-ppp nodetach
 Restart=always
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
+
