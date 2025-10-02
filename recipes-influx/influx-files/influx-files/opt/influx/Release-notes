@@ -1,5 +1,47 @@
 ### Release notes ###
-v 3.1.rc
+v 2.0.0
+    Mender update image rootfs	
+
+v 1.2.5
+    Fixed multiple files download
+    Fixed Cancel download
+    Fixed bad communication between Rexdesk and the device
+
+v 1.2.4
+    Added system logging service (rex_sys_log.sh) that logs the min, max and average cpu, temperature and memory.
+    It also logs GNSS position and download speed
+    Logs are written in /home/root/rexusb/log and uploaded to Google cloud at the end of the day.
+    Measurement times can be configured through rex_sys_log.conf
+    New version of socket service with Google fix
+ 
+v 1.2.3
+    GCS support via Service Account credential json - download, upload, resume upload
+    GCS HMAC credentials removed
+
+v 1.2.2
+    GCS support (Google cloud)
+
+v 1.2.1
+  Distro 6.6-scarthgap
+  Linux kernel 6.6.23
+  U-boot 2024.04
+  Mender update single files (image update is NOT implemented)
+
+  Influx features
+
+v 1.0.2
+    Reworked ap_flask.py for better experience
+    Added LED for LTE and additional state for data transmit for both LEDs
+
+v 1.0.1
+    Fixed GNSS data wrong values.
+    Support for reconfiguring through S3 - configuration file name should be config.rxc in order to be downloaded. It should be placed in the logger's folder.
+    Support for Reflash through S3 - file name should be firmware.bin. It should be placed in the logger's folder.
+    Assigned LED for Wi-Fi connection - The first LED (JA35) is used for this.
+    Fixed skip uploading files to S3 due to interuption.
+    ReXgen Pro switches between Wi-Fi and LTE based on availability of Wi-Fi.
+    ReXgen Pro uploads status.json file to S3
+    
     Rexgen tool v.1.17 support SD card functions
         Format, get general info, log info by index, log count,
         download all rxd files, download rdx by index, user configured rxd download folder
@@ -13,7 +55,8 @@ v 3.1.rc
 
     Installed image packages
         mc (midnight comamnder), htop
-v.3.0
+
+v.1.0.0
     Linux kernel 6.1.36
 
     Installed image packages

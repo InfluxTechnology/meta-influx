@@ -10,63 +10,59 @@ IMAGE_FEATURES += " \
 "
 
 IMAGE_INSTALL = "\
-   ${CORE_IMAGE_BASE_INSTALL} \
-   i2c-tools-misc \
-   i2c-tools \
-   pciutils \
-   can-utils \
-   iproute2 \
-   ethtool \
-   evtest \
-   alsa-utils \
-   wget \
-   nano \
-   gdbserver \
-   openssh-sftp-server \
-   sqlite3 \
-   v4l-utils \
-   bluez5 \
-   bluez5-noinst-tools \
-   bluez5-obex \
-   openobex \
-   obexftp \
-   glibc-gconv-utf-16 \
-   glibc-utils \
-   iperf3 \
-   tslib \
-   tslib-tests \
-   tslib-calibrate \
-   tslib-dev \
-   mtdev \
-   mmc-utils \
-   memtester \
-   screen \
-   u-boot-fw-utils \
-   u-boot-script-inf \
-   libgpiod \
-   libgpiod-tools \
-   firmwared \
-   python3-pip \
-   python3 \
-   python3-dev\
-   auditd \
-   hostapd \
-   murata-binaries \
-   cyw-supplicant \
-   cyw-hostapd \
-   hostap-conf \
-   hostap-utils \
-   kernel-module-nxp-wlan \
-   linux-firmware \
-   uhubctl \
-   influx-files \
-   rexgen-stream \
-   rexgen-usb \
+    ${CORE_IMAGE_BASE_INSTALL} \
+    i2c-tools-misc \
+    i2c-tools \
+    pciutils \
+    can-utils \
+    iproute2 \
+    ethtool \
+    evtest \
+    alsa-utils \
+    wget \
+    nano \
+    gdbserver \
+    openssh-sftp-server \
+    sqlite3 \
+    v4l-utils \
+    bluez5 \
+    bluez5-noinst-tools \
+    bluez5-obex \
+    openobex \
+    obexftp \
+    glibc-gconv-utf-16 \
+    glibc-utils \
+    iperf3 \
+    tslib \
+    tslib-tests \
+    tslib-calibrate \
+    tslib-dev \
+    mtdev \
+    mmc-utils \
+    memtester \
+    screen \
+    u-boot-inf-fw-utils \
+    u-boot-script-inf \
+    libgpiod \
+    libgpiod-tools \
+    firmwared \
+    python3-pip \
+    python3 \
+    python3-dev\
+    auditd \
+    hostapd \
+    dnsmasq \
+    murata-binaries \
+    cyw-supplicant \
+    cyw-hostapd \
+    hostap-conf \
+    hostap-utils \
+    kernel-module-nxp-wlan \
+    linux-firmware \
+    uhubctl \
+    influx-files \
+    rexgen-stream \
 "
-
-#IMAGE_INSTALL:append:imx8mn-influx-rex-smart = "\
-#   inf-resizefs \
-#"
 
 inherit core-image
 

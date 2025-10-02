@@ -1,21 +1,29 @@
 #!/bin/sh
 
-# create link to rexgen tool
-if [ ! -f /usr/sbin/rexgen ]; then
-    ln -s /home/root/rexusb/rexgen /usr/sbin/rexgen
+# Influx RexGen system log service
+if test -f /opt/influx/rex_sys_log.sh; then
+    mv /opt/influx/rex_sys_log.* /home/root/rexusb/log/
+    systemctl enable rex_sys_log.service
+    systemctl start rex_sys_log.service 
 fi
 
-# create link to aws tool
-if [ ! -f /usr/sbin/aws ]; then
-    ln -s /home/root/rexusb/aws /usr/sbin/aws
+# rc.local 
+if test -f /opt/influx/rc.local; then
+    chmod +x /opt/influx/rc.local
+    mv /opt/influx/rc.local /etc/
 fi
 
-# enable autostart service
-as_enabled=$(systemctl is-enabled autostart.service)
-if [ "$as_enabled" != "enabled" ];
-then
-   systemctl enable autostart.service
-   systemctl start autostart.service
-   /bin/sed -i "s/####//" /opt/influx/autostart.sh
+# move preserved files list 
+if test -f /opt/influx/preserved-files; then
+    mv /opt/influx/preserved-files /data/mender/
 fi
 
+sed -i 's/"UpdatePollIntervalSeconds": 1800/"UpdatePollIntervalSeconds": 300/' /etc/mender/mender.conf
+
+# editing this service unit with timeout 10s (default is 2 mins).
+SNWOS="/lib/systemd/system/systemd-networkd-wait-online.service"
+TIME_OUT=$(cat "$SNWOS" | grep 'ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --timeout=10')
+if [ "$TIME_OUT" == "" ]; then
+        LINE_NUM=$(grep -n 'ExecStart=/usr/lib/systemd/systemd-networkd-wait-online' "$SNWOS" | cut -d : -f 1)
+        sed -i "${LINE_NUM}s/systemd-networkd-wait-online/systemd-networkd-wait-online --timeout=10/" "$SNWOS"
+fi

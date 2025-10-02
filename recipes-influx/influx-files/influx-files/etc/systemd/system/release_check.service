@@ -1,0 +1,13 @@
+[Unit]
+Description=Check for mender releases
+After=network.target
+
+[Service]
+ExecStart=/opt/influx/release_check.sh
+Restart=always
+RestartSec=1800s
+Sysloglevel=5
+LogLevelMax=5
+
+[Install]
+WantedBy=multi-user.target

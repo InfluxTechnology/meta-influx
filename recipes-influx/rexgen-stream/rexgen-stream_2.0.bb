@@ -7,18 +7,12 @@ DESCRIPTION = "Rexgen_stream tool is for utilizing ReXgen device in order to mak
 	Rexgen tool is used to configure ReXgen device."
 SECTION = "console/tools"
 
-LICENSE = "MIT"
-LIC_FILES_CHKSUM="file://LICENSE;md5=b234ee4d69f5fce4486a80fdaf4a4263"
+require rexgen-base.inc
 
-SRC_URI = "git://github.com/InfluxTechnology/rexgen-linux-stream.git;protocol=https;branch=main \
-	file://LICENSE \	
-"
+SRC_URI:append = "git://github.com/InfluxTechnology/rexgen-linux-stream.git;protocol=https;branch=main"
 
-#SRCREV = "ed6df882a30d4e75a3516a84366c789bdc1faeda"
-SRCREV = "013516b6b04f0a7ad4d7b00cdb82d6cb2a391f8d"
+SRCREV = "865a7b551a9694eda744701246a6187913bccbc8"
 SRC_URI[sha256sum] = "3cc71d3fd6b1db43035f5ab5699ce2b17e1b6eaeee43fb8c26e158cdd637ea37"
-
-S = "${WORKDIR}/git"
 
 DEPENDS += "libusb1"
 
@@ -29,18 +23,10 @@ do_compile () {
 	${CC} -o rexgen rexusb.c comm*.c -I./ -lusb-1.0 ${LDFLAGS}
 }
 
-# these folders will be created
-REX_USB_DIR = "/home/root/rexusb/"
-REX_USB_DIRS = "${REX_USB_DIR} ${REX_USB_DIR}/config/ ${REX_USB_DIR}/etc \
-		${REX_USB_DIR}/examples/ ${REX_USB_DIR}/firmware/"
 # the content of these folders will be copied to image rootfs 
 REX_FILES = "${S}/config/ ${S}/etc/ ${S}/examples/ ${S}/firmware/"
 
 do_install () {
-	for d in ${REX_USB_DIRS}; do
-		install -m 0755 -d ${D}${d}
-	done
-
 	for d in $(ls ${REX_FILES}); do
 		# extract folder
 		if [ ! $(echo "${d}" | grep ':') = "" ]; then
@@ -63,8 +49,10 @@ do_install () {
 		install -m 0644 ${S}${F}${d} ${D}${REX_USB_DIR}${F}${d}
 	done
 
-	install -m 0755 ${S}/rexgen_stream ${D}${REX_USB_DIR}/rexgen_stream
+#	install -m 0755 ${S}/rexgen_stream ${D}${REX_USB_DIR}/rexgen_stream
 	install -m 0755 ${S}/rexgen ${D}${REX_USB_DIR}/rexgen
+
+	ln -sf ${REX_USB_DIR}rexgen ${D}/usr/sbin/rexgen
 }
 
 INHIBIT_PACKAGE_STRIP = "1"

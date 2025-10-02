@@ -7,9 +7,9 @@ DEPENDS += "flex-native bison-native"
 LICENSE = "GPL-2.0-or-later"
 LIC_FILES_CHKSUM = "file://Licenses/gpl-2.0.txt;md5=b234ee4d69f5fce4486a80fdaf4a4263"
 
-SRCBRANCH = "inf_v2024.04"
+SRCBRANCH = "mender_v2024.04"
 SRC_URI = "git://github.com/InfluxTechnology/uboot-imx.git;protocol=https;branch=${SRCBRANCH}"
-SRCREV = "ff64aa7a83973c993a5ed8dea88e00ef595cd78e"
+SRCREV = "8ea8912eb1b6c0ccac1b138879b16b64e114e00f"
 
 S = "${WORKDIR}/git"
 

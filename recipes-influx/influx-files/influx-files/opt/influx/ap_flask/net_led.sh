@@ -59,6 +59,12 @@ while true; do
         # ❗ No default route = No internet — blink once per second
         echo $BLINK_OFF > "$WIFI_LED"
         echo $BLINK_OFF > "$LTE_LED"
+        sleep $BLINK_DURATION
+        echo $BLINK_ON > "$WIFI_LED"
+        echo $BLINK_ON > "$LTE_LED"
+        sleep $BLINK_DURATION
+        echo $BLINK_OFF > "$WIFI_LED"
+        echo $BLINK_OFF > "$LTE_LED"
         sleep $CHECK_INTERVAL
     fi
 done

@@ -4,7 +4,6 @@ SUMMARY = "U-Boot bootloader fw_printenv/setenv utilities"
 DEPENDS:append = " mtd-utils bison-native"
 
 SRC_URI += " \
-   file://fw_env.config \
    file://fw_unlock_mmc.sh \
 "
 
@@ -22,7 +21,7 @@ do_compile () {
 do_install () {
     install -Dm 0755 ${S}/tools/env/fw_printenv   ${D}${base_sbindir}/fw_printenv
     install -Dm 0755 ${S}/tools/env/fw_printenv   ${D}${base_sbindir}/fw_setenv
-    install -Dm 0644 ${WORKDIR}/fw_env.config     ${D}${sysconfdir}/fw_env.config
+#    install -Dm 0644 ${WORKDIR}/fw_env.config     ${D}${sysconfdir}/fw_env.config
     install -Dm 0644 ${WORKDIR}/fw_unlock_mmc.sh  ${D}${sysconfdir}/profile.d/fw_unlock_mmc.sh
 }
 
@@ -51,6 +50,6 @@ pkg_postinst_ontarget:${PN} () {
     CONFIG_ENV_SIZE=8192 # 0x2000, 8Kb
     CONFIG_ENV_OFFSET=2097152 # 0x200000, 2Mb
     CONFIG_ENV_OFFSET=`expr $CONFIG_ENV_OFFSET - $CONFIG_ENV_SIZE`
-    printf "%s\t0x%X\t0x%X\n" $DISK $CONFIG_ENV_OFFSET $CONFIG_ENV_SIZE >> "/etc/fw_env.config"
+#    printf "%s\t0x%X\t0x%X\n" $DISK $CONFIG_ENV_OFFSET $CONFIG_ENV_SIZE >> "/etc/fw_env.config"
 }
 
