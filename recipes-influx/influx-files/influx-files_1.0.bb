@@ -159,6 +159,10 @@ do_install () {
     ln -sf /etc/systemd/system/socket.service ${D}/usr/lib/systemd/system/multi-user.target.wants/socket.service
 }
 
+do_install:append () {
+    echo ${INFLUX_RELEASE} > ${D}/etc/hostname
+    sed -i 's/\./\_/g' ${D}/etc/hostname
+}
 
 # Enable systemd services 
 SYSTEMD_AUTO_ENABLE = "enable"
