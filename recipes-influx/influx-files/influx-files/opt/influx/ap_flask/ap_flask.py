@@ -34,15 +34,17 @@ scan_network_lock = threading.Lock()
 
 def log_message(message):
     logging.info(message)
-
+    
 def can_ping(host="8.8.8.8"):
     try:
         subprocess.check_output(
             ["ping", "-c", "1", "-W", "2", host],  # 1 packet, 2s timeout
             stderr=subprocess.STDOUT
         )
+        log_message("Ping successful.")
         return True
     except subprocess.CalledProcessError:
+        log_message("Ping failed.")
         return False
 
 # Function to retrieve and clean the serial number from a file
@@ -314,6 +316,30 @@ def scan_wifi_networks():
     log_message(f"Scanned Wi-Fi networks: {networks}")
     return networks
 
+def get_gateway(interface="wlan0"):
+    try:
+        # Run `ip route show` and filter for the default gateway of wlan0
+        result = subprocess.check_output(
+            ["ip", "route", "show", "dev", interface, "default"],
+            text=True
+        )
+        # Example line: "default via 192.168.1.1 dev wlan0 proto dhcp metric 600"
+        for line in result.splitlines():
+            parts = line.split()
+            if "via" in parts:
+                return parts[parts.index("via") + 1]
+    except subprocess.CalledProcessError:
+        return None
+
+def save_gateway(ssid, interface="wlan0", filepath="/opt/influx/wifi_gateways"):
+    gateway = get_gateway(interface)
+    if gateway:
+        with open(filepath, "a") as f:
+            f.write(f"{ssid} {gateway}\n")
+        print(f"Saved: {ssid} {gateway}")
+    else:
+        print(f"No gateway found for {interface}")
+
 # Configure wpa_supplicant and attempt connection
 def configure_wpa_supplicant(ssid, password):
     wpa_config = f"""
@@ -329,6 +355,7 @@ network={{
     connection_status = os.popen("iw wlan0 link | grep 'Connected to'").read()    
     connected = "Connected to" in connection_status
     if connected: 
+        save_gateway(ssid)
         with open('/sys/class/leds/JA35/brightness', 'w') as f:
             f.write('1')
     else:

@@ -4,13 +4,11 @@ SECTION = "base"
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-SRC_URI = "file://LICENSE \
+SRC_URI += "file://LICENSE \
 	file://etc/minirc.dfl \
 	file://etc/wvdial.conf \
 	file://etc/chatscripts/1nce-new.chat \
 	file://etc/firmware/BCM4345C0_003.001.025.0175.0000_Murata_1MW_SXM_TEST_ONLY.hcd \
-	file://etc/mender/scripts/Download_Enter_00 \
-	file://etc/mender/scripts/Download_Leave_00 \
 	file://etc/ppp/peers/1nce.provider \
 	file://etc/ppp/peers/quectel-chat-connect \
 	file://etc/ppp/peers/quectel-chat-disconnect \
@@ -46,10 +44,8 @@ SRC_URI = "file://LICENSE \
 	file://opt/influx/options \
 	file://opt/influx/pap-secrets \
 	file://opt/influx/pipes_reconnect.sh \
-	file://opt/influx/preserved-files \
 	file://opt/influx/rc.local \
 	file://opt/influx/reboot.sh \
-	file://opt/influx/release_check.sh \
 	file://opt/influx/rex_sys_log.conf \
 	file://opt/influx/rex_sys_log.sh \
 	file://opt/influx/setup_wifi_module.sh \
@@ -110,7 +106,6 @@ INFLUX_FILES_644 = "\
     options \
     pap-secrets \
     peers/quectel-ppp \
-    preserved-files \
     rex_sys_log.service \
     rex_sys_log.conf \
     templates/index.html \
@@ -121,7 +116,7 @@ INFLUX_FILES_644 = "\
     wpa_supplicant@wlan0.service \
     wvdial.conf \
 "
-#    socket.service 
+
 do_install () {
     # Create necessary directories
     for d in ${INFLUX_DIRS}; do
@@ -162,7 +157,6 @@ do_install () {
     ln -sf /etc/systemd/system/wifi_monitor.service ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.service
     ln -sf /etc/systemd/system/wifi_monitor.timer ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.timer
     ln -sf /etc/systemd/system/socket.service ${D}/usr/lib/systemd/system/multi-user.target.wants/socket.service
-#    ln -sf /etc/systemd/system/rex_sys_log.service ${D}/usr/lib/systemd/system/multi-user.target.wants/rex_sys_log.service
 }
 
 
@@ -174,7 +168,7 @@ SYSTEMD_SERVICE:${PN} = " \
     net_led.service \
     socket.service \
 "
-#    rex_sys_log.service 
+
 SYSTEMD_SERVICE:${PN}:append = " wifi_monitor.service wifi_monitor.timer "
 
 INHIBIT_PACKAGE_STRIP = "1"
