@@ -13,5 +13,6 @@ IMAGE_INSTALL:append = " python3-pyserial python3-pyserial-asyncio python3-pip"
 IMAGE_INSTALL:append = " htop "
 IMAGE_INSTALL:append = " mc "
 IMAGE_INSTALL:append = " cloud-support "
+IMAGE_INSTALL:append = " rex-sys-log "
 
 INFLUX_RELEASE="pro.2.0.0"
