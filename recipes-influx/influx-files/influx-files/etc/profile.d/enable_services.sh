@@ -7,12 +7,6 @@ if test -f /opt/influx/rex_sys_log.sh; then
     systemctl start rex_sys_log.service 
 fi
 
-# rc.local 
-if test -f /opt/influx/rc.local; then
-    chmod +x /opt/influx/rc.local
-    mv /opt/influx/rc.local /etc/
-fi
-
 # editing this service unit with timeout 10s (default is 2 mins).
 SNWOS="/lib/systemd/system/systemd-networkd-wait-online.service"
 TIME_OUT=$(cat "$SNWOS" | grep 'ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --timeout=10')

@@ -12,3 +12,7 @@ export EDITOR=/usr/bin/nano	# crontab uses this editor
 #/opt/influx/start_ppp0.sh
 
 echo 0 > /sys/block/mmcblk2boot0/force_ro
+
+systemctl stop serial-getty@ttymxc1.service
+systemctl disable serial-getty@ttymxc1.service
+

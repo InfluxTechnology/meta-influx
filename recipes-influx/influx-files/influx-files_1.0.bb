@@ -14,7 +14,6 @@ SRC_URI += "file://LICENSE \
 	file://etc/ppp/peers/quectel-chat-disconnect \
 	file://etc/ppp/peers/quectel-ppp \
 	file://etc/profile.d/enable_services.sh \
-	file://etc/profile.d/wpa_supplicant_check.sh \
 	file://etc/systemd/network/20-wireless-wlan0.network \
 	file://etc/systemd/system/autostart.service \
 	file://etc/systemd/system/lte-ppp.service \
@@ -44,7 +43,6 @@ SRC_URI += "file://LICENSE \
 	file://opt/influx/options \
 	file://opt/influx/pap-secrets \
 	file://opt/influx/pipes_reconnect.sh \
-	file://opt/influx/rc.local \
 	file://opt/influx/reboot.sh \
 	file://opt/influx/rex_sys_log.conf \
 	file://opt/influx/rex_sys_log.sh \
