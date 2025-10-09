@@ -21,7 +21,6 @@ SRC_URI += "file://LICENSE \
 	file://etc/systemd/system/net-failover.timer \
 	file://etc/systemd/system/net_led.service \
 	file://etc/systemd/system/release_check.service \
-	file://etc/systemd/system/rex_sys_log.service \
 	file://etc/systemd/system/socket.service \
 	file://etc/systemd/system/wifi_monitor.service \
 	file://etc/systemd/system/wifi_monitor.timer \
@@ -44,8 +43,6 @@ SRC_URI += "file://LICENSE \
 	file://opt/influx/pap-secrets \
 	file://opt/influx/pipes_reconnect.sh \
 	file://opt/influx/reboot.sh \
-	file://opt/influx/rex_sys_log.conf \
-	file://opt/influx/rex_sys_log.sh \
 	file://opt/influx/setup_wifi_module.sh \
 	file://opt/influx/socket/socket \
 	file://opt/influx/start_ppp0.sh \
@@ -69,7 +66,6 @@ INFLUX_DIRS = "\
     ${INFLUX_DIR}/ap_flask/templates/ \
     ${INFLUX_DIR}/socket/ \
     ${REX_USB_DIR} \
-    ${REX_USB_DIR}/log/ \
     /etc/chatscripts/ \
     /etc/firmware/ \
     /etc/mender/scripts/ \
@@ -104,8 +100,6 @@ INFLUX_FILES_644 = "\
     options \
     pap-secrets \
     peers/quectel-ppp \
-    rex_sys_log.service \
-    rex_sys_log.conf \
     templates/index.html \
     quectel-chat-connect \
     quectel-chat-disconnect \

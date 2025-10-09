@@ -13,15 +13,13 @@ S = "${WORKDIR}/git"
 
 # these folders will be created
 REX_USB_DIR = "/home/root/rexusb/"
-REX_USB_DIRS = "${REX_USB_DIR} ${REX_USB_DIR}/config/ ${REX_USB_DIR}/etc \
-	${REX_USB_DIR}/examples/ ${REX_USB_DIR}/firmware/"
+INFLUX_DIRS = "${REX_USB_DIR} ${REX_USB_DIR}/config/ ${REX_USB_DIR}/etc/ \
+	${REX_USB_DIR}/examples/ ${REX_USB_DIR}/firmware/  ${REX_USB_DIR}/log/ \
+	/usr/sbin/ /etc/systemd/network/ /etc/systemd/system/ \
+        /usr/lib/systemd/system/ /usr/lib/systemd/system/multi-user.target.wants/ "
 
 do_install:prepend() {
-    if [ ! -d ${D}/usr/sbin/ ]; then
-	mkdir -p ${D}/usr/sbin/
-    fi
-
-    for d in ${REX_USB_DIRS}; do
+    for d in ${INFLUX_DIRS}; do
 	if [ ! -d ${D}${d} ]; then
 	    install -m 0755 -d ${D}${d}
 	fi
