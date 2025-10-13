@@ -21,7 +21,7 @@ SRC_URI += "file://LICENSE \
 	file://etc/systemd/system/net-failover.timer \
 	file://etc/systemd/system/net_led.service \
 	file://etc/systemd/system/release_check.service \
-	file://etc/systemd/system/socket.service \
+	file://etc/systemd/system/rexgencore.service \
 	file://etc/systemd/system/wifi_monitor.service \
 	file://etc/systemd/system/wifi_monitor.timer \
 	file://opt/influx/Release-notes \
@@ -44,7 +44,7 @@ SRC_URI += "file://LICENSE \
 	file://opt/influx/pipes_reconnect.sh \
 	file://opt/influx/reboot.sh \
 	file://opt/influx/setup_wifi_module.sh \
-	file://opt/influx/socket/socket \
+	file://opt/influx/socket/rexgencore \
 	file://opt/influx/start_ppp0.sh \
 	file://opt/influx/wakeup_BT.sh \
 	file://usr/lib/systemd/system/hostapd@wlan1.service \
@@ -148,7 +148,7 @@ do_install () {
     ln -sf /etc/systemd/system/lte-ppp.service ${D}/usr/lib/systemd/system/multi-user.target.wants/lte-ppp.service
     ln -sf /etc/systemd/system/wifi_monitor.service ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.service
     ln -sf /etc/systemd/system/wifi_monitor.timer ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.timer
-    ln -sf /etc/systemd/system/socket.service ${D}/usr/lib/systemd/system/multi-user.target.wants/socket.service
+    ln -sf /etc/systemd/system/rexgencore.service ${D}/usr/lib/systemd/system/multi-user.target.wants/rexgencore.service
 }
 
 do_install:append () {
@@ -162,7 +162,7 @@ SYSTEMD_SERVICE:${PN} = " \
     autostart.service \
     lte-ppp.service \
     net_led.service \
-    socket.service \
+    rexgencore.service \
 "
 
 SYSTEMD_SERVICE:${PN}:append = " wifi_monitor.service wifi_monitor.timer "

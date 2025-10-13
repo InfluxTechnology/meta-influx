@@ -14,7 +14,7 @@ S = "${WORKDIR}/git"
 # these folders will be created
 REX_USB_DIR = "/home/root/rexusb/"
 INFLUX_DIRS = "${REX_USB_DIR} ${REX_USB_DIR}/config/ ${REX_USB_DIR}/etc/ \
-	${REX_USB_DIR}/examples/ ${REX_USB_DIR}/firmware/  ${REX_USB_DIR}/log/ \
+	${REX_USB_DIR}/examples/ ${REX_USB_DIR}/firmware/  ${REX_USB_DIR}/log/ ${REX_USB_DIR}/var/ \
 	/usr/sbin/ /etc/systemd/network/ /etc/systemd/system/ \
         /usr/lib/systemd/system/ /usr/lib/systemd/system/multi-user.target.wants/ "
 

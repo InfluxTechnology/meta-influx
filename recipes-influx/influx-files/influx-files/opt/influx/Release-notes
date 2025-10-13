@@ -1,6 +1,12 @@
 ### Release notes ###
+
 v 2.0.0
     Mender update image rootfs	
+    Added rexgen core service
+	Inherited socket.service
+	Multi partition file upload to cloud.
+	Support socket can over virtual can (/home/root/rexusb/var/live_data_output must contain 'socketcan').
+	Support multi partition.
 
 v 1.2.5
     Fixed multiple files download
