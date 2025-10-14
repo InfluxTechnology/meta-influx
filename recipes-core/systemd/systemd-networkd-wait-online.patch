@@ -1,0 +1,11 @@
+--- a/usr/lib/systemd/system/systemd-networkd-wait-online.service	2025-09-30 14:49:54.185283222 +0000
++++ b/usr/lib/systemd/system/systemd-networkd-wait-online.service	2025-10-08 08:14:26.736422837 +0000
+@@ -19,7 +19,7 @@
+ 
+ [Service]
+ Type=oneshot
+-ExecStart=/usr/lib/systemd/systemd-networkd-wait-online
++ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --timeout=10
+ RemainAfterExit=yes
+ 
+ [Install]
