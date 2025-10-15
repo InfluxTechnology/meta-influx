@@ -13,7 +13,6 @@ SRC_URI += "file://LICENSE \
 	file://etc/ppp/peers/quectel-chat-connect \
 	file://etc/ppp/peers/quectel-chat-disconnect \
 	file://etc/ppp/peers/quectel-ppp \
-	file://etc/profile.d/enable_services.sh \
 	file://etc/systemd/network/20-wireless-wlan0.network \
 	file://etc/systemd/system/autostart.service \
 	file://etc/systemd/system/lte-ppp.service \

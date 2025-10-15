@@ -1,9 +1,5 @@
 #!/bin/sh
 
-export EDITOR=/usr/bin/nano	# crontab uses this editor
-# execute at first time
-/etc/profile.d/enable_services.sh
-
 # Power up the Quectel chip
 /opt/influx/cellular_module_start.sh
 
