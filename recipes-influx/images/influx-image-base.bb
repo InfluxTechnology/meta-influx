@@ -61,7 +61,6 @@ IMAGE_INSTALL = "\
     linux-firmware \
     uhubctl \
     influx-files \
-    rexgen-stream \
 "
 
 inherit core-image
