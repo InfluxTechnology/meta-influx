@@ -12,6 +12,9 @@ IMAGE_INSTALL:append = " wvdial "
 IMAGE_INSTALL:append = " python3-pyserial python3-pyserial-asyncio python3-pip"
 IMAGE_INSTALL:append = " htop "
 IMAGE_INSTALL:append = " mc "
+
+# Influx RexGen support
+IMAGE_INSTALL:append = " rexgen-core "
 IMAGE_INSTALL:append = " cloud-support "
 IMAGE_INSTALL:append = " rex-sys-log "
 
