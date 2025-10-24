@@ -3,7 +3,7 @@ Description=Resize root filesystem to full available size
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c 'sleep 5 ; /usr/sbin/ea-resizefs.sh'
+ExecStart=/bin/sh -c 'sleep 5 ; /usr/sbin/inf-resizefs.sh'
 
 [Install]
 WantedBy=multi-user.target

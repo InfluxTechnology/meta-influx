@@ -18,13 +18,16 @@ SRC_URI = "file://LICENSE \
 	file://etc/profile.d/enable_services.sh \
 	file://etc/profile.d/login.sh \
 	file://etc/profile.d/networkd-wait-timeout.sh \
-	file://etc/profile.d/wlan_check.sh \
-	file://etc/profile.d/wpa_supplicant_check.sh \
 	file://etc/systemd/network/20-wireless-wlan0.network \
 	file://etc/systemd/system/rexgen_data.service \
 	file://etc/systemd/system/autostart.service \
+	file://etc/systemd/system/wifi_monitor.service \
 	file://usr/lib/systemd/system/wpa_supplicant@wlan0.service \
 	file://usr/lib/systemd/system/hostapd@wlan1.service \
+	file://opt/influx/ap_flask/ap_flask.py \
+	file://opt/influx/ap_flask/net_led.sh \
+	file://opt/influx/ap_flask/templates/index.html \
+	file://opt/influx/ap_flask/wifi_monitor.sh \
 	file://opt/influx/escape.minicom \
 	file://opt/influx/gnssdata_start.sh \
 	file://opt/influx/gnssinit_quectel.py \
@@ -40,13 +43,12 @@ SRC_URI = "file://LICENSE \
 	file://opt/influx/lte_start_ppp.sh \
 	file://opt/influx/lte_start_wvdial.sh \
 	file://opt/influx/pap-secrets \
-	file://opt/influx/wpa_supplicant.conf.cust \
 	file://opt/influx/start_ppp0.sh \
 "
 
 S = "${WORKDIR}"
 
-RDEPENDS:influx-files = "libusb1"
+RDEPENDS:influx-files = "libusb1  python3 python3-flask python3-pip dnsmasq"
 
 REX_USB_DIR="/home/root/rexusb/"
 INFLUX_DIR="/opt/influx/"
@@ -61,8 +63,11 @@ INFLUX_DIRS = "\
 	/etc/chatscripts/ \
 	/etc/systemd/network/ \
 	/usr/lib/systemd/system/ \
+	/usr/lib/systemd/system/multi-user.target.wants \
 	${REX_USB_DIR} \
 	${INFLUX_DIR} \
+	${INFLUX_DIR}/ap_flask/ \
+	${INFLUX_DIR}/ap_flask/templates/ \
 "
 
 # content of these folders will be installed with 755 permisions
@@ -76,11 +81,11 @@ INFLUX_FILES_755 = "\
 INFLUX_FILES_644 = "\
 	minirc.dfl \
 	wvdial.conf \
-	wpa_supplicant.conf.cust \
 	rexgen_data.service \
 	autostart.service \
 	20-wireless-wlan0.network \
 	hostapd@wlan1.service \
+	wifi_monitor.service \
 	wpa_supplicant@wlan0.service \
 	escape.minicom \ 
 	Release-notes \
@@ -123,10 +128,56 @@ do_install () {
 			chmod 644 ${D}${fold}${file}
 		fi
 	done
+
+	# Enable services manually
+	ln -sf /etc/systemd/system/autostart.service ${D}/usr/lib/systemd/system/multi-user.target.wants/autostart.service
+	ln -sf /etc/systemd/system/wifi_monitor.service ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.service
 }
+
+# Set version to hostname
+do_install:append () {
+    echo ${INFLUX_RELEASE} > ${D}/etc/hostname
+    sed -i 's/\./\_/g' ${D}/etc/hostname
+}
+
+# Enable systemd services 
+SYSTEMD_AUTO_ENABLE = "enable"
+SYSTEMD_SERVICE:${PN} = " \
+    autostart.service \
+    wifi_monitor.service \
+"
 
 INHIBIT_PACKAGE_STRIP = "1"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 
 PACKAGES = "${PN}"
 FILES:${PN} = "/"
+
+# Post-install script to setup Wi-Fi module
+pkg_postinst:${PN}() {
+    if [ -z "$D" ]; then
+        echo "Running postinstall for Wi-Fi module setup..."
+        
+        exec >> /var/log/post_wifi.log 2>&1
+        set -x
+
+        # Call switch script
+        /usr/sbin/switch_module.sh 1MW
+
+        # Unlock boot partition
+        if [ -e /sys/block/mmcblk2boot0/force_ro ]; then
+            echo "0" > /sys/block/mmcblk2boot0/force_ro
+        fi
+
+        # Set correct DTB
+        /sbin/fw_setenv fdt_file imx8mm-influx-rex-smart_v2-1mw.dtb
+
+        sync
+
+        echo "Wi-Fi module postinstall setup complete."
+        # Do not reboot here!
+        # echo "WIFI_SETUP_DONE" > /tmp/.wifi_setup_done
+    else
+        echo "Postinstall will run on first boot"
+    fi
+}
