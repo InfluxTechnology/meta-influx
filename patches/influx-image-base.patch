@@ -15,7 +15,7 @@
      uhubctl \
      influx-files \
      rexgen-stream \
-     rexgen-usb \
+-     rexgen-usb \
  "
 +#   murata-binaries 
 +#   cyw-supplicant 

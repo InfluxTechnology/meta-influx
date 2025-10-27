@@ -4,10 +4,9 @@ import os
 import time
 import logging
 import subprocess
-import ipaddress
 import re
 import threading
-from flask import Flask, render_template, request, redirect, jsonify, make_response, url_for
+from flask import Flask, render_template, request, redirect, jsonify, make_response
 import sys
 
 # Initialize Flask app
@@ -25,7 +24,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-last_heartbeat = -50
+last_heartbeat = 0
 networks = []
 heartbeat_lock = threading.Lock()
 ap_mode_lock = threading.Lock()
@@ -34,18 +33,6 @@ scan_network_lock = threading.Lock()
 
 def log_message(message):
     logging.info(message)
-    
-def can_ping(host="8.8.8.8"):
-    try:
-        subprocess.check_output(
-            ["ping", "-c", "1", "-W", "2", host],  # 1 packet, 2s timeout
-            stderr=subprocess.STDOUT
-        )
-        log_message("Ping successful.")
-        return True
-    except subprocess.CalledProcessError:
-        log_message("Ping failed.")
-        return False
 
 # Function to retrieve and clean the serial number from a file
 def get_serial_number():
@@ -140,9 +127,6 @@ def check_and_connect_known_networks():
             log_message("User connected to AP")
             return False
         if is_wifi_connected():
-            if not can_ping():  #This is a fix when wifi is connected but no internet.
-                log_message("renew DHCP")
-                os.system("udhcpc -i wlan0")
             log_message("WiFi is connected")
             return True        
         with open('/etc/wpa_supplicant.conf', 'r') as f:
@@ -175,13 +159,9 @@ def check_and_connect_known_networks():
                 with open('/sys/class/leds/JA35/brightness', 'w') as f:
                     f.write('1')
                 log_message(f"Successfully connected to known network: {ssid}")
-                log_message(f"Has Ping : {can_ping()}")
-                cmd_ipr = subprocess.run(["ip", "r"], capture_output=True, text=True)
-                if cmd_ipr.stdout:
-                    log_message(f"IP Route: {cmd_ipr.stdout}")
                 return True
             else:
-                log_message(f"Failed to connect to known network: {ssid}")#   Attempt: {attempt_counter}")            
+                log_message(f"Failed to connect to known network: {ssid}   Attempt: {attempt_counter}")
                 # Restart AP mode if connection fails                    
     return False
 
@@ -198,8 +178,8 @@ def heartbeat():
 def is_user_connected_to_ap():
     global last_heartbeat
     with heartbeat_lock:
-        #if last_heartbeat == 0:
-        #    last_heartbeat = time.monotonic()
+        if last_heartbeat == 0:
+            last_heartbeat = time.monotonic()
         now = time.monotonic()
         time_diff = now - last_heartbeat
         log_message(f"is_user_connected_to_ap: now={now}, last_heartbeat={last_heartbeat}, diff={time_diff}")
@@ -274,29 +254,24 @@ def catch_all(path):
     response.set_cookie("first_visit_done", "1")  # session cookie
     return response
 
+
 @app.route('/configure_wifi', methods=['POST'])
 def configure_wifi():
     ssid = request.form['ssid']
     password = request.form['password']
     success = configure_wpa_supplicant(ssid, password)
     if success:
+        #os.system("systemctl restart wpa_supplicant@wlan0.service")
         log_message(f"Connected to Wi-Fi network: {ssid}")
         with open('/sys/class/leds/JA35/brightness', 'w') as f:
             f.write('1')
-        time.sleep(5)  # Wait for IP to be assigned
-
-        device_ip = get_ip_address()
-        if device_ip and device_ip != "No IP assigned":
-            return redirect(f"http://{device_ip}:5051/dashboard")
-
-        return f"<html><body><h1>Configuration Successful</h1><p>Connected to {ssid}, but no IP found.</p></body></html>"
-        
-        os._exit(0)  # Optional: Exit after redirect
+        return f"<html><body><h1>Configuration Successful</h1><p>Connected to {ssid}</p></body></html>"
+  # Exit after successful manual configuration
+        os._exit(0)  # Exit the script after manual connection
     else:
         start_ap_mode()
         log_message(f"Failed to connect to Wi-Fi network: {ssid}. Restarting AP mode.")
         return f"<html><body><h1>Configuration Failed</h1><p>Could not connect to {ssid}. Check credentials.</p></body></html>"
-
 
 # Scan for available Wi-Fi networks
 def scan_wifi_networks():
@@ -316,30 +291,6 @@ def scan_wifi_networks():
     log_message(f"Scanned Wi-Fi networks: {networks}")
     return networks
 
-def get_gateway(interface="wlan0"):
-    try:
-        # Run `ip route show` and filter for the default gateway of wlan0
-        result = subprocess.check_output(
-            ["ip", "route", "show", "dev", interface, "default"],
-            text=True
-        )
-        # Example line: "default via 192.168.1.1 dev wlan0 proto dhcp metric 600"
-        for line in result.splitlines():
-            parts = line.split()
-            if "via" in parts:
-                return parts[parts.index("via") + 1]
-    except subprocess.CalledProcessError:
-        return None
-
-def save_gateway(ssid, interface="wlan0", filepath="/opt/influx/wifi_gateways"):
-    gateway = get_gateway(interface)
-    if gateway:
-        with open(filepath, "a") as f:
-            f.write(f"{ssid} {gateway}\n")
-        print(f"Saved: {ssid} {gateway}")
-    else:
-        print(f"No gateway found for {interface}")
-
 # Configure wpa_supplicant and attempt connection
 def configure_wpa_supplicant(ssid, password):
     wpa_config = f"""
@@ -355,7 +306,6 @@ network={{
     connection_status = os.popen("iw wlan0 link | grep 'Connected to'").read()    
     connected = "Connected to" in connection_status
     if connected: 
-        save_gateway(ssid)
         with open('/sys/class/leds/JA35/brightness', 'w') as f:
             f.write('1')
     else:
@@ -373,7 +323,6 @@ def get_ip_address():
 if __name__ == "__main__":
     while True: 
         # Check for known networks first
-        log_message("Initial network check...")
         if check_and_connect_known_networks():
             log_message("Connected to a known network")
         # Start periodic network check in background thread

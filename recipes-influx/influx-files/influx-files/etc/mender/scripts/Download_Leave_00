@@ -1,0 +1,5 @@
+#!/bin/sh
+
+/usr/bin/crontab -u root -l | { cat; echo "*/1 * * * * /opt/influx/release_check.sh"; } | /usr/bin/crontab -
+
+exit 0

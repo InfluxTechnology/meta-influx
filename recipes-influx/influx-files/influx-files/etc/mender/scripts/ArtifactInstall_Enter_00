@@ -1,0 +1,7 @@
+#!/bin/sh
+
+#cat /sys/block/mmcblk2boot0/force_ro > /data/mender/test
+echo 0 > /sys/block/mmcblk2boot0/force_ro
+#cat /sys/block/mmcblk2boot0/force_ro >> /data/mender/test
+
+exit 0

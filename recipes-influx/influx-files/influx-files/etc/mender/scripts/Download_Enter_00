@@ -1,0 +1,6 @@
+#!/bin/sh
+
+FILES=$(cat /data/mender/preserved-files | grep -v '#' )
+tar -czf /data/mender/preserved-files.tgz $FILES 
+
+exit 0

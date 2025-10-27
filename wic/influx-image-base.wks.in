@@ -6,6 +6,6 @@ part u-boot --source rawcopy --sourceparams="file=imx-boot" --ondisk mmcblk --no
 part --source bootimg-partition --ondisk mmcblk --fstype=vfat --label boot --active --align 8192 --size 128
 part / --source rootfs --ondisk mmcblk --fstype=ext4 --label root --align 8192 --size 1024
 # part /data --ondisk mmcblk --fstype=ext4 --label data --align 40960 --size 5120
-part /data --ondisk mmcblk --fstype=ext4 --label data --align 8192 --size 5120
+part /data --ondisk mmcblk --fstype=ext4 --label data --align 8192 --size 1024
 
 bootloader --ptable gpt

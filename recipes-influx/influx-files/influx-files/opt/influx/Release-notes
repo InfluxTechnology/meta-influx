@@ -1,25 +1,4 @@
 ### Release notes ###
-
-v 2.0.0
-    Mender update image rootfs	
-    Added rexgen core service
-	Inherited socket.service
-	Multi partition file upload to cloud.
-	Support socket can over virtual can (/home/root/rexusb/var/live_data_output must contain 'socketcan').
-	Support multi partition.
-
-v 1.2.5
-    Fixed multiple files download
-    Fixed Cancel download
-    Fixed bad communication between Rexdesk and the device
-
-v 1.2.4
-    Added system logging service (rex_sys_log.sh) that logs the min, max and average cpu, temperature and memory.
-    It also logs GNSS position and download speed
-    Logs are written in /home/root/rexusb/log and uploaded to Google cloud at the end of the day.
-    Measurement times can be configured through rex_sys_log.conf
-    New version of socket service with Google fix
- 
 v 1.2.3
     GCS support via Service Account credential json - download, upload, resume upload
     GCS HMAC credentials removed
@@ -28,12 +7,10 @@ v 1.2.2
     GCS support (Google cloud)
 
 v 1.2.1
-  Distro 6.6-scarthgap
-  Linux kernel 6.6.23
-  U-boot 2024.04
-  Mender update single files (image update is NOT implemented)
-
-  Influx features
+    Distro 6.6-scarthgap
+    Linux kernel 6.6.23
+    U-boot 2024.04
+    Mender update single files (image update is NOT implemented)
 
 v 1.0.2
     Reworked ap_flask.py for better experience

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+tar -xzf /data/mender/preserved-files.tgz -C /
+#rm /data/mender/preserved-files.tgz
+
+echo 0 > /sys/block/mmcblk2boot0/force_ro
+
+exit 0

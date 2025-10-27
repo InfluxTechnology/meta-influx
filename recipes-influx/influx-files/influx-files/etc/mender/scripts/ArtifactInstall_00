@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo 0 > /sys/block/mmcblk2boot0/force_ro
+
+exit 0
