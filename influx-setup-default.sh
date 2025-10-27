@@ -19,8 +19,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-#rm -fr sources/meta-imx/meta-imx-bsp/conf/machine/imx95*
-#rm -fr sources/meta-imx/meta-imx-bsp/conf/machine/include/imx95*
+rm -fr sources/meta-imx/meta-imx-bsp/conf/machine/imx95*
+rm -fr sources/meta-imx/meta-imx-bsp/conf/machine/include/imx95*
 
 . sources/meta-imx/tools/setup-utils.sh
 
