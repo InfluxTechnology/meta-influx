@@ -6,7 +6,7 @@ import logging
 import subprocess
 import re
 import threading
-from flask import Flask, render_template, request, redirect, jsonify, make_response
+from flask import Flask, render_template, request, redirect, jsonify, make_response, url_for
 import sys
 
 # Initialize Flask app
@@ -161,7 +161,7 @@ def check_and_connect_known_networks():
                 log_message(f"Successfully connected to known network: {ssid}")
                 return True
             else:
-                log_message(f"Failed to connect to known network: {ssid}   Attempt: {attempt_counter}")
+                log_message(f"Failed to connect to known network: {ssid}")#   Attempt: {attempt_counter}")
                 # Restart AP mode if connection fails                    
     return False
 
@@ -254,24 +254,29 @@ def catch_all(path):
     response.set_cookie("first_visit_done", "1")  # session cookie
     return response
 
-
 @app.route('/configure_wifi', methods=['POST'])
 def configure_wifi():
     ssid = request.form['ssid']
     password = request.form['password']
     success = configure_wpa_supplicant(ssid, password)
     if success:
-        #os.system("systemctl restart wpa_supplicant@wlan0.service")
         log_message(f"Connected to Wi-Fi network: {ssid}")
         with open('/sys/class/leds/JA35/brightness', 'w') as f:
             f.write('1')
-        return f"<html><body><h1>Configuration Successful</h1><p>Connected to {ssid}</p></body></html>"
-  # Exit after successful manual configuration
-        os._exit(0)  # Exit the script after manual connection
+        time.sleep(5)  # Wait for IP to be assigned
+
+        device_ip = get_ip_address()
+        if device_ip and device_ip != "No IP assigned":
+            return redirect(f"http://{device_ip}:5051/dashboard")
+
+        return f"<html><body><h1>Configuration Successful</h1><p>Connected to {ssid}, but no IP found.</p></body></html>"
+        
+        os._exit(0)  # Optional: Exit after redirect
     else:
         start_ap_mode()
         log_message(f"Failed to connect to Wi-Fi network: {ssid}. Restarting AP mode.")
         return f"<html><body><h1>Configuration Failed</h1><p>Could not connect to {ssid}. Check credentials.</p></body></html>"
+
 
 # Scan for available Wi-Fi networks
 def scan_wifi_networks():

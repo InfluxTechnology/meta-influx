@@ -1,4 +1,16 @@
 ### Release notes ###
+v 1.2.5
+    Fixed multiple files download
+    Fixed Cancel download
+    Fixed bad communication between Rexdesk and the device
+
+v 1.2.4
+    Added system logging service (rex_sys_log.sh) that logs the min, max and average cpu, temperature and memory.
+    It also logs GNSS position and download speed
+    Logs are written in /home/root/rexusb/log and uploaded to Google cloud at the end of the day.
+    Measurement times can be configured through rex_sys_log.conf
+    New version of socket service with Google fix
+ 
 v 1.2.3
     GCS support via Service Account credential json - download, upload, resume upload
     GCS HMAC credentials removed

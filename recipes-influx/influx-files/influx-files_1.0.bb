@@ -58,13 +58,16 @@ SRC_URI = "file://LICENSE \
         file://opt/influx/ap_flask/net_led.sh \
         file://etc/systemd/system/net_led.service \
         file://opt/influx/release_check.sh \
+        file://etc/systemd/system/rex_sys_log.service \
         file://etc/systemd/system/release_check.service \
         file://opt/influx/rc.local \
         file://opt/influx/release_check.sh \
+	file://opt/influx/preserved-files \
         file://home/root/rexusb/gcs_hmac \
         file://home/root/rexusb/gcs_sa \
         file://home/root/rexusb/aws \
-	file://opt/influx/preserved-files \
+        file://home/root/rexusb/log/rex_sys_log.conf \
+        file://home/root/rexusb/log/rex_sys_log.sh \
 "
 
 S = "${WORKDIR}"
@@ -86,6 +89,7 @@ INFLUX_DIRS = "\
     /etc/systemd/network/ \
     /usr/lib/systemd/system/ \
     ${REX_USB_DIR} \
+    ${REX_USB_DIR}/log/ \
     ${INFLUX_DIR} \
     ${INFLUX_DIR}/ap_flask/ \
     ${INFLUX_DIR}/ap_flask/templates/ \
@@ -120,6 +124,7 @@ INFLUX_FILES_755 = "\
     ${S}/opt/influx/release_check.sh \
     ${S}/opt/influx/net_failover.sh \
     ${S}/opt/influx/rc.local \
+    ${S}/home/root/rexusb/log/rex_sys_log.sh \
     ${S}/home/root/rexusb/gcs_hmac \
     ${S}/home/root/rexusb/gcs_sa \
     ${S}/home/root/rexusb/aws \
@@ -144,6 +149,7 @@ INFLUX_FILES_644 = "\
     ${S}/opt/influx/pap-secrets \
     ${S}/opt/influx/wpa_supplicant.conf.cust \
     ${S}/opt/influx/ap_flask/templates/index.html \
+    ${S}/home/root/rexusb/log/rex_sys_log.conf \
     ${S}/etc/systemd/system/wifi_monitor.service \
     ${S}/etc/systemd/system/wifi_monitor.timer \
     ${S}/etc/systemd/system/socket.service \
@@ -151,6 +157,7 @@ INFLUX_FILES_644 = "\
     ${S}/etc/systemd/system/net_led.service \
     ${S}/etc/systemd/system/net-failover.service \
     ${S}/etc/systemd/system/net-failover.timer \
+    ${S}/etc/systemd/system/rex_sys_log.service \
     ${S}/etc/ppp/peers/1nce.provider \
     ${S}/etc/ppp/peers/quectel-chat-connect \
     ${S}/etc/ppp/peers/quectel-chat-disconnect \
@@ -192,12 +199,12 @@ do_install() {
     ln -sf /etc/systemd/system/net_led.service ${D}/usr/lib/systemd/system/multi-user.target.wants/net_led.service
     ln -sf /etc/systemd/system/net-failover.service ${D}/usr/lib/systemd/system/multi-user.target.wants/net-failover.service
     ln -sf /etc/systemd/system/net-failover.timer ${D}/usr/lib/systemd/system/multi-user.target.wants/net-failover.timer
-
+    ln -sf /etc/systemd/system/rex_sys_log.service ${D}/usr/lib/systemd/system/multi-user.target.wants/rex_sys_log.service
 }
 
 # Enable systemd services
 SYSTEMD_AUTO_ENABLE = "enable"
-SYSTEMD_SERVICE:${PN} = "wifi_monitor.service wifi_monitor.timer socket.service lte-ppp.service net_led.service"
+SYSTEMD_SERVICE:${PN} = "wifi_monitor.service wifi_monitor.timer socket.service lte-ppp.service net_led.service rex_sys_log.service"
 
 INHIBIT_PACKAGE_STRIP = "1"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
@@ -206,25 +213,6 @@ PACKAGES = "${PN}"
 FILES:${PN} = "/"
 
 # Post-install script to setup Wi-Fi module
-#pkg_postinst:${PN}() {
-#    if [ -z "$D" ]; then
-#        echo "Running postinstall for Wi-Fi module setup..."
-#        echo "0" > /sys/block/mmcblk2boot0/force_ro
-#
-#        #  switch_module
-#        /usr/sbin/switch_module.sh 1MW
-#
-#        # set на DTB
-#        /sbin/fw_setenv fdt_file imx8mm-influx-rex-smart_v2-1mw.dtb
-#
-#        sync
-#
-#        echo "Wi-Fi module postinstall setup complete. Rebooting..."
-#        reboot
-#    else
-#        echo "Postinstall will run on first boot"
-#    fi
-#}
 pkg_postinst:${PN}() {
     if [ -z "$D" ]; then
         echo "Running postinstall for Wi-Fi module setup..."
