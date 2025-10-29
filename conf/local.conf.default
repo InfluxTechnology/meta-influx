@@ -14,4 +14,4 @@ IMAGE_INSTALL:append = " python3-pyserial python3-pyserial-asyncio python3-pip"
 IMAGE_INSTALL:append = " htop "
 IMAGE_INSTALL:append = " mc "
 
-INFLUX_RELEASE="rl.1.2.5"
+INFLUX_RELEASE="pro.1.2.5"
