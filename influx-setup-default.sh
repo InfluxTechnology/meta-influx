@@ -66,9 +66,6 @@ patch -Np1 -r - sources/meta-imx/meta-imx-sdk/conf/distro/include/fsl-imx-prefer
 #patch -Np1 -r - sources/meta-imx/meta-imx-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb < $LPF/0002-mx93-soc-rev0.patch
 patch -Np1 -r - sources/base/setup-environment < $LPF/0001-setup-environment.patch
 
-#patch -Np1 -r - sources/meta-influx/recipes-influx/influx-files/influx-files.bb < $LPF/influx-files.patch
-#patch -Np1 -r - sources/meta-influx/recipes-influx/images/influx-image-base.bb < $LPF/influx-image-base.patch
-
 # get command line options
 OLD_OPTIND=$OPTIND
 unset FSLDISTRO
