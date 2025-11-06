@@ -16,12 +16,12 @@ SRC_URI = "file://LICENSE \
 	file://etc/ppp/peers/quectel-chat-disconnect \
 	file://etc/ppp/peers/quectel-ppp \
 	file://etc/profile.d/enable_services.sh \
-	file://etc/profile.d/login.sh \
 	file://etc/profile.d/networkd-wait-timeout.sh \
 	file://etc/systemd/network/20-wireless-wlan0.network \
 	file://etc/systemd/system/rexgen_data.service \
 	file://etc/systemd/system/autostart.service \
 	file://etc/systemd/system/wifi_monitor.service \
+	file://etc/systemd/system/wifi_monitor.timer \
 	file://usr/lib/systemd/system/wpa_supplicant@wlan0.service \
 	file://usr/lib/systemd/system/hostapd@wlan1.service \
 	file://opt/influx/ap_flask/ap_flask.py \
@@ -36,7 +36,6 @@ SRC_URI = "file://LICENSE \
 	file://opt/influx/pipes_reconnect.sh \
 	file://opt/influx/Release-notes \
 	file://opt/influx/autostart.sh \
-	file://opt/influx/check_firmware_version.sh \
         file://opt/influx/wakeup_BT.sh \
 	file://opt/influx/options \
 	file://opt/influx/cellular_module_start.sh \
@@ -86,6 +85,7 @@ INFLUX_FILES_644 = "\
 	20-wireless-wlan0.network \
 	hostapd@wlan1.service \
 	wifi_monitor.service \
+	wifi_monitor.timer \
 	wpa_supplicant@wlan0.service \
 	escape.minicom \ 
 	Release-notes \
@@ -132,12 +132,15 @@ do_install () {
 	# Enable services manually
 	ln -sf /etc/systemd/system/autostart.service ${D}/usr/lib/systemd/system/multi-user.target.wants/autostart.service
 	ln -sf /etc/systemd/system/wifi_monitor.service ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.service
+	ln -sf /etc/systemd/system/wifi_monitor.timer ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.timer
 }
 
 # Set version to hostname
 do_install:append () {
     echo ${INFLUX_RELEASE} > ${D}/etc/hostname
     sed -i 's/\./\_/g' ${D}/etc/hostname
+
+    echo ${INFLUX_RELEASE} > ${D}${INFLUX_DIR}/release
 }
 
 # Enable systemd services 
@@ -145,6 +148,7 @@ SYSTEMD_AUTO_ENABLE = "enable"
 SYSTEMD_SERVICE:${PN} = " \
     autostart.service \
     wifi_monitor.service \
+    wifi_monitor.timer \
 "
 
 INHIBIT_PACKAGE_STRIP = "1"
@@ -161,13 +165,13 @@ pkg_postinst:${PN}() {
         exec >> /var/log/post_wifi.log 2>&1
         set -x
 
-        # Call switch script
-        /usr/sbin/switch_module.sh 1MW
-
         # Unlock boot partition
         if [ -e /sys/block/mmcblk2boot0/force_ro ]; then
             echo "0" > /sys/block/mmcblk2boot0/force_ro
         fi
+
+        # Call switch script
+        /usr/sbin/switch_module.sh 1MW
 
         # Set correct DTB
         /sbin/fw_setenv fdt_file imx8mm-influx-rex-smart_v2-1mw.dtb

@@ -1,0 +1,9 @@
+[Unit]
+Description=Run WiFi Monitor periodically
+
+[Timer]
+OnBootSec=15s
+OnUnitActiveSec=60s
+
+[Install]
+WantedBy=timers.target
