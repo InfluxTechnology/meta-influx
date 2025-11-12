@@ -12,9 +12,10 @@ require rexgen-base.inc
 LICENSE = "CLOSED"
 
 SRC_URI = " \
-    file://live_data_output \
-    file://rexgencore \
-    file://rexgencore.service \
+    file://rexgend \
+    file://rexgend.conf \
+    file://rexgend.service \
+    file://end_influx_upgrade.service \
 "
 
 S = "${WORKDIR}"
@@ -22,15 +23,16 @@ S = "${WORKDIR}"
 RDEPENDS:${PN} = "libusb1 "
 
 do_install () {
-	install -m 0644 ${WORKDIR}/live_data_output ${D}${REX_USB_DIR}/var/live_data_output
-	install -m 0755 ${S}/rexgencore ${D}${REX_USB_DIR}/rexgencore
-	install -m 0644 ${S}/rexgencore.service ${D}/etc/systemd/system/rexgencore.service \
+	install -m 0755 ${S}/rexgend ${D}${REX_USB_DIR}/rexgend
+	install -m 0644 ${S}/rexgend.conf ${D}${REX_USB_DIR}/rexgend.conf
+	install -m 0644 ${S}/rexgend.service ${D}/etc/systemd/system/rexgend.service 
+	install -m 0644 ${S}/end_influx_upgrade.service ${D}/etc/systemd/system/end_influx_upgrade.service
 
-	ln -sf /etc/systemd/system/rexgencore.service ${D}/usr/lib/systemd/system/multi-user.target.wants/rexgencore.service
+#	ln -sf /etc/systemd/system/rexgend.service ${D}/usr/lib/systemd/system/multi-user.target.wants/rexgend.service
 }
 
-SYSTEMD_AUTO_ENABLE = "enable"
-SYSTEMD_SERVICE:${PN} = "rexgencore.service"
+#SYSTEMD_AUTO_ENABLE = "enable"
+#SYSTEMD_SERVICE:${PN} = "rexgend.service"
 
 INHIBIT_PACKAGE_STRIP = "1"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"

@@ -1,0 +1,10 @@
+[Unit]
+Description=Avoiding the sleep during OTA update 
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 240
+ExecStart=/usr/sbin/fw_setenv influx_upgrade 0
+
+[Install]
+WantedBy=multi-user.target

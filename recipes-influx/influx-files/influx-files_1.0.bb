@@ -20,6 +20,7 @@ SRC_URI += "file://LICENSE \
 	file://etc/systemd/system/net-failover.timer \
 	file://etc/systemd/system/net_led.service \
 	file://etc/systemd/system/release_check.service \
+	file://etc/systemd/system/rexgen_sn_to_hostname.service \
 	file://etc/systemd/system/wifi_monitor.service \
 	file://etc/systemd/system/wifi_monitor.timer \
 	file://opt/influx/Release-notes \
@@ -28,6 +29,7 @@ SRC_URI += "file://LICENSE \
 	file://opt/influx/ap_flask/templates/index.html \
 	file://opt/influx/ap_flask/wifi_monitor.sh \
 	file://opt/influx/autostart.sh \
+	file://opt/influx/blt_start.sh \
 	file://opt/influx/escape.minicom \
 	file://opt/influx/cellular_module_start.sh \
 	file://opt/influx/gnssdata_start.sh \
@@ -41,9 +43,8 @@ SRC_URI += "file://LICENSE \
 	file://opt/influx/pap-secrets \
 	file://opt/influx/pipes_reconnect.sh \
 	file://opt/influx/reboot.sh \
-	file://opt/influx/setup_wifi_module.sh \
 	file://opt/influx/start_ppp0.sh \
-	file://opt/influx/blt_start.sh \
+	file://opt/influx/rexgen_sn_to_hostname.sh \
 	file://usr/lib/systemd/system/hostapd@wlan1.service \
 	file://usr/lib/systemd/system/wpa_supplicant@wlan0.service \
 "
@@ -143,6 +144,7 @@ do_install () {
     ln -sf /etc/systemd/system/net-failover.timer ${D}/usr/lib/systemd/system/multi-user.target.wants/net-failover.timer
     ln -sf /etc/systemd/system/net_led.service ${D}/usr/lib/systemd/system/multi-user.target.wants/net_led.service
     ln -sf /etc/systemd/system/lte-ppp.service ${D}/usr/lib/systemd/system/multi-user.target.wants/lte-ppp.service
+    ln -sf /etc/systemd/system/rexgen_sn_to_hostname.service ${D}/usr/lib/systemd/system/multi-user.target.wants/rexgen_sn_to_hostname.service
     ln -sf /etc/systemd/system/wifi_monitor.service ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.service
     ln -sf /etc/systemd/system/wifi_monitor.timer ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.timer
 }
@@ -150,6 +152,8 @@ do_install () {
 do_install:append () {
     echo ${INFLUX_RELEASE} > ${D}/etc/hostname
     sed -i 's/\./\_/g' ${D}/etc/hostname
+
+    echo ${INFLUX_RELEASE} > ${D}${INFLUX_DIR}/release
 }
 
 # Enable systemd services 
@@ -158,6 +162,7 @@ SYSTEMD_SERVICE:${PN} = " \
     autostart.service \
     lte-ppp.service \
     net_led.service \
+    rexgen_sn_to_hostname.service \
     wifi_monitor.service \
     wifi_monitor.timer \
 "

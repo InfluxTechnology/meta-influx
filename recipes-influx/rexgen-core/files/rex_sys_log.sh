@@ -55,12 +55,12 @@ get_temp_c() {
 get_net_dl_kbps() {
   URL="http://speedtest.tele2.net/1MB.zip"
   TMP="/tmp/speedtest.$$"
-  START=$(date +%s)
+  START=$(date +%s%3N)  # milliseconds
   curl -s -o "$TMP" "$URL"
-  END=$(date +%s)
+  END=$(date +%s%3N)    # milliseconds
   rm -f "$TMP"
   DUR=$((END-START))
-  [ "$DUR" -gt 0 ] && echo $((1024 / DUR)) || echo 0
+  [ "$DUR" -gt 0 ] && echo $((1024000 / DUR)) || echo 0
 }
 
 upload_pending_logs() {
@@ -111,6 +111,7 @@ get_gnss_location() {
 # ---- State ----
 NOW=$(date +%s)
 LAST_TS=$(ts_now)
+LAST_MAX=$NOW
 
 # CPU
 CPU_MIN=100 CPU_SUM=0 CPU_COUNT=0
@@ -234,6 +235,26 @@ while true; do
     GNSS=$(get_gnss_location)
     log_line "$TS $SERIAL: GNSS=${GNSS}"
     LAST_GNSS=$NOW
+  fi
+  #logger -t sys_logging "DEBUG: Before MAX"
+  # ---- MAX VALUES ----
+  if [ $((NOW - LAST_MAX)) -ge $MAX_INTERVAL ]; then
+    #logger -t sys_logging "Begin MAX"
+    log_line "$TS $SERIAL: CPU_MAX=${CPU_MAX}%"
+    log_line "$TS $SERIAL: MEM_MAX=${MEM_MAX}%"
+    log_line "$TS $SERIAL: TEMP_MAX=${TEMP_MAX}C"
+  
+    # Reset MAX values after logging
+    CPU_MAX=0
+    MEM_MAX=0
+    TEMP_MAX=0
+    echo 0 > "$CPU_MAX_FILE"
+    echo 0 > "$MEM_MAX_FILE"
+    echo 0 > "$TEMP_MAX_FILE"
+  
+    LAST_MAX=$NOW
+    #logger -t sys_logging "END MAX"
+
   fi
 
   LAST_TS="$TS"

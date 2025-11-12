@@ -1,0 +1,13 @@
+[Unit]
+Description=Copy RexGen serial number to host name
+After=rexgend.service
+Requires=rexgend.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStartPre=/bin/sleep 10
+ExecStart=/opt/influx/rexgen_sn_to_hostname.sh
+
+[Install]
+WantedBy=multi-user.target

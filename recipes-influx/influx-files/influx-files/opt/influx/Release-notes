@@ -2,11 +2,21 @@
 
 v 2.0.0
     Mender update image rootfs	
-    Added rexgen core service
-	Inherited socket.service
-	Multi partition file upload to cloud.
-	Support socket can over virtual can (/home/root/rexusb/var/live_data_output must contain 'socketcan').
-	Support multi partition.
+
+    Influx features
+	GNSS LED added
+	Report MAX values interval is now configurable
+	Unit name contains RexGen serial number
+
+    Added rexgend service v.1.2.2
+        Inherited socket.service
+        Multi partition file upload to cloud
+	Support socket can over virtual can (configurable in rexgend.conf)
+	APN settings can be set through ReXdesk
+	Reflash, Reconfigure from Google Cloud
+        Support multi partition
+	Fixed sleeping mode
+	Live data runs continuously
 
 v 1.2.5
     Fixed multiple files download
