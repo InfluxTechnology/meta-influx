@@ -18,4 +18,4 @@ IMAGE_INSTALL:append = " rexgen-core "
 IMAGE_INSTALL:append = " cloud-support "
 IMAGE_INSTALL:append = " rex-sys-log "
 
-INFLUX_RELEASE="pro.2.0.0"
+INFLUX_RELEASE="pro.2.0.1"
