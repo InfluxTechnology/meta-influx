@@ -7,8 +7,8 @@ Type=simple
 ExecStart=/home/root/rexusb/log/rex_sys_log.sh
 Restart=always
 RestartSec=10
-StandardOutput=append:/home/root/rexusb/log/rex_sys_log.log
-StandardError=append:/home/root/rexusb/log/rex_sys_log.err
+StandardOutput=append:/data/rexgen/logs/rex_sys_log.log
+StandardError=append:/data/rexgen/logs/rex_sys_log.err
 EnvironmentFile=/home/root/rexusb/log/rex_sys_log.conf
 
 [Install]

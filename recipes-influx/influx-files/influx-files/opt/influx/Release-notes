@@ -1,4 +1,6 @@
 ### Release notes ###
+v 2.0.1
+    Kept Google cloud settings and rexgen logs on mender update
 
 v 2.0.0
     Mender update image rootfs	

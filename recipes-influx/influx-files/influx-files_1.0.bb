@@ -35,6 +35,7 @@ SRC_URI += "file://LICENSE \
 	file://opt/influx/gnssdata_start.sh \
 	file://opt/influx/gnssinit_quectel.py \
 	file://opt/influx/gnssinit_ublox.py \
+	file://opt/influx/gnss_led_blink.sh \
 	file://opt/influx/driver_reconnect.sh \
 	file://opt/influx/lte_start_ppp.sh \
 	file://opt/influx/lte_start_wvdial.sh \

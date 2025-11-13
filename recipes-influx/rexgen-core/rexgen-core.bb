@@ -24,7 +24,7 @@ RDEPENDS:${PN} = "libusb1 "
 
 do_install () {
 	install -m 0755 ${S}/rexgend ${D}${REX_USB_DIR}/rexgend
-	install -m 0644 ${S}/rexgend.conf ${D}${REX_USB_DIR}/rexgend.conf
+	install -m 0644 ${S}/rexgend.conf ${D}/data/rexgen/config/rexgend.conf
 	install -m 0644 ${S}/rexgend.service ${D}/etc/systemd/system/rexgend.service 
 	install -m 0644 ${S}/end_influx_upgrade.service ${D}/etc/systemd/system/end_influx_upgrade.service
 
