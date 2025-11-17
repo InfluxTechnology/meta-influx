@@ -24,18 +24,19 @@ RDEPENDS:${PN} = "libusb1 "
 
 do_install () {
 	install -m 0755 ${S}/rexgend ${D}${REX_USB_DIR}/rexgend
-	install -m 0644 ${S}/rexgend.conf ${D}/data/rexgen/config/rexgend.conf
+	install -m 0644 ${S}/rexgend.conf ${D}${REX_USB_DIR}/rexgend.conf
 	install -m 0644 ${S}/rexgend.service ${D}/etc/systemd/system/rexgend.service 
 	install -m 0644 ${S}/end_influx_upgrade.service ${D}/etc/systemd/system/end_influx_upgrade.service
 
-#	ln -sf /etc/systemd/system/rexgend.service ${D}/usr/lib/systemd/system/multi-user.target.wants/rexgend.service
+	ln -sf /home/root/rexusb/rexgend ${D}/usr/sbin/rexgend
 }
-
-#SYSTEMD_AUTO_ENABLE = "enable"
-#SYSTEMD_SERVICE:${PN} = "rexgend.service"
 
 INHIBIT_PACKAGE_STRIP = "1"
 INHIBIT_PACKAGE_DEBUG_SPLIT = "1"
 
 PACKAGES = "${PN}"
 FILES:${PN} = "/"
+
+pkg_postinst_ontarget:${PN}() {
+	mv /home/root/rexusb/rexgend.conf /data/rexgen/config/rexgend.conf
+}
