@@ -17,14 +17,14 @@ if [ -z "$gateway" ] || [ "$gateway" = "default" ]; then
 fi
 
 # Add a host route to test target via wlan0 gateway, *without touching default
-ip route replace 8.8.8.8 via "$gateway" dev wlan0 metric 5
+ip route replace 9.9.9.9 via "$gateway" dev wlan0 metric 5
 
 # Ping using wlan0
-ping -I wlan0 -c 2 -W 2 8.8.8.8 > /dev/null
+ping -I wlan0 -c 2 -W 2 9.9.9.9 > /dev/null
 WLAN_OK=$?
 
 # Clean up the test route
-ip route del 8.8.8.8 dev wlan0 2>/dev/null
+ip route del 9.9.9.9 dev wlan0 2>/dev/null
 
 # Check if wlan0 is down
 if [ "$WLAN_OK" -ne 0 ]; then

@@ -35,7 +35,7 @@ scan_network_lock = threading.Lock()
 def log_message(message):
     logging.info(message)
     
-def can_ping(host="8.8.8.8"):
+def can_ping(host="9.9.9.9"):
     try:
         subprocess.check_output(
             ["ping", "-c", "1", "-W", "2", host],  # 1 packet, 2s timeout
@@ -287,12 +287,15 @@ def configure_wifi():
 
         device_ip = get_ip_address()
         if device_ip and device_ip != "No IP assigned":
-            return redirect(f"http://{device_ip}:5051/dashboard")
+            return redirect(f"http://{device_ip}:5080")
 
         return f"<html><body><h1>Configuration Successful</h1><p>Connected to {ssid}, but no IP found.</p></body></html>"
         
         os._exit(0)  # Optional: Exit after redirect
     else:
+        os.system(f"sed -i '/network={{/{{:a;N;/}}/!ba;/ssid=\"{ssid}\"/d}}' /etc/wpa_supplicant.conf")
+        os.system("systemctl restart wpa_supplicant@wlan0.service")
+        # os.system("systemctl restart wifi_monitor")
         start_ap_mode()
         log_message(f"Failed to connect to Wi-Fi network: {ssid}. Restarting AP mode.")
         return f"<html><body><h1>Configuration Failed</h1><p>Could not connect to {ssid}. Check credentials.</p></body></html>"

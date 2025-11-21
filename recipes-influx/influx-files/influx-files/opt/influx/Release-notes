@@ -1,4 +1,16 @@
 ### Release notes ###
+
+v.2.0.2
+    Influx features
+	CAN Error frame support - socketcan and pipes
+	Changed ping server (from 8.8.8.8 to 9.9.9.9)
+
+    Bug fixes
+	AWS upload big files (500MB)
+	Enabled socket cAN by default 
+	Option to reserve percent of disk space for rxd files
+	Problem with wrong WiFi password 
+
 v 2.0.1
     Kept Google cloud settings and rexgen logs on mender update
 
