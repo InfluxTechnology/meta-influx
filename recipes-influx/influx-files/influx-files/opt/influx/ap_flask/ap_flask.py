@@ -293,7 +293,7 @@ def configure_wifi():
         
         os._exit(0)  # Optional: Exit after redirect
     else:
-        os.system(f"sed -i '/network={{/{{:a;N;/}}/!ba;/ssid=\"{ssid}\"/d}}' /etc/wpa_supplicant.conf")
+        remove_network_from_config(ssid)
         os.system("systemctl restart wpa_supplicant@wlan0.service")
         # os.system("systemctl restart wifi_monitor")
         start_ap_mode()
@@ -345,18 +345,40 @@ def save_gateway(ssid, interface="wlan0", filepath="/opt/influx/wifi_gateways"):
 
 # Configure wpa_supplicant and attempt connection
 def configure_wpa_supplicant(ssid, password):
-    wpa_config = f"""
+    """Add or update a network in wpa_supplicant.conf without deleting other networks"""
+    
+    remove_network_from_config(ssid)
+    
+    # Read existing config
+    try:
+        with open('/etc/wpa_supplicant.conf', 'r') as f:
+            existing_config = f.read()
+    except FileNotFoundError:
+        existing_config = ""
+    
+    # Prepare new network block
+    new_network = f"""
 network={{
     ssid="{ssid}"
-    psk="{password}"
+    psk="{password}" 
 }}
 """
+    
+    # Append new network to existing config
+    updated_config = existing_config.rstrip() + "\n" + new_network
+    
+    # Write updated config
     with open('/etc/wpa_supplicant.conf', 'w') as f:
-        f.write(wpa_config)
+        f.write(updated_config)
+    
+    log_message(f"Added network {ssid} to wpa_supplicant.conf")
+    
+    # Restart wpa_supplicant and attempt connection
     os.system("systemctl restart wpa_supplicant@wlan0.service")
     time.sleep(15)
     connection_status = os.popen("iw wlan0 link | grep 'Connected to'").read()    
     connected = "Connected to" in connection_status
+    
     if connected: 
         save_gateway(ssid)
         with open('/sys/class/leds/JA35/brightness', 'w') as f:
@@ -364,6 +386,7 @@ network={{
     else:
         with open('/sys/class/leds/JA35/brightness', 'w') as f:
             f.write('0')
+    
     log_message(f"Attempted to connect to {ssid}. Success: {connected}")
     return connected
 
@@ -372,6 +395,29 @@ def get_ip_address():
     ip_output = os.popen("ip addr show wlan0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1").read().strip()
     log_message(f"Current IP address: {ip_output}")
     return ip_output if ip_output else "No IP assigned"
+
+def remove_network_from_config(ssid):
+    """Remove a specific network from wpa_supplicant.conf"""
+    try:
+        escaped_ssid = ssid.replace('"', '\\"').replace('/', '\\/')
+        subprocess.run(
+            ['sed', '-i', f'/network={{/{{:a;N;/}}/!ba;/ssid="{escaped_ssid}"/d}}', '/etc/wpa_supplicant.conf'],
+            check=True
+        )
+        log_message(f"Removed network {ssid} from wpa_supplicant.conf")
+    except subprocess.CalledProcessError as e:
+        log_message(f"Error removing network from config: {e}")
+
+def network_exists_in_config(ssid):
+    """Check if a network with the given SSID already exists in wpa_supplicant.conf"""
+    try:
+        with open('/etc/wpa_supplicant.conf', 'r') as f:
+            config = f.read()
+        # Look for the SSID in network blocks
+        pattern = rf'network=\s*\{{[^}}]*ssid="{re.escape(ssid)}"[^}}]*\}}'
+        return bool(re.search(pattern, config, re.DOTALL))
+    except FileNotFoundError:
+        return False
 
 if __name__ == "__main__":
     while True: 
@@ -386,3 +432,4 @@ if __name__ == "__main__":
         #if check_and_connect_known_networks() == False:
            # start_ap_mode()
         app.run(host='0.0.0.0', port=80)
+
