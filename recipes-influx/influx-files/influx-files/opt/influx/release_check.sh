@@ -33,6 +33,15 @@ if [ -f "$REBOOT_FILE" ]; then
     rm "$REBOOT_FILE"
 fi
 
+if [[ $NUMBER2 == "" ]]; then
+	ARTIFACT=$(mender-update show-artifact)
+	ARTIFACT=$(echo "$ARTIFACT" | sed 's/patch_//')
+	SETUP_FILE=/opt/influx/releases/"$ARTIFACT"/setup.sh
+
+	sh "$SETUP_FILE"	
+	exit
+fi
+
 if [[ $NUMBER1 -lt $NUMBER2 ]]; then
         if [ ! -f "$SETUP_FILE" ]; then
                 exit 1
