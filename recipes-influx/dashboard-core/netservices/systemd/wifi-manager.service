@@ -1,0 +1,22 @@
+[Unit]
+Description=ReXgen WiFi Manager Service
+After=network.target autostart.service wpa_supplicant@wlan0.service
+Wants=network.target autostart.service
+Requires=wpa_supplicant@wlan0.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/influx/netservices/services/wifi_manager.py
+WorkingDirectory=/opt/influx/netservices/services
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=false
+ProtectSystem=false
+ProtectHome=false
+
+[Install]
+WantedBy=multi-user.target

@@ -1,4 +1,7 @@
 #!/bin/sh
+# LED Blink Script - Shows network status via LEDs
+# WiFi LED (JA35) - blinks when WiFi is default route
+# LTE LED (JA33) - blinks when LTE is default route
 
 WIFI_LED="/sys/class/leds/JA35/brightness"
 LTE_LED="/sys/class/leds/JA33/brightness"
@@ -37,7 +40,7 @@ while true; do
             rx=$(cat /sys/class/net/$DEFAULT_IF/statistics/rx_bytes)
 
             if [ "$tx" -ne "$prev_tx" ] || [ "$rx" -ne "$prev_rx" ]; then
-                # Traffic flowing — custom blink
+                # Traffic flowing - custom blink
                 echo $BLINK_ON > "$LED"
                 sleep $BLINK_DURATION
                 echo $BLINK_OFF > "$LED"
@@ -47,7 +50,7 @@ while true; do
                 echo $BLINK_OFF > "$LED"
                 sleep $BLINK_DURATION
             else
-                # No traffic — solid LED
+                # No traffic - solid LED
                 echo $BLINK_ON > "$LED"
                 sleep $CHECK_INTERVAL
             fi
@@ -56,7 +59,7 @@ while true; do
             prev_rx=$rx
         fi
     else
-        # ❗ No default route = No internet — blink once per second
+        # No default route = No internet - blink both LEDs slowly
         echo $BLINK_OFF > "$WIFI_LED"
         echo $BLINK_OFF > "$LTE_LED"
         sleep $BLINK_DURATION

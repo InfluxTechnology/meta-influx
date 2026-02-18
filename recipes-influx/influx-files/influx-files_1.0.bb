@@ -18,16 +18,9 @@ SRC_URI += "file://LICENSE \
 	file://etc/systemd/system/lte-ppp.service \
 	file://etc/systemd/system/net-failover.service \
 	file://etc/systemd/system/net-failover.timer \
-	file://etc/systemd/system/net_led.service \
 	file://etc/systemd/system/release_check.service \
 	file://etc/systemd/system/rexgen_sn_to_hostname.service \
-	file://etc/systemd/system/wifi_monitor.service \
-	file://etc/systemd/system/wifi_monitor.timer \
 	file://opt/influx/Release-notes \
-	file://opt/influx/ap_flask/ap_flask.py \
-	file://opt/influx/ap_flask/net_led.sh \
-	file://opt/influx/ap_flask/templates/index.html \
-	file://opt/influx/ap_flask/wifi_monitor.sh \
 	file://opt/influx/autostart.sh \
 	file://opt/influx/blt_start.sh \
 	file://opt/influx/escape.minicom \
@@ -47,7 +40,6 @@ SRC_URI += "file://LICENSE \
 	file://opt/influx/reboot.sh \
 	file://opt/influx/start_ppp0.sh \
 	file://opt/influx/rexgen_sn_to_hostname.sh \
-	file://usr/lib/systemd/system/hostapd@wlan1.service \
 	file://usr/lib/systemd/system/wpa_supplicant@wlan0.service \
 "
 
@@ -62,9 +54,6 @@ INFLUX_DIR="/opt/influx/"
 # Directories to create in the image
 INFLUX_DIRS = "\
     ${INFLUX_DIR} \
-    ${INFLUX_DIR}/ap_flask/ \
-    ${INFLUX_DIR}/ap_flask/templates/ \
-    ${INFLUX_DIR}/socket/ \
     ${REX_USB_DIR} \
     /etc/chatscripts/ \
     /etc/firmware/ \
@@ -91,20 +80,16 @@ INFLUX_FILES_644 = "\
     1nce.provider \
     20-wireless-wlan0.network \
     autostart.service \
-    hostapd@wlan1.service \
     lte-ppp.service \
     minirc.dfl \
     net-failover.service \
     net-failover.timer \
-    net_led.service \
     options \
     pap-secrets \
     peers/quectel-ppp \
     templates/index.html \
     quectel-chat-connect \
     quectel-chat-disconnect \
-    wifi_monitor.service \
-    wifi_monitor.timer \
     wpa_supplicant@wlan0.service \
     wvdial.conf \
 "
@@ -144,11 +129,8 @@ do_install () {
     ln -sf /etc/systemd/system/autostart.service ${D}/usr/lib/systemd/system/multi-user.target.wants/autostart.service
     ln -sf /etc/systemd/system/net-failover.service ${D}/usr/lib/systemd/system/multi-user.target.wants/net-failover.service
     ln -sf /etc/systemd/system/net-failover.timer ${D}/usr/lib/systemd/system/multi-user.target.wants/net-failover.timer
-    ln -sf /etc/systemd/system/net_led.service ${D}/usr/lib/systemd/system/multi-user.target.wants/net_led.service
     ln -sf /etc/systemd/system/lte-ppp.service ${D}/usr/lib/systemd/system/multi-user.target.wants/lte-ppp.service
     ln -sf /etc/systemd/system/rexgen_sn_to_hostname.service ${D}/usr/lib/systemd/system/multi-user.target.wants/rexgen_sn_to_hostname.service
-    ln -sf /etc/systemd/system/wifi_monitor.service ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.service
-    ln -sf /etc/systemd/system/wifi_monitor.timer ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi_monitor.timer
 }
 
 do_install:append () {
@@ -163,10 +145,7 @@ SYSTEMD_AUTO_ENABLE = "enable"
 SYSTEMD_SERVICE:${PN} = " \
     autostart.service \
     lte-ppp.service \
-    net_led.service \
     rexgen_sn_to_hostname.service \
-    wifi_monitor.service \
-    wifi_monitor.timer \
 "
 
 INHIBIT_PACKAGE_STRIP = "1"

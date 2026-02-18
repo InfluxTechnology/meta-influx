@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi Configuration</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 17px; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%); }
+        .container { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 420px; width: 94%; }
+        .logo { text-align: center; margin-bottom: 12px; }
+        h1 { font-size: 1.35em; margin-bottom: 1em; text-align: center; color: #333; }
+        .status { text-align: center; padding: 10px; margin-top: 15px; border-radius: 8px; display: none; transition: opacity 0.5s ease-out; }
+        .status.fade-out { opacity: 0; }
+        .status.loading { display: block; background: #e0f7f5; color: #178a83; }
+        .status.error { display: block; background: #ffebee; color: #c62828; }
+        .status.success { display: block; background: #e8f5e9; color: #2e7d32; }
+        .no-networks { text-align: center; color: #999; padding: 20px; }
+        .network-list { margin-bottom: 10px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 15px; background: #f5f5f7; }
+        .section-label { font-size: 0.75em; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1; }
+        .section-link { font-size: 0.75em; color: #20b2aa; text-decoration: none; cursor: pointer; }
+        .connected-detail { display: flex; justify-content: space-between; width: 100%; padding: 2px 0 10px 0; font-size: 0.8em; color: #86868b; }
+        .network-item { display: flex; align-items: center; padding: 12px 15px; background: white; cursor: pointer; border-bottom: 1px solid #e5e5e7; }
+        .network-item:last-child { border-bottom: none; }
+        .network-item:active { background: #e5e5e7; }
+        .network-item.selected { background: #f0f0f5; }
+        .network-name { flex: 1; font-size: 1em; }
+        .wifi-bars { display: flex; align-items: flex-end; gap: 2px; height: 16px; margin-left: 8px; }
+        .wifi-bars .bar { width: 3px; background: #cfe5e2; border-radius: 1px; }
+        .wifi-bars .bar.active { background: #20b2aa; }
+        .wifi-bars .bar:nth-child(1) { height: 4px; }
+        .wifi-bars .bar:nth-child(2) { height: 8px; }
+        .wifi-bars .bar:nth-child(3) { height: 12px; }
+        .wifi-bars .bar:nth-child(4) { height: 16px; }
+        .info-btn { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #c7c7cc; color: #86868b; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 8px; flex-shrink: 0; font-style: italic; font-family: Georgia, serif; }
+        .inline-expand { padding: 10px 15px; background: #f9f9fb; border-bottom: 1px solid #e5e5e7; }
+        .inline-password { display: flex; align-items: center; gap: 8px; }
+        .inline-password input { flex: 1; padding: 10px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95em; outline: none; margin: 0; width: auto; }
+        .inline-password input:focus { border-color: #20b2aa; }
+        .inline-password .pwd-toggle { color: #20b2aa; cursor: pointer; font-size: 0.8em; white-space: nowrap; }
+        .inline-password .join-btn { padding: 10px 18px; background: linear-gradient(135deg, #20b2aa 0%, #178a83 100%); color: white; border: none; border-radius: 6px; font-size: 0.9em; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .inline-password .join-btn:disabled { background: #ccc; cursor: not-allowed; }
+        /* Detail page */
+        .detail-header { display: flex; align-items: center; margin-bottom: 14px; }
+        .back-btn { font-size: 1.3em; color: #20b2aa; cursor: pointer; margin-right: 10px; text-decoration: none; line-height: 1; }
+        .detail-title { font-size: 1.1em; font-weight: 600; color: #333; flex: 1; }
+        .detail-signal { display: flex; align-items: center; justify-content: center; margin: 12px 0; gap: 10px; }
+        .detail-signal .wifi-bars { height: 24px; gap: 3px; }
+        .detail-signal .wifi-bars .bar { width: 4px; border-radius: 2px; }
+        .detail-signal .wifi-bars .bar:nth-child(1) { height: 6px; }
+        .detail-signal .wifi-bars .bar:nth-child(2) { height: 10px; }
+        .detail-signal .wifi-bars .bar:nth-child(3) { height: 16px; }
+        .detail-signal .wifi-bars .bar:nth-child(4) { height: 24px; }
+        .detail-signal .signal-text { font-size: 1em; color: #333; }
+        .detail-table { width: 100%; border-collapse: collapse; }
+        .detail-table tr { border-bottom: 1px solid #e5e5e7; }
+        .detail-table tr:last-child { border-bottom: none; }
+        .detail-table td { padding: 10px 0; font-size: 0.95em; }
+        .detail-table td:first-child { color: #86868b; width: 40%; }
+        .detail-table td:last-child { color: #333; text-align: right; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; }
+        /* Nav bar */
+        .nav-bar { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; font-size: 0.8em; }
+        .nav-bar a, .nav-bar span { color: #20b2aa; text-decoration: none; cursor: pointer; }
+        .nav-bar a:active, .nav-bar span:active { opacity: 0.6; }
+        .nav-sep { color: #c7c7cc; }
+        /* AP users list */
+        .ap-client { display: grid; grid-template-columns: minmax(0, 1fr) 92px; column-gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #e5e5e7; font-size: 0.85em; }
+        .ap-client:last-child { border-bottom: none; }
+        .ap-client-info { min-width: 0; }
+        .ap-client-name { color: #333; font-weight: 500; }
+        .ap-client-detail { color: #86868b; font-size: 0.85em; }
+        .ap-client-detail-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 8px; }
+        .ap-client-detail-row span { min-width: 0; white-space: nowrap; }
+        .ap-client-detail-row .mac-col { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
+        .ap-client-detail-row .right { text-align: right; }
+        .ap-client-action { width: 92px; display: flex; justify-content: flex-end; }
+        .ap-btn-placeholder { width: 92px; height: 28px; visibility: hidden; }
+        .ap-client .block-btn { padding: 4px 10px; border: 1px solid #dc3545; color: #dc3545; background: none; border-radius: 4px; font-size: 0.85em; cursor: pointer; white-space: nowrap; }
+        .ap-client .block-btn:active { background: #dc3545; color: #fff; }
+        .ap-client .unblock-btn { padding: 4px 10px; border: 1px solid #20b2aa; color: #20b2aa; background: none; border-radius: 4px; font-size: 0.85em; cursor: pointer; white-space: nowrap; }
+        .ap-client .unblock-btn:active { background: #20b2aa; color: #fff; }
+        .ap-empty { text-align: center; color: #999; padding: 12px; font-size: 0.85em; }
+        .ui-locked { pointer-events: none; opacity: 0.95; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main WiFi list view -->
+        <div id="mainView">
+            <div class="logo">
+                <svg width="50" height="50" viewBox="0 0 24 24" fill="#20b2aa">
+                    <path d="M12 3C7.46 3 3.34 4.78.29 7.67c-.18.18-.29.43-.29.71 0 .28.11.53.29.71l11 11c.39.39 1.02.39 1.41 0l11-11c.18-.18.29-.43.29-.71 0-.28-.11-.53-.29-.71C20.66 4.78 16.54 3 12 3zm0 2c3.83 0 7.32 1.39 10 3.67l-10 10-10-10c2.68-2.28 6.17-3.67 10-3.67z"/>
+                </svg>
+            </div>
+
+            <h1>Wi-Fi Configuration</h1>
+
+            <div class="nav-bar">
+                <span onclick="refreshFromNav(this)">Refresh</span>
+                <span class="nav-sep">|</span>
+                <a href="/saved-networks">Manage Saved</a>
+                <span class="nav-sep">|</span>
+                <span onclick="showApUsersPage()"><span id="apUserCount">0</span> Clients</span>
+            </div>
+
+            <div id="networkList" class="network-list">
+                <div class="no-networks"><p>Scanning...</p></div>
+            </div>
+
+            <div id="status" class="status"></div>
+        </div>
+
+        <!-- Network detail view (hidden by default) -->
+        <div id="detailView" style="display:none;">
+            <div id="detailContent"></div>
+        </div>
+
+        <!-- AP Users page (hidden by default) -->
+        <div id="apUsersView" style="display:none;">
+            <div class="detail-header">
+                <a class="back-btn" onclick="showMainView()">&larr;</a>
+                <span class="detail-title">Manage AP Connections</span>
+                <span class="section-link" onclick="refreshApUsers(this)" style="font-size:0.85em">Refresh</span>
+            </div>
+            <div id="apUsersContent"></div>
+        </div>
+    </div>
+    <script>
+        // State
+        let knownNetworks = [];
+        let connectedSsid = null;
+        let selectedSsid = null;
+        let statusTimeout = null;
+        let clientIp = null;
+        let clientMac = null;
+        let lastNetworks = [];
+        let lastScanTime = 0;
+        let lastApClients = [];
+        let lastApBlocked = {};
+        let requesterIp = null;
+        let connectLockActive = false;
+        let connectLockTimer = null;
+        let connectRequestPending = false;
+        let connectStatusFailures = 0;
+
+        // Auto-hide status message after delay
+        function hideStatusAfter(ms) {
+            if (statusTimeout) clearTimeout(statusTimeout);
+            statusTimeout = setTimeout(() => {
+                const el = document.getElementById('status');
+                el.classList.add('fade-out');
+                setTimeout(() => {
+                    el.style.display = 'none';
+                    el.classList.remove('fade-out');
+                    el.className = 'status';
+                }, 500);
+            }, ms);
+        }
+
+        function isKnownNetwork(ssid) { return knownNetworks.includes(ssid); }
+
+        function setConnectLock(active, message) {
+            connectLockActive = !!active;
+            var mainView = document.getElementById('mainView');
+            var detailView = document.getElementById('detailView');
+            var apUsersView = document.getElementById('apUsersView');
+            if (mainView) mainView.classList.toggle('ui-locked', connectLockActive);
+            if (detailView) detailView.classList.toggle('ui-locked', connectLockActive);
+            if (apUsersView) apUsersView.classList.toggle('ui-locked', connectLockActive);
+            if (connectLockActive) {
+                connectRequestPending = true;
+                startConnectLockWatch();
+            } else {
+                connectRequestPending = false;
+                stopConnectLockWatch();
+                var statusEl = document.getElementById('status');
+                if (statusEl && statusEl.classList.contains('loading')) {
+                    statusEl.style.display = 'none';
+                    statusEl.className = 'status';
+                }
+            }
+        }
+
+        function stopConnectLockWatch() {
+            if (connectLockTimer) {
+                clearInterval(connectLockTimer);
+                connectLockTimer = null;
+            }
+        }
+
+        function startConnectLockWatch() {
+            if (connectLockTimer) return;
+            connectLockTimer = setInterval(function() {
+                fetch('/api/status')
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        connectStatusFailures = 0;
+                        updateDeviceInfo(data);
+                        if (data.connect_in_progress) {
+                            // Keep lock active silently (no popup UI).
+                        } else if (connectLockActive) {
+                            setConnectLock(false);
+                        }
+                    })
+                    .catch(function() {
+                        connectStatusFailures += 1;
+                        if (connectStatusFailures >= 10 && connectLockActive) {
+                            var statusEl = document.getElementById('status');
+                            if (statusEl) {
+                                statusEl.className = 'status error';
+                                statusEl.textContent = 'Connection status unavailable. Unlocking UI.';
+                                statusEl.style.display = 'block';
+                                hideStatusAfter(5000);
+                            }
+                            setConnectLock(false);
+                        }
+                    });
+            }, 1000);
+        }
+
+        // Network data helpers
+        function netSsid(n) { return typeof n === 'object' ? n.ssid : n; }
+        function netSignal(n) { return typeof n === 'object' ? (n.signal || -100) : -100; }
+        function findNetwork(ssid) { return lastNetworks.find(n => netSsid(n) === ssid); }
+        function netBands(n) { return (typeof n === 'object' && Array.isArray(n.bands)) ? n.bands : []; }
+        function techSupportFromBands(bands) {
+            if (!bands || !bands.length) return [];
+            var map = {
+                '2.4 GHz': 'WiFi 4 (802.11n)',
+                '5 GHz': 'WiFi 5 (802.11ac)',
+                '6 GHz': 'WiFi 6E (802.11ax)'
+            };
+            var out = [];
+            bands.forEach(function(b) {
+                var t = map[b];
+                if (t && out.indexOf(t) < 0) out.push(t);
+            });
+            return out;
+        }
+
+        // Signal helpers
+        function signalBars(dbm) {
+            if (dbm >= -50) return 4;
+            if (dbm >= -60) return 3;
+            if (dbm >= -70) return 2;
+            if (dbm >= -80) return 1;
+            return 0;
+        }
+        function signalLabel(dbm) {
+            if (dbm >= -50) return 'Excellent';
+            if (dbm >= -60) return 'Good';
+            if (dbm >= -70) return 'Fair';
+            if (dbm >= -80) return 'Weak';
+            return 'Very weak';
+        }
+
+        // Parse frequency to band/technology/channel
+        function freqInfo(freq) {
+            var f = parseInt(freq);
+            if (!f) return { band: '--', tech: '--', channel: '--' };
+            var band, tech, ch;
+            if (f >= 2400 && f <= 2500) {
+                band = '2.4 GHz';
+                tech = 'WiFi 4 (802.11n)';
+                ch = Math.round((f - 2407) / 5);
+                if (f === 2484) ch = 14;
+            } else if (f >= 5000 && f <= 5900) {
+                band = '5 GHz';
+                tech = 'WiFi 5 (802.11ac)';
+                ch = Math.round((f - 5000) / 5);
+            } else if (f >= 5925 && f <= 7125) {
+                band = '6 GHz';
+                tech = 'WiFi 6E (802.11ax)';
+                ch = Math.round((f - 5950) / 5);
+            } else {
+                band = f + ' MHz';
+                tech = '--';
+                ch = '--';
+            }
+            return { band: band, tech: tech, channel: String(ch) };
+        }
+
+        // Parse security flags like [WPA2-PSK-CCMP][WPS][ESS]
+        function parseSecurity(flags) {
+            if (!flags) return 'Open';
+            var sec = [];
+            if (flags.indexOf('WPA3') >= 0) sec.push('WPA3');
+            else if (flags.indexOf('WPA2') >= 0) sec.push('WPA2');
+            else if (flags.indexOf('WPA') >= 0) sec.push('WPA');
+            if (flags.indexOf('WEP') >= 0) sec.push('WEP');
+            if (flags.indexOf('PSK') >= 0) sec.push('Personal');
+            else if (flags.indexOf('EAP') >= 0) sec.push('Enterprise');
+            if (flags.indexOf('CCMP') >= 0 && flags.indexOf('TKIP') >= 0) sec.push('CCMP+TKIP');
+            else if (flags.indexOf('CCMP') >= 0) sec.push('CCMP');
+            else if (flags.indexOf('TKIP') >= 0) sec.push('TKIP');
+            return sec.length > 0 ? sec.join(' / ') : 'Open';
+        }
+
+        // Render signal bars HTML
+        function renderBars(dbm) {
+            var bars = signalBars(dbm);
+            var html = '<div class="wifi-bars">';
+            for (var i = 1; i <= 4; i++) {
+                html += '<div class="bar' + (i <= bars ? ' active' : '') + '"></div>';
+            }
+            return html + '</div>';
+        }
+
+        // Render info button
+        function renderInfoBtn(ssid) {
+            return '<div class="info-btn" onclick="event.stopPropagation(); showDetail(\'' + ssid.replace(/'/g, "\\'") + '\')">i</div>';
+        }
+
+        // ========== Detail page ==========
+
+        function showDetail(ssid) {
+            var net = findNetwork(ssid);
+            var sig = net ? netSignal(net) : -100;
+            var freq = net ? (net.frequency || '') : '';
+            var flags = net ? (net.flags || '') : '';
+            var bssid = net ? ((net.bssid || '--').toUpperCase()) : '--';
+            var fi = freqInfo(freq);
+            var bands = net ? netBands(net) : [];
+            var techSupport = techSupportFromBands(bands);
+            var security = parseSecurity(flags);
+            var isConn = (ssid === connectedSsid);
+
+            var html = '<div class="detail-header">' +
+                '<a class="back-btn" onclick="showMainView()">&larr;</a>' +
+                '<span class="detail-title">' + ssid + '</span>' +
+            '</div>';
+
+            // Signal bars (large)
+            html += '<div class="detail-signal">' +
+                renderBars(sig) +
+                '<span class="signal-text">' + signalLabel(sig) + '</span>' +
+            '</div>';
+
+            // Detail table
+            html += '<table class="detail-table">';
+            if (isConn) {
+                html += '<tr><td>Status</td><td>Connected</td></tr>';
+                if (clientIp) html += '<tr><td>IP Address</td><td>' + clientIp + '</td></tr>';
+                if (clientMac) html += '<tr><td>MAC Address</td><td>' + clientMac.toUpperCase() + '</td></tr>';
+            }
+            html += '<tr><td>Signal</td><td>' + sig + ' dBm</td></tr>';
+            html += '<tr><td>Security</td><td>' + security + '</td></tr>';
+            html += '<tr><td>Technology</td><td>' + fi.tech + '</td></tr>';
+            if (techSupport.length > 1) {
+                html += '<tr><td>Technology Support</td><td>' + techSupport.join(' / ') + '</td></tr>';
+            }
+            html += '<tr><td>Band</td><td>' + fi.band + '</td></tr>';
+            if (bands.length > 1) {
+                html += '<tr><td>Band Support</td><td>' + bands.join(' / ') + '</td></tr>';
+            }
+            html += '<tr><td>Channel</td><td>' + fi.channel + '</td></tr>';
+            if (bssid && bssid !== '--') {
+                html += '<tr><td>BSSID</td><td style="font-size:0.85em">' + bssid + '</td></tr>';
+            }
+            if (freq) {
+                html += '<tr><td>Frequency</td><td>' + freq + ' MHz</td></tr>';
+            }
+            html += '</table>';
+
+            document.getElementById('detailContent').innerHTML = html;
+            document.getElementById('mainView').style.display = 'none';
+            document.getElementById('detailView').style.display = 'block';
+        }
+
+        function showMainView() {
+            document.getElementById('detailView').style.display = 'none';
+            document.getElementById('apUsersView').style.display = 'none';
+            document.getElementById('mainView').style.display = 'block';
+        }
+
+        // ========== Inline password ==========
+
+        function collapseInline() {
+            document.querySelectorAll('.inline-expand').forEach(function(el) { el.remove(); });
+            document.querySelectorAll('.network-item.selected').forEach(function(el) { el.classList.remove('selected'); });
+        }
+
+        function isInlinePasswordActive() {
+            return !!document.querySelector('.inline-expand') && !connectLockActive && !connectRequestPending;
+        }
+
+        function selectNetwork(el) {
+            var ssid = el.dataset.ssid;
+            if (ssid === connectedSsid) return;
+            collapseInline();
+            selectedSsid = ssid;
+            el.classList.add('selected');
+
+            var row = document.createElement('div');
+            row.className = 'inline-expand';
+            row.innerHTML =
+                '<div class="inline-password">' +
+                    '<input type="password" id="inlinePwd" placeholder="Password" autocomplete="off">' +
+                    '<span class="pwd-toggle" onclick="toggleInlinePwd()">Show</span>' +
+                    '<button class="join-btn" onclick="connectInline(\'' + ssid.replace(/'/g, "\\'") + '\')">Join</button>' +
+                '</div>';
+            el.after(row);
+            var input = document.getElementById('inlinePwd');
+            input.focus();
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); connectInline(ssid); }
+            });
+            setTimeout(function() { row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 100);
+        }
+
+        function toggleInlinePwd() {
+            var pwd = document.getElementById('inlinePwd');
+            var toggle = event.target;
+            if (pwd.type === 'password') { pwd.type = 'text'; toggle.textContent = 'Hide'; }
+            else { pwd.type = 'password'; toggle.textContent = 'Show'; }
+        }
+
+        function connectInline(ssid) {
+            if (connectLockActive || connectRequestPending) return;
+            connectRequestPending = true;
+            var pwd = document.getElementById('inlinePwd');
+            if (!pwd) return;
+            var password = pwd.value;
+            var btn = pwd.parentElement.querySelector('.join-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>';
+            setConnectLock(true, "Connection to '" + ssid + "' is in progress. Operations are temporarily locked.");
+
+            var status = document.getElementById('status');
+            status.className = 'status loading';
+            status.textContent = 'Connecting to ' + ssid + '...';
+            status.style.display = 'block';
+
+            var useSaved = isKnownNetwork(ssid) && !password;
+
+            fetch('/api/connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ssid: ssid, password: password, use_saved: useSaved })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.error) {
+                    status.className = 'status error';
+                    status.innerHTML = data.error;
+                    btn.disabled = false;
+                    btn.textContent = 'Join';
+                    if (String(data.error).indexOf('in progress') >= 0) {
+                        setConnectLock(true, data.error);
+                    } else {
+                        setConnectLock(false);
+                    }
+                    hideStatusAfter(8000);
+                } else {
+                    pollConnection(ssid, btn);
+                }
+            })
+            .catch(function() {
+                status.className = 'status error';
+                status.textContent = 'Request failed';
+                btn.disabled = false;
+                btn.textContent = 'Join';
+                setConnectLock(false);
+                hideStatusAfter(8000);
+            });
+        }
+
+        function pollConnection(ssid, btn) {
+            var checks = 0, maxChecks = 20;
+            var status = document.getElementById('status');
+            function check() {
+                fetch('/api/status')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.connected_ssid === ssid) {
+                            status.className = 'status success';
+                            status.innerHTML = '<b>Connected!</b> IP: ' + (data.client_ip || 'acquiring...');
+                            connectedSsid = ssid;
+                            collapseInline();
+                            setConnectLock(false);
+                            hideStatusAfter(5000);
+                            setTimeout(function() { updateNetworkList(data.networks, data.known, ssid); }, 1000);
+                        } else if (data.connect_error) {
+                            status.className = 'status error';
+                            status.innerHTML = data.connect_error;
+                            if (btn) { btn.disabled = false; btn.textContent = 'Join'; }
+                            setConnectLock(false);
+                            hideStatusAfter(8000);
+                        } else if (++checks >= maxChecks) {
+                            status.className = 'status error';
+                            status.textContent = 'Connection timeout';
+                            if (btn) { btn.disabled = false; btn.textContent = 'Join'; }
+                            setConnectLock(false);
+                            hideStatusAfter(8000);
+                        } else {
+                            setTimeout(check, 1000);
+                        }
+                    })
+                    .catch(function() {
+                        if (++checks >= maxChecks) {
+                            status.className = 'status error';
+                            status.textContent = 'Connection status unavailable';
+                            if (btn) { btn.disabled = false; btn.textContent = 'Join'; }
+                            setConnectLock(false);
+                            hideStatusAfter(8000);
+                        } else {
+                            setTimeout(check, 1000);
+                        }
+                    });
+            }
+            setTimeout(check, 2000);
+        }
+
+        // ========== Known network auto-connect ==========
+
+        function connectKnown(el) {
+            if (connectLockActive || connectRequestPending) return;
+            var ssid = el.dataset.ssid;
+            if (ssid === connectedSsid) return;
+            connectRequestPending = true;
+            collapseInline();
+            selectedSsid = ssid;
+            el.classList.add('selected');
+
+            var status = document.getElementById('status');
+            status.className = 'status loading';
+            status.textContent = 'Connecting to ' + ssid + '...';
+            status.style.display = 'block';
+            setConnectLock(true, "Connection to '" + ssid + "' is in progress. Operations are temporarily locked.");
+
+            fetch('/api/connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ssid: ssid, password: '', use_saved: true })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.error) {
+                    if (String(data.error).indexOf('in progress') >= 0) {
+                        setConnectLock(true, data.error);
+                    } else {
+                        setConnectLock(false);
+                    }
+                    showPasswordForKnown(el, ssid, data.error);
+                }
+                else { pollConnection(ssid, null); }
+            })
+            .catch(function() {
+                setConnectLock(false);
+                showPasswordForKnown(el, ssid, 'Connection failed');
+            });
+        }
+
+        function showPasswordForKnown(itemEl, ssid, error) {
+            var status = document.getElementById('status');
+            status.className = 'status error';
+            status.innerHTML = error + ' &mdash; enter password';
+            hideStatusAfter(8000);
+
+            collapseInline();
+            itemEl.classList.add('selected');
+
+            var row = document.createElement('div');
+            row.className = 'inline-expand';
+            row.innerHTML =
+                '<div class="inline-password">' +
+                    '<input type="password" id="inlinePwd" placeholder="New password" autocomplete="off">' +
+                    '<span class="pwd-toggle" onclick="toggleInlinePwd()">Show</span>' +
+                    '<button class="join-btn" onclick="connectInline(\'' + ssid.replace(/'/g, "\\'") + '\')">Join</button>' +
+                '</div>';
+            itemEl.after(row);
+            var input = document.getElementById('inlinePwd');
+            input.focus();
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); connectInline(ssid); }
+            });
+            setTimeout(function() { row.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 100);
+        }
+
+        // ========== Build network list ==========
+
+        function buildNetworkList(networks, known, connected) {
+            var container = document.getElementById('networkList');
+
+            var connNet = connected ? networks.find(function(n) { return netSsid(n) === connected; }) : null;
+            var savedNets = networks.filter(function(n) { return netSsid(n) !== connected && known.indexOf(netSsid(n)) >= 0; });
+            var otherNets = networks.filter(function(n) { return netSsid(n) !== connected && known.indexOf(netSsid(n)) < 0; });
+
+            var html = '';
+
+            // Connected
+            if (connected) {
+                var sig = connNet ? netSignal(connNet) : -100;
+                html += '<div class="section-header"><span class="section-label">Connected</span></div>';
+                html += '<div class="network-item" data-ssid="' + connected + '" data-signal="' + sig + '" style="cursor:default; border-bottom:none; flex-wrap:wrap; padding-bottom:0;">' +
+                    '<span class="network-name" style="font-weight:600">' + connected + '</span>' +
+                    (connNet ? renderBars(sig) : '') +
+                    renderInfoBtn(connected) +
+                    '<div class="connected-detail">' +
+                        '<span>' + (clientIp || '--') + '</span>' +
+                        '<span>' + (clientMac ? clientMac.toUpperCase() : '--') + '</span>' +
+                    '</div>' +
+                '</div>';
+            }
+
+            // Saved
+            if (savedNets.length > 0) {
+                html += '<div class="section-header"><span class="section-label">Saved Networks</span></div>';
+                savedNets.forEach(function(net) {
+                    var ssid = netSsid(net), sig = netSignal(net);
+                    html += '<div class="network-item" data-ssid="' + ssid + '" data-signal="' + sig + '" onclick="connectKnown(this)">' +
+                        '<span class="network-name">' + ssid + '</span>' +
+                        renderBars(sig) + renderInfoBtn(ssid) +
+                    '</div>';
+                });
+            }
+
+            // Available — always shown
+            html += '<div class="section-header"><span class="section-label">Available Networks</span></div>';
+            if (otherNets.length > 0) {
+                otherNets.forEach(function(net) {
+                    var ssid = netSsid(net), sig = netSignal(net);
+                    html += '<div class="network-item" data-ssid="' + ssid + '" data-signal="' + sig + '" onclick="selectNetwork(this)">' +
+                        '<span class="network-name">' + ssid + '</span>' +
+                        renderBars(sig) + renderInfoBtn(ssid) +
+                    '</div>';
+                });
+            } else {
+                html += '<div class="no-networks">No other networks found</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function updateNetworkList(networks, known, connected) {
+            if (known) knownNetworks = known;
+            if (connected !== undefined) connectedSsid = connected;
+            if (networks) lastNetworks = networks;
+            buildNetworkList(lastNetworks, knownNetworks, connectedSsid);
+        }
+
+        // ========== Refresh ==========
+
+        function requestScanAndPoll(scanBefore, onDone) {
+            fetch('/api/scan', { method: 'POST' })
+                .then(function(res) {
+                    return res.json().catch(function() { return {}; }).then(function(data) {
+                        if (!res.ok || data.error) {
+                            throw new Error(data.error || 'Scan request failed');
+                        }
+                        return data;
+                    });
+                })
+                .then(function() {
+                    var attempts = 0, maxAttempts = 15;
+                    var finished = false;
+                    function finish(ok, err) {
+                        if (finished) return;
+                        finished = true;
+                        if (onDone) onDone(ok, err);
+                    }
+                    var poll = setInterval(function() {
+                        attempts++;
+                        fetch('/api/status')
+                            .then(function(res) { return res.json(); })
+                            .then(function(data) {
+                                if (data.last_scan && data.last_scan > scanBefore) {
+                                    lastScanTime = data.last_scan;
+                                    updateDeviceInfo(data);
+                                    updateNetworkList(data.networks, data.known, data.connected_ssid);
+                                    clearInterval(poll);
+                                    finish(true);
+                                } else if (attempts >= maxAttempts) {
+                                    clearInterval(poll);
+                                    finish(false, 'Scan timeout');
+                                }
+                            })
+                            .catch(function() {
+                                if (attempts >= maxAttempts) {
+                                    clearInterval(poll);
+                                    finish(false, 'Status check failed');
+                                }
+                            });
+                    }, 1000);
+                })
+                .catch(function(err) { if (onDone) onDone(false, err && err.message ? err.message : 'Scan request failed'); });
+        }
+
+        function refreshFromNav(el) {
+            if (connectLockActive) return;
+            var original = el.textContent;
+            el.textContent = 'Scanning...';
+            el.style.pointerEvents = 'none';
+            var scanBefore = lastScanTime;
+            requestScanAndPoll(scanBefore, function(ok, err) {
+                el.textContent = original;
+                el.style.pointerEvents = '';
+                if (!ok && err) {
+                    var status = document.getElementById('status');
+                    status.className = 'status error';
+                    status.textContent = err;
+                    status.style.display = 'block';
+                    hideStatusAfter(6000);
+                }
+            });
+        }
+
+        // ========== AP Users Page ==========
+
+        function showApUsersPage() {
+            if (connectLockActive) return;
+            document.getElementById('mainView').style.display = 'none';
+            document.getElementById('detailView').style.display = 'none';
+            document.getElementById('apUsersView').style.display = 'block';
+            // Fetch fresh data when opening
+            fetchApUsers();
+        }
+
+        function fetchApUsers() {
+            fetch('/api/ap-clients')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    lastApClients = data.clients || [];
+                    lastApBlocked = data.blocked || {};
+                    // Also update count on nav bar
+                    var el = document.getElementById('apUserCount');
+                    if (el) el.textContent = lastApClients.length;
+                    renderApUsersPage();
+                })
+                .catch(function() {});
+        }
+
+        function refreshApUsers(el) {
+            if (connectLockActive) return;
+            if (el) { el.textContent = 'Refreshing...'; el.style.pointerEvents = 'none'; }
+            fetch('/api/ap-clients')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    lastApClients = data.clients || [];
+                    lastApBlocked = data.blocked || {};
+                    var countEl = document.getElementById('apUserCount');
+                    if (countEl) countEl.textContent = lastApClients.length;
+                    renderApUsersPage();
+                })
+                .catch(function() {})
+                .finally(function() {
+                    if (el) { el.textContent = 'Refresh'; el.style.pointerEvents = ''; }
+                });
+        }
+
+        function renderApUsersPage() {
+            var container = document.getElementById('apUsersContent');
+            var clients = lastApClients || [];
+            var blocked = lastApBlocked || {};
+            var now = Date.now() / 1000;
+            var connectedMacs = {};
+
+            var html = '';
+
+            if (clients.length === 0 && Object.keys(blocked).length === 0) {
+                html = '<div class="ap-empty">No devices connected</div>';
+            }
+
+            clients.forEach(function(c) {
+                var macLower = (c.mac || '').toLowerCase();
+                var mac = macLower.toUpperCase();
+                connectedMacs[macLower] = true;
+                var isSelf = (c.ip && c.ip === requesterIp);
+                var blockedUntil = blocked[macLower] || 0;
+                var isBlocked = blockedUntil > now;
+                var remaining = isBlocked ? Math.ceil((blockedUntil - now) / 60) : 0;
+                var name = c.hostname || mac;
+                if (name && name.indexOf('-') >= 0 && name.indexOf(' ') < 0) {
+                    name = name.replace(/-/g, ' ');
+                }
+                var ipText = c.ip || '--';
+                var blockedText = isBlocked ? ('Blocked ' + remaining + 'm') : '';
+                var detailHtml = '<div class="ap-client-detail-row">' +
+                    '<span>' + ipText + '</span>' +
+                    '<span class="mac-col">' + mac + '</span>' +
+                    '<span class="right">' + blockedText + '</span>' +
+                '</div>';
+                var actionHtml = isSelf
+                    ? '<span class="ap-btn-placeholder"></span>'
+                    : (isBlocked
+                        ? '<button class="unblock-btn" onclick="unblockClient(\'' + macLower + '\')">Unblock</button>'
+                        : '<button class="block-btn" onclick="blockClient(\'' + macLower + '\')">Block 5m</button>');
+                html += '<div class="ap-client">' +
+                    '<div class="ap-client-info">' +
+                        '<div class="ap-client-name">' + name + (isSelf ? ' <span style="color:#86868b; font-weight:normal">(you)</span>' : '') + '</div>' +
+                        '<div class="ap-client-detail">' + detailHtml + '</div>' +
+                    '</div>' +
+                    '<div class="ap-client-action">' + actionHtml + '</div>' +
+                '</div>';
+            });
+
+            // Blocked clients
+            var blockedMacs = Object.keys(blocked).filter(function(m) { return blocked[m] > now && !connectedMacs[m]; });
+            blockedMacs.forEach(function(mac) {
+                var remaining = Math.ceil((blocked[mac] - now) / 60);
+                var macUpper = mac.toUpperCase();
+                var detailHtml = '<div class="ap-client-detail-row">' +
+                    '<span>--</span>' +
+                    '<span class="mac-col">' + macUpper + '</span>' +
+                    '<span class="right">Blocked ' + remaining + 'm</span>' +
+                '</div>';
+                html += '<div class="ap-client">' +
+                    '<div class="ap-client-info">' +
+                        '<div class="ap-client-name" style="color:#dc3545">' + macUpper + '</div>' +
+                        '<div class="ap-client-detail">' + detailHtml + '</div>' +
+                    '</div>' +
+                    '<div class="ap-client-action"><button class="unblock-btn" onclick="unblockClient(\'' + mac + '\')">Unblock</button></div>' +
+                '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        function blockClient(mac) {
+            if (connectLockActive) return;
+            var macLower = (mac || '').toLowerCase();
+            var now = Date.now() / 1000;
+            lastApBlocked[macLower] = now + (5 * 60);
+            renderApUsersPage();
+            fetch('/api/ap-clients/block', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mac: macLower })
+            })
+            .then(function(res) {
+                if (!res.ok) {
+                    delete lastApBlocked[macLower];
+                }
+            })
+            .catch(function() {
+                delete lastApBlocked[macLower];
+            })
+            .finally(function() {
+                renderApUsersPage();
+                setTimeout(fetchApUsers, 400);
+            });
+        }
+
+        function unblockClient(mac) {
+            if (connectLockActive) return;
+            var macLower = (mac || '').toLowerCase();
+            delete lastApBlocked[macLower];
+            renderApUsersPage();
+            fetch('/api/ap-clients/unblock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mac: macLower })
+            })
+            .catch(function() {})
+            .finally(function() {
+                setTimeout(fetchApUsers, 400);
+            });
+        }
+
+        // ========== Background ==========
+
+        // Update device info + AP client count
+        function updateDeviceInfo(data) {
+            var ipChanged = clientIp !== data.client_ip;
+            var macChanged = clientMac !== data.client_mac;
+            clientIp = data.client_ip || null;
+            clientMac = data.client_mac || null;
+            if ((ipChanged || macChanged) && data.connected_ssid && !isInlinePasswordActive()) {
+                if (data.networks) lastNetworks = data.networks;
+                buildNetworkList(lastNetworks, knownNetworks, connectedSsid);
+            }
+            // Update AP client count + requester IP
+            if (data.requester_ip) requesterIp = data.requester_ip;
+            if (data.ap_clients !== undefined) lastApClients = data.ap_clients || [];
+            if (data.ap_blocked !== undefined) lastApBlocked = data.ap_blocked || {};
+            var el = document.getElementById('apUserCount');
+            if (el) el.textContent = lastApClients.length;
+            if (document.getElementById('apUsersView').style.display === 'block') {
+                renderApUsersPage();
+            }
+        }
+
+        function applyStatusSnapshot(data) {
+            if (data.known) knownNetworks = data.known;
+            if (data.connected_ssid !== undefined) connectedSsid = data.connected_ssid;
+            if (data.last_scan !== undefined) lastScanTime = data.last_scan || lastScanTime;
+            updateDeviceInfo(data);
+            if (data.networks && !isInlinePasswordActive()) {
+                updateNetworkList(data.networks, data.known, data.connected_ssid);
+            }
+
+            if (data.connect_in_progress) {
+                var msg = data.connect_target
+                    ? ("Connecting to '" + data.connect_target + "'... Please wait.")
+                    : 'Connecting... Please wait.';
+                var status = document.getElementById('status');
+                if (status) {
+                    status.className = 'status loading';
+                    status.textContent = msg;
+                    status.style.display = 'block';
+                }
+                setConnectLock(true, msg);
+            } else if (connectLockActive) {
+                setConnectLock(false);
+            }
+        }
+
+        function pollStatus() {
+            fetch('/api/status')
+                .then(function(res) { return res.json(); })
+                .then(function(data) { applyStatusSnapshot(data); })
+                .catch(function() {});
+        }
+
+        // Initial load
+        fetch('/api/status')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                applyStatusSnapshot(data);
+            });
+        setInterval(pollStatus, 5000);
+    </script>
+</body>
+</html>
