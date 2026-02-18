@@ -18,4 +18,6 @@ IMAGE_INSTALL:append = " rexgen-core "
 IMAGE_INSTALL:append = " cloud-support "
 IMAGE_INSTALL:append = " rex-sys-log "
 
-INFLUX_RELEASE="pro.2.0.4"
+IMAGE_INSTALL:append = " wlan-manager "
+
+INFLUX_RELEASE="pro.2.0.7"
