@@ -20,4 +20,4 @@ IMAGE_INSTALL:append = " rex-sys-log "
 
 IMAGE_INSTALL:append = " wlan-manager "
 
-INFLUX_RELEASE="pro.2.0.7"
+INFLUX_RELEASE="pro.2.0.8"
