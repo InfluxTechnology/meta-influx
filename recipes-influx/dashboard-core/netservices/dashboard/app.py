@@ -7,6 +7,10 @@ import os
 import sys
 import logging
 import time
+import subprocess
+import configparser
+import ipaddress
+from pathlib import Path
 
 # Minimal imports for lower memory
 from flask import Flask, render_template, request, redirect, jsonify, make_response
@@ -20,6 +24,17 @@ from shared_state import wifi_state
 LOG_FILE = "/var/log/wifi_dashboard.log"
 DASHBOARD_PORT = 80
 CONNECT_LOCK_TIMEOUT_SECONDS = 90
+REXGEND_CONFIG_FILE = "/data/rexgen/config/rexgend.conf"
+REXGEND_SERVICE = "rexgend.service"
+REXGEND_DEFAULTS = {
+    "use_socketcan": 0,
+    "sample_rate": 10,
+    "use_space_limit": 1,
+    "max_space_percent": 90,
+    "log_errors": 0,
+    "use_ntp": 1,
+    "ntp_update_period": 300,
+}
 
 # Setup logging - minimal
 logging.basicConfig(
@@ -28,7 +43,7 @@ logging.basicConfig(
     format="%(asctime)s %(message)s"
 )
 log = logging.getLogger(__name__)
-TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "1") == "1"
+TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "0") == "1"
 
 # Flask app - minimal config
 app = Flask(__name__, template_folder='templates')
@@ -39,6 +54,15 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 def _trace(msg: str):
     if TRACE_VERBOSE:
         log.info(f"[TRACE][DASH] {msg}")
+
+
+def _is_ap_client_request(remote_addr: str) -> bool:
+    """True when request originates from AP subnet clients."""
+    try:
+        ip = ipaddress.ip_address(remote_addr or "")
+        return ip in ipaddress.ip_network("192.168.51.0/24")
+    except Exception:
+        return False
 
 
 def busy_connect_response():
@@ -66,6 +90,120 @@ def validate_wifi_input(ssid: str, password: str) -> tuple:
     if password and len(password) > 63:
         return False, f"Password too long ({len(password)} chars, max 63)"
     return True, None
+
+
+def validate_ap_password(password: str) -> tuple:
+    """Validate AP password (WPA2 PSK constraints)."""
+    if not password:
+        return False, "AP password is required"
+    if len(password) < 8:
+        return False, "AP password too short (min 8 characters)"
+    if len(password) > 63:
+        return False, "AP password too long (max 63 characters)"
+    return True, None
+
+
+def _read_text(path: str) -> str:
+    try:
+        return Path(path).read_text().strip()
+    except Exception:
+        return ""
+
+
+def get_device_info() -> dict:
+    """Read device metadata from rexgend var files and Linux system info."""
+    base = "/home/root/rexusb/var"
+    image_version = ""
+    try:
+        res = subprocess.run(
+            ["mender-update", "show-artifact"],
+            capture_output=True, text=True, timeout=3
+        )
+        if res.returncode == 0:
+            image_version = (res.stdout or "").strip()
+    except Exception:
+        image_version = ""
+
+    os_release = _read_text("/etc/os-release")
+    if (not image_version) and os_release:
+        for line in os_release.splitlines():
+            if line.startswith("VERSION_ID="):
+                image_version = line.split("=", 1)[1].strip().strip('"')
+                break
+    if not image_version:
+        image_version = "2.04"
+
+    return {
+        "rexgend_version": _read_text(f"{base}/rexgend_version"),
+        "serial_number": _read_text(f"{base}/serial"),
+        "cpu_type": _read_text(f"{base}/cputype"),
+        "firmware_version": _read_text(f"{base}/firmware"),
+        "configuration_name": _read_text(f"{base}/configuration_name"),
+        "configuration_uid": _read_text(f"{base}/configuration_uuid"),
+        "linux_version": os.uname().release if hasattr(os, "uname") else "",
+        "image_version": image_version
+    }
+
+
+def _load_rexgend_config() -> dict:
+    """Load rexgend.conf values used by LoadSettings()."""
+    parser = configparser.ConfigParser(interpolation=None)
+    parser.optionxform = str
+    parser.read(REXGEND_CONFIG_FILE)
+
+    def _getint(section: str, key: str, fallback: int, alt_section: str = None) -> int:
+        try:
+            if parser.has_section(section) and parser.has_option(section, key):
+                return parser.getint(section, key)
+            if alt_section and parser.has_section(alt_section) and parser.has_option(alt_section, key):
+                return parser.getint(alt_section, key)
+        except Exception:
+            pass
+        return fallback
+
+    return {
+        "config_path": REXGEND_CONFIG_FILE,
+        "use_socketcan": 1 if _getint("Live data", "use_socketcan", REXGEND_DEFAULTS["use_socketcan"]) else 0,
+        "sample_rate": _getint("Live data", "sample_rate", REXGEND_DEFAULTS["sample_rate"]),
+        "use_space_limit": 1 if _getint("Storage", "use_space_limit", REXGEND_DEFAULTS["use_space_limit"]) else 0,
+        "max_space_percent": _getint("Storage", "max_space_percent", REXGEND_DEFAULTS["max_space_percent"]),
+        "log_errors": 1 if _getint("CAN bus", "log_errors", REXGEND_DEFAULTS["log_errors"], alt_section="Canbus") else 0,
+        "use_ntp": 1 if _getint("System", "use_ntp", REXGEND_DEFAULTS["use_ntp"]) else 0,
+        "ntp_update_period": _getint("System", "ntp_update_period", REXGEND_DEFAULTS["ntp_update_period"]),
+    }
+
+
+def _save_rexgend_config(data: dict):
+    existing = _load_rexgend_config()
+    parser = configparser.ConfigParser(interpolation=None)
+    parser.optionxform = str
+    parser.read(REXGEND_CONFIG_FILE)
+
+    def ensure_section(name: str):
+        if not parser.has_section(name):
+            parser.add_section(name)
+
+    # Keep existing section naming if present.
+    can_section = "CAN bus" if parser.has_section("CAN bus") else ("Canbus" if parser.has_section("Canbus") else "CAN bus")
+
+    ensure_section("Live data")
+    ensure_section("Storage")
+    ensure_section(can_section)
+    ensure_section("System")
+
+    # Update only managed keys; preserve all other keys/sections intact.
+    parser.set("Live data", "use_socketcan", str(1 if int(data["use_socketcan"]) else 0))
+    parser.set("Live data", "sample_rate", str(int(data["sample_rate"])))
+    parser.set("Storage", "use_space_limit", str(1 if int(data["use_space_limit"]) else 0))
+    parser.set("Storage", "max_space_percent", str(int(data["max_space_percent"])))
+    parser.set(can_section, "log_errors", str(1 if int(data["log_errors"]) else 0))
+    # NTP is intentionally not used for now.
+    parser.set("System", "use_ntp", "0")
+    parser.set("System", "ntp_update_period", str(int(existing.get("ntp_update_period", REXGEND_DEFAULTS["ntp_update_period"]))))
+
+    Path(REXGEND_CONFIG_FILE).parent.mkdir(parents=True, exist_ok=True)
+    with open(REXGEND_CONFIG_FILE, "w") as f:
+        parser.write(f)
 
 
 # ========== API Endpoints ==========
@@ -115,6 +253,8 @@ def api_status():
         "last_scan": state.get("last_scan", 0),
         "ap_clients": state.get("ap_clients", []),
         "ap_blocked": state.get("ap_blocked", {}),
+        "ap_settings_error": state.get("ap_settings_error"),
+        "ap_settings_last_action": state.get("ap_settings_last_action"),
         "requester_ip": request.remote_addr
     })
 
@@ -242,6 +382,9 @@ def api_ap_unblock():
 @app.route('/api/connect', methods=['POST'])
 def api_connect():
     """Non-blocking connect request with validation"""
+    if not _is_ap_client_request(request.remote_addr):
+        return jsonify({"error": "SSID connect is allowed only when accessed via AP."}), 403
+
     data = request.get_json() or {}
     ssid = data.get('ssid') or request.form.get('ssid', '')
     password = data.get('password') or request.form.get('password', '')
@@ -289,12 +432,97 @@ def api_connect():
     return '{"status":"connecting"}', 200, {'Content-Type': 'application/json'}
 
 
+@app.route('/api/ap-settings/password', methods=['POST'])
+def api_ap_settings_password():
+    _trace(f"POST /api/ap-settings/password from={request.remote_addr}")
+    if wifi_state.get("connect_in_progress", False):
+        return busy_connect_response()
+
+    data = request.get_json() or {}
+    password = (data.get('password') or '').strip()
+    valid, error = validate_ap_password(password)
+    if not valid:
+        return jsonify({"error": error}), 400
+
+    wifi_state.update({
+        "ap_settings_error": None,
+        "ap_settings_last_action": None
+    })
+    wifi_state.request_ap_password_change(password)
+    return jsonify({"status": "requested"}), 202
+
+
+@app.route('/api/device-info')
+def api_device_info():
+    _trace(f"GET /api/device-info from={request.remote_addr}")
+    return jsonify(get_device_info())
+
+
+@app.route('/api/rexgend-config', methods=['GET'])
+def api_rexgend_config_get():
+    _trace(f"GET /api/rexgend-config from={request.remote_addr}")
+    return jsonify(_load_rexgend_config())
+
+
+@app.route('/api/rexgend-config', methods=['POST'])
+def api_rexgend_config_save():
+    _trace(f"POST /api/rexgend-config from={request.remote_addr}")
+    data = request.get_json() or {}
+    try:
+        cfg = {
+            "use_socketcan": 1 if int(data.get("use_socketcan", 0)) else 0,
+            "sample_rate": int(data.get("sample_rate", REXGEND_DEFAULTS["sample_rate"])),
+            "use_space_limit": 1 if int(data.get("use_space_limit", 0)) else 0,
+            "max_space_percent": int(data.get("max_space_percent", REXGEND_DEFAULTS["max_space_percent"])),
+            "log_errors": 1 if int(data.get("log_errors", 0)) else 0,
+            "use_ntp": 1 if int(data.get("use_ntp", 0)) else 0,
+            "ntp_update_period": int(data.get("ntp_update_period", REXGEND_DEFAULTS["ntp_update_period"])),
+        }
+    except Exception:
+        return jsonify({"error": "Invalid settings values"}), 400
+
+    if cfg["sample_rate"] <= 0:
+        return jsonify({"error": "sample_rate must be > 0"}), 400
+    if cfg["max_space_percent"] < 1 or cfg["max_space_percent"] > 100:
+        return jsonify({"error": "max_space_percent must be 1-100"}), 400
+
+    restart = bool(data.get("restart", False))
+    _save_rexgend_config(cfg)
+
+    if restart:
+        try:
+            subprocess.run(["systemctl", "restart", REXGEND_SERVICE], check=True, timeout=20)
+            is_active = subprocess.run(
+                ["systemctl", "is-active", REXGEND_SERVICE],
+                capture_output=True, text=True, timeout=5
+            ).stdout.strip()
+            if is_active != "active":
+                return jsonify({"error": "rexgend restart requested but service is not active"}), 500
+        except Exception as e:
+            return jsonify({"error": f"Failed to restart rexgend: {e}"}), 500
+
+    return jsonify({"status": "ok", "restarted": restart})
+
+
 # ========== Web Pages ==========
 
 @app.route('/')
+def home():
+    # Smart home: AP clients land on WiFi setup; other interfaces land on Device information.
+    if _is_ap_client_request(request.remote_addr):
+        return redirect('/wifi-settings', code=302)
+    return redirect('/device-info', code=302)
+
+
+@app.route('/wifi-settings')
 def index():
     networks = wifi_state.get("networks", [])
-    return render_template("index.html", networks=networks)
+    return render_template(
+        "index.html",
+        networks=networks,
+        show_back=(not _is_ap_client_request(request.remote_addr)),
+        connect_allowed=_is_ap_client_request(request.remote_addr)
+    )
 
 
 @app.route('/saved-networks')
@@ -302,8 +530,36 @@ def saved_networks_page():
     return render_template("manage_networks.html")
 
 
+@app.route('/device-info')
+def device_info_page():
+    return render_template("device_info.html")
+
+
+@app.route('/ap-settings')
+def ap_settings_page():
+    return render_template("ap_settings.html")
+
+
+@app.route('/ap-password')
+def ap_password_page():
+    return redirect('/ap-settings', code=302)
+
+
+@app.route('/rexgend-settings')
+def rexgend_settings_page():
+    return render_template("rexgend_settings.html")
+
+
+@app.route('/rexgen-settings')
+def rexgen_settings_page():
+    return redirect('/rexgend-settings', code=302)
+
+
 @app.route('/configure_wifi', methods=['POST'])
 def configure_wifi():
+    if not _is_ap_client_request(request.remote_addr):
+        return "SSID connect is allowed only when accessed via AP.", 403
+
     ssid = request.form.get('ssid', '').strip()
     password = request.form.get('password', '')
 

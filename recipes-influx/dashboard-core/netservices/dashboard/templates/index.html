@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wi-Fi Configuration</title>
+    <title>Wi-Fi Settings</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 17px; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%); }
         .container { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 420px; width: 94%; }
-        .logo { text-align: center; margin-bottom: 12px; }
-        h1 { font-size: 1.35em; margin-bottom: 1em; text-align: center; color: #333; }
+        .header { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .title { font-size: 1.1em; font-weight: 600; color: #333; text-align: center; width: 100%; }
         .status { text-align: center; padding: 10px; margin-top: 15px; border-radius: 8px; display: none; transition: opacity 0.5s ease-out; }
         .status.fade-out { opacity: 0; }
         .status.loading { display: block; background: #e0f7f5; color: #178a83; }
@@ -66,44 +66,44 @@
         .nav-bar a, .nav-bar span { color: #20b2aa; text-decoration: none; cursor: pointer; }
         .nav-bar a:active, .nav-bar span:active { opacity: 0.6; }
         .nav-sep { color: #c7c7cc; }
-        /* AP users list */
-        .ap-client { display: grid; grid-template-columns: minmax(0, 1fr) 92px; column-gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #e5e5e7; font-size: 0.85em; }
-        .ap-client:last-child { border-bottom: none; }
-        .ap-client-info { min-width: 0; }
-        .ap-client-name { color: #333; font-weight: 500; }
-        .ap-client-detail { color: #86868b; font-size: 0.85em; }
-        .ap-client-detail-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 8px; }
-        .ap-client-detail-row span { min-width: 0; white-space: nowrap; }
-        .ap-client-detail-row .mac-col { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95em; }
-        .ap-client-detail-row .right { text-align: right; }
-        .ap-client-action { width: 92px; display: flex; justify-content: flex-end; }
-        .ap-btn-placeholder { width: 92px; height: 28px; visibility: hidden; }
-        .ap-client .block-btn { padding: 4px 10px; border: 1px solid #dc3545; color: #dc3545; background: none; border-radius: 4px; font-size: 0.85em; cursor: pointer; white-space: nowrap; }
-        .ap-client .block-btn:active { background: #dc3545; color: #fff; }
-        .ap-client .unblock-btn { padding: 4px 10px; border: 1px solid #20b2aa; color: #20b2aa; background: none; border-radius: 4px; font-size: 0.85em; cursor: pointer; white-space: nowrap; }
-        .ap-client .unblock-btn:active { background: #20b2aa; color: #fff; }
-        .ap-empty { text-align: center; color: #999; padding: 12px; font-size: 0.85em; }
         .ui-locked { pointer-events: none; opacity: 0.95; }
+        .top-switch { display: flex; background: #f5f5f7; border-radius: 16px 16px 0 0; overflow: hidden; margin: -20px -20px 12px -20px; }
+        .top-switch a { flex: 1; height: 64px; text-decoration: none; color: #20b2aa; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .top-switch a.active { background: #fff; color: #178a83; }
+        .top-switch svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .top-switch .tab-label { font-size: 0.62em; font-weight: 600; line-height: 1; white-space: nowrap; text-align: center; }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Main WiFi list view -->
         <div id="mainView">
-            <div class="logo">
-                <svg width="50" height="50" viewBox="0 0 24 24" fill="#20b2aa">
-                    <path d="M12 3C7.46 3 3.34 4.78.29 7.67c-.18.18-.29.43-.29.71 0 .28.11.53.29.71l11 11c.39.39 1.02.39 1.41 0l11-11c.18-.18.29-.43.29-.71 0-.28-.11-.53-.29-.71C20.66 4.78 16.54 3 12 3zm0 2c3.83 0 7.32 1.39 10 3.67l-10 10-10-10c2.68-2.28 6.17-3.67 10-3.67z"/>
-                </svg>
+            <div class="top-switch">
+                <a href="/device-info" title="Device Information" aria-label="Device Information">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="11.5" x2="12" y2="16"></line><circle cx="12" cy="7" r="0.75"></circle></svg>
+                    <span class="tab-label">Device</span>
+                </a>
+                <a href="/wifi-settings" class="active" title="Wi-Fi Settings" aria-label="Wi-Fi Settings">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9a12 12 0 0 1 16 0"></path><path d="M7 12a8 8 0 0 1 10 0"></path><path d="M10 15a4 4 0 0 1 4 0"></path><circle cx="12" cy="19" r="1"></circle></svg>
+                    <span class="tab-label">Wi-Fi</span>
+                </a>
+                <a href="/ap-settings" title="Access Point Settings" aria-label="Access Point Settings">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="7" rx="2"></rect><path d="M8 11V8"></path><path d="M12 11V7"></path><path d="M16 11V9"></path><circle cx="9" cy="14.5" r="0.8"></circle><circle cx="13" cy="14.5" r="0.8"></circle></svg>
+                    <span class="tab-label">AP</span>
+                </a>
+                <a href="/rexgend-settings" title="rexgend Settings" aria-label="rexgend Settings">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4.8a7 7 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 0 0-1.7 1l-2.4-.8-2 3.5 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.4-.8a7 7 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7 7 0 0 0 1.7-1l2.4.8 2-3.5-2-1.5c.1-.3.1-.7.1-1z"></path></svg>
+                    <span class="tab-label">rexgend</span>
+                </a>
             </div>
-
-            <h1>Wi-Fi Configuration</h1>
+            <div class="header">
+                <span class="title">Wi-Fi Settings</span>
+            </div>
 
             <div class="nav-bar">
                 <span onclick="refreshFromNav(this)">Refresh</span>
                 <span class="nav-sep">|</span>
                 <a href="/saved-networks">Manage Saved</a>
-                <span class="nav-sep">|</span>
-                <span onclick="showApUsersPage()"><span id="apUserCount">0</span> Clients</span>
             </div>
 
             <div id="networkList" class="network-list">
@@ -118,17 +118,9 @@
             <div id="detailContent"></div>
         </div>
 
-        <!-- AP Users page (hidden by default) -->
-        <div id="apUsersView" style="display:none;">
-            <div class="detail-header">
-                <a class="back-btn" onclick="showMainView()">&larr;</a>
-                <span class="detail-title">Manage AP Connections</span>
-                <span class="section-link" onclick="refreshApUsers(this)" style="font-size:0.85em">Refresh</span>
-            </div>
-            <div id="apUsersContent"></div>
-        </div>
     </div>
     <script>
+        const CONNECT_ALLOWED = {{ 'true' if connect_allowed else 'false' }};
         // State
         let knownNetworks = [];
         let connectedSsid = null;
@@ -138,9 +130,6 @@
         let clientMac = null;
         let lastNetworks = [];
         let lastScanTime = 0;
-        let lastApClients = [];
-        let lastApBlocked = {};
-        let requesterIp = null;
         let connectLockActive = false;
         let connectLockTimer = null;
         let connectRequestPending = false;
@@ -162,14 +151,22 @@
 
         function isKnownNetwork(ssid) { return knownNetworks.includes(ssid); }
 
+        function ensureConnectAllowed() {
+            if (CONNECT_ALLOWED) return true;
+            var status = document.getElementById('status');
+            status.className = 'status error';
+            status.textContent = 'SSID connect is allowed only when accessed via AP.';
+            status.style.display = 'block';
+            hideStatusAfter(8000);
+            return false;
+        }
+
         function setConnectLock(active, message) {
             connectLockActive = !!active;
             var mainView = document.getElementById('mainView');
             var detailView = document.getElementById('detailView');
-            var apUsersView = document.getElementById('apUsersView');
             if (mainView) mainView.classList.toggle('ui-locked', connectLockActive);
             if (detailView) detailView.classList.toggle('ui-locked', connectLockActive);
-            if (apUsersView) apUsersView.classList.toggle('ui-locked', connectLockActive);
             if (connectLockActive) {
                 connectRequestPending = true;
                 startConnectLockWatch();
@@ -372,7 +369,6 @@
 
         function showMainView() {
             document.getElementById('detailView').style.display = 'none';
-            document.getElementById('apUsersView').style.display = 'none';
             document.getElementById('mainView').style.display = 'block';
         }
 
@@ -388,6 +384,7 @@
         }
 
         function selectNetwork(el) {
+            if (!ensureConnectAllowed()) return;
             var ssid = el.dataset.ssid;
             if (ssid === connectedSsid) return;
             collapseInline();
@@ -419,6 +416,7 @@
         }
 
         function connectInline(ssid) {
+            if (!ensureConnectAllowed()) return;
             if (connectLockActive || connectRequestPending) return;
             connectRequestPending = true;
             var pwd = document.getElementById('inlinePwd');
@@ -517,6 +515,7 @@
         // ========== Known network auto-connect ==========
 
         function connectKnown(el) {
+            if (!ensureConnectAllowed()) return;
             if (connectLockActive || connectRequestPending) return;
             var ssid = el.dataset.ssid;
             if (ssid === connectedSsid) return;
@@ -708,161 +707,9 @@
             });
         }
 
-        // ========== AP Users Page ==========
-
-        function showApUsersPage() {
-            if (connectLockActive) return;
-            document.getElementById('mainView').style.display = 'none';
-            document.getElementById('detailView').style.display = 'none';
-            document.getElementById('apUsersView').style.display = 'block';
-            // Fetch fresh data when opening
-            fetchApUsers();
-        }
-
-        function fetchApUsers() {
-            fetch('/api/ap-clients')
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    lastApClients = data.clients || [];
-                    lastApBlocked = data.blocked || {};
-                    // Also update count on nav bar
-                    var el = document.getElementById('apUserCount');
-                    if (el) el.textContent = lastApClients.length;
-                    renderApUsersPage();
-                })
-                .catch(function() {});
-        }
-
-        function refreshApUsers(el) {
-            if (connectLockActive) return;
-            if (el) { el.textContent = 'Refreshing...'; el.style.pointerEvents = 'none'; }
-            fetch('/api/ap-clients')
-                .then(function(res) { return res.json(); })
-                .then(function(data) {
-                    lastApClients = data.clients || [];
-                    lastApBlocked = data.blocked || {};
-                    var countEl = document.getElementById('apUserCount');
-                    if (countEl) countEl.textContent = lastApClients.length;
-                    renderApUsersPage();
-                })
-                .catch(function() {})
-                .finally(function() {
-                    if (el) { el.textContent = 'Refresh'; el.style.pointerEvents = ''; }
-                });
-        }
-
-        function renderApUsersPage() {
-            var container = document.getElementById('apUsersContent');
-            var clients = lastApClients || [];
-            var blocked = lastApBlocked || {};
-            var now = Date.now() / 1000;
-            var connectedMacs = {};
-
-            var html = '';
-
-            if (clients.length === 0 && Object.keys(blocked).length === 0) {
-                html = '<div class="ap-empty">No devices connected</div>';
-            }
-
-            clients.forEach(function(c) {
-                var macLower = (c.mac || '').toLowerCase();
-                var mac = macLower.toUpperCase();
-                connectedMacs[macLower] = true;
-                var isSelf = (c.ip && c.ip === requesterIp);
-                var blockedUntil = blocked[macLower] || 0;
-                var isBlocked = blockedUntil > now;
-                var remaining = isBlocked ? Math.ceil((blockedUntil - now) / 60) : 0;
-                var name = c.hostname || mac;
-                if (name && name.indexOf('-') >= 0 && name.indexOf(' ') < 0) {
-                    name = name.replace(/-/g, ' ');
-                }
-                var ipText = c.ip || '--';
-                var blockedText = isBlocked ? ('Blocked ' + remaining + 'm') : '';
-                var detailHtml = '<div class="ap-client-detail-row">' +
-                    '<span>' + ipText + '</span>' +
-                    '<span class="mac-col">' + mac + '</span>' +
-                    '<span class="right">' + blockedText + '</span>' +
-                '</div>';
-                var actionHtml = isSelf
-                    ? '<span class="ap-btn-placeholder"></span>'
-                    : (isBlocked
-                        ? '<button class="unblock-btn" onclick="unblockClient(\'' + macLower + '\')">Unblock</button>'
-                        : '<button class="block-btn" onclick="blockClient(\'' + macLower + '\')">Block 5m</button>');
-                html += '<div class="ap-client">' +
-                    '<div class="ap-client-info">' +
-                        '<div class="ap-client-name">' + name + (isSelf ? ' <span style="color:#86868b; font-weight:normal">(you)</span>' : '') + '</div>' +
-                        '<div class="ap-client-detail">' + detailHtml + '</div>' +
-                    '</div>' +
-                    '<div class="ap-client-action">' + actionHtml + '</div>' +
-                '</div>';
-            });
-
-            // Blocked clients
-            var blockedMacs = Object.keys(blocked).filter(function(m) { return blocked[m] > now && !connectedMacs[m]; });
-            blockedMacs.forEach(function(mac) {
-                var remaining = Math.ceil((blocked[mac] - now) / 60);
-                var macUpper = mac.toUpperCase();
-                var detailHtml = '<div class="ap-client-detail-row">' +
-                    '<span>--</span>' +
-                    '<span class="mac-col">' + macUpper + '</span>' +
-                    '<span class="right">Blocked ' + remaining + 'm</span>' +
-                '</div>';
-                html += '<div class="ap-client">' +
-                    '<div class="ap-client-info">' +
-                        '<div class="ap-client-name" style="color:#dc3545">' + macUpper + '</div>' +
-                        '<div class="ap-client-detail">' + detailHtml + '</div>' +
-                    '</div>' +
-                    '<div class="ap-client-action"><button class="unblock-btn" onclick="unblockClient(\'' + mac + '\')">Unblock</button></div>' +
-                '</div>';
-            });
-
-            container.innerHTML = html;
-        }
-
-        function blockClient(mac) {
-            if (connectLockActive) return;
-            var macLower = (mac || '').toLowerCase();
-            var now = Date.now() / 1000;
-            lastApBlocked[macLower] = now + (5 * 60);
-            renderApUsersPage();
-            fetch('/api/ap-clients/block', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mac: macLower })
-            })
-            .then(function(res) {
-                if (!res.ok) {
-                    delete lastApBlocked[macLower];
-                }
-            })
-            .catch(function() {
-                delete lastApBlocked[macLower];
-            })
-            .finally(function() {
-                renderApUsersPage();
-                setTimeout(fetchApUsers, 400);
-            });
-        }
-
-        function unblockClient(mac) {
-            if (connectLockActive) return;
-            var macLower = (mac || '').toLowerCase();
-            delete lastApBlocked[macLower];
-            renderApUsersPage();
-            fetch('/api/ap-clients/unblock', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mac: macLower })
-            })
-            .catch(function() {})
-            .finally(function() {
-                setTimeout(fetchApUsers, 400);
-            });
-        }
-
         // ========== Background ==========
 
-        // Update device info + AP client count
+        // Update device info shown in connected section.
         function updateDeviceInfo(data) {
             var ipChanged = clientIp !== data.client_ip;
             var macChanged = clientMac !== data.client_mac;
@@ -871,15 +718,6 @@
             if ((ipChanged || macChanged) && data.connected_ssid && !isInlinePasswordActive()) {
                 if (data.networks) lastNetworks = data.networks;
                 buildNetworkList(lastNetworks, knownNetworks, connectedSsid);
-            }
-            // Update AP client count + requester IP
-            if (data.requester_ip) requesterIp = data.requester_ip;
-            if (data.ap_clients !== undefined) lastApClients = data.ap_clients || [];
-            if (data.ap_blocked !== undefined) lastApBlocked = data.ap_blocked || {};
-            var el = document.getElementById('apUserCount');
-            if (el) el.textContent = lastApClients.length;
-            if (document.getElementById('apUsersView').style.display === 'block') {
-                renderApUsersPage();
             }
         }
 

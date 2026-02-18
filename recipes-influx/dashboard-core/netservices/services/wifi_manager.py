@@ -57,7 +57,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 log = logging.getLogger("wifi_manager")
-TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "1") == "1"
+TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "0") == "1"
 CONNECT_FORENSICS = os.environ.get("REXGEN_CONNECT_FORENSICS", "0") == "1"
 
 
@@ -90,7 +90,7 @@ class WifiManager:
             "connect_target": None
         })
         log.info(f"WiFi Manager initialized. Serial: {self.serial}")
-        log.info(f"[TRACE] verbose={TRACE_VERBOSE} scan_cfg={self.network_scan_cfg} ap_cfg={self.ap_clients_cfg}")
+        self._trace(f"verbose={TRACE_VERBOSE} scan_cfg={self.network_scan_cfg} ap_cfg={self.ap_clients_cfg}")
 
     def _trace(self, msg: str):
         if TRACE_VERBOSE:
@@ -468,6 +468,22 @@ class WifiManager:
                     })
                 else:
                     wifi_state.update({"saved_network_error": f"Network '{ssid}' not found"})
+            return
+
+        # AP password change request
+        ap_pwd_req = wifi_state.get_ap_password_change_request()
+        if ap_pwd_req:
+            new_password = (ap_pwd_req.get("password") or "").strip()
+            ok, msg = self.ap.set_password(new_password)
+            if ok:
+                wifi_state.update({
+                    "ap_settings_error": None,
+                    "ap_settings_last_action": msg
+                })
+            else:
+                wifi_state.update({
+                    "ap_settings_error": msg
+                })
             return
 
         # Block/unblock AP client requests

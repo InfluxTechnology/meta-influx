@@ -9,11 +9,17 @@ DESCRIPTION = " Create a virtual wlan1 interface \
 "
 
 SRC_URI += "\
-        file://docs/architecture.drawio \
         file://dashboard/app.py \
         file://dashboard/__init__.py \
+        file://dashboard/templates/ap_settings.html \
+        file://dashboard/templates/device_info.html \
         file://dashboard/templates/index.html \
         file://dashboard/templates/manage_networks.html \
+        file://dashboard/templates/rexgend_settings.html \
+        file://dashboard/templates/settings.html \
+        file://dashboard/templates/settings_ap_password.html \
+        file://dashboard/templates/settings_device_info.html \
+        file://dashboard/templates/settings_rexgend_config.html \
         file://services/__init__.py \
         file://services/ap_clients_config.json \
         file://services/ap_manager.py \
@@ -26,7 +32,7 @@ SRC_URI += "\
         file://systemd/wifi-dashboard.service \
         file://systemd/wifi-manager.service \
 "
-
+#        file://docs/architecture.drawio 
 
 LICENSE = "CLOSED"
 
@@ -36,7 +42,6 @@ INFLUX_DIR="/opt/influx/"
 INFLUX_DIRS = "\
     ${INFLUX_DIR} \
     ${INFLUX_DIR}/netservices/ \
-    ${INFLUX_DIR}/netservices/docs/ \
     ${INFLUX_DIR}/netservices/dashboard/ \
     ${INFLUX_DIR}/netservices/dashboard/templates/ \
     ${INFLUX_DIR}/netservices/scripts/ \
@@ -45,6 +50,7 @@ INFLUX_DIRS = "\
     /usr/lib/systemd/system/ \
     /usr/lib/systemd/system/multi-user.target.wants/ \
 "
+#    ${INFLUX_DIR}/netservices/docs/ 
 
 INFLUX_FILES = "\
     ${S}/docs/ \
@@ -65,7 +71,6 @@ do_install:prepend() {
 do_install () {    
     install -m 0755 ${S}/dashboard/*.py ${D}${INFLUX_DIR}/netservices/dashboard/
     install -m 0755 ${S}/dashboard/templates/*.html ${D}${INFLUX_DIR}/netservices/dashboard/templates/
-    install -m 0755 ${S}/docs/architecture.drawio ${D}${INFLUX_DIR}/netservices/docs/
     install -m 0755 ${S}/scripts/*.sh ${D}${INFLUX_DIR}/netservices/scripts/
     install -m 0755 ${S}/services/*.py ${D}${INFLUX_DIR}/netservices/services/
     install -m 0755 ${S}/services/*.json ${D}${INFLUX_DIR}/netservices/services/
@@ -76,6 +81,7 @@ do_install () {
     ln -sf /etc/systemd/system/wifi-manager.service ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi-manager.service
 }
 
+#    install -m 0755 ${S}/docs/architecture.drawio ${D}${INFLUX_DIR}/netservices/docs/
 
 SYSTEMD_AUTO_ENABLE = "enable"
 SYSTEMD_SERVICE:${PN} = "\

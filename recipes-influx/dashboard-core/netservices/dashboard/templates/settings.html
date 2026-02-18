@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 17px; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%); }
+        .container { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 420px; width: 94%; }
+        .header { display: flex; align-items: center; margin-bottom: 14px; }
+        .back-btn { font-size: 1.3em; color: #20b2aa; cursor: pointer; margin-right: 10px; text-decoration: none; line-height: 1; }
+        .title { font-size: 1.1em; font-weight: 600; color: #333; }
+        .menu-list { border: 1px solid #e5e5e7; border-radius: 10px; overflow: hidden; }
+        .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 13px 14px; border-bottom: 1px solid #eef0f2; cursor: pointer; font-size: 0.95em; color: #222; text-decoration: none; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:active { background: #f6f8fa; }
+        .menu-arrow { color: #9aa0a6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            {% if show_back %}
+            <a class="back-btn" href="/">&larr;</a>
+            {% endif %}
+            <span class="title">Settings</span>
+        </div>
+        <div class="menu-list">
+            <a class="menu-item" href="/settings/device-info">
+                <span>Device information</span>
+                <span class="menu-arrow">&rsaquo;</span>
+            </a>
+            <a class="menu-item" href="/wifi-settings">
+                <span>WiFi Settings</span>
+                <span class="menu-arrow">&rsaquo;</span>
+            </a>
+            <a class="menu-item" href="/settings/ap-password">
+                <span>AP Password</span>
+                <span class="menu-arrow">&rsaquo;</span>
+            </a>
+            <a class="menu-item" href="/settings/rexgend-config">
+                <span>ReXgen Settings</span>
+                <span class="menu-arrow">&rsaquo;</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

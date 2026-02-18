@@ -19,7 +19,7 @@ STATE_FILE = f"{STATE_DIR}/wifi_state.json"
 
 # Heartbeat timeout (seconds)
 HEARTBEAT_TIMEOUT = 30
-TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "1") == "1"
+TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "0") == "1"
 log = logging.getLogger("shared_state")
 
 
@@ -215,6 +215,26 @@ class WifiState:
             self._trace("has_ap_clients_refresh_request consumed=True")
             return True
         return False
+
+    def request_ap_password_change(self, password: str):
+        """Request AP password change"""
+        with open(f"{STATE_DIR}/ap_password_request.json", 'w') as f:
+            json.dump({"password": password}, f)
+        self._trace(f"request_ap_password_change password_len={len(password or '')}")
+
+    def get_ap_password_change_request(self) -> dict:
+        """Get and clear AP password change request"""
+        request_file = Path(f"{STATE_DIR}/ap_password_request.json")
+        if request_file.exists():
+            try:
+                with open(request_file, 'r') as f:
+                    data = json.load(f)
+                request_file.unlink()
+                self._trace("get_ap_password_change_request consumed=True")
+                return data
+            except (json.JSONDecodeError, IOError):
+                pass
+        return None
 
 
 # Global instance

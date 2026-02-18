@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 
 log = logging.getLogger(__name__)
-TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "1") == "1"
+TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "0") == "1"
 
 # ========== Configuration ==========
 
@@ -190,7 +190,7 @@ address=/#/{self.ip}
             self.channel = ch
             return True, None
 
-        log.info(f"[TRACE][AP] Sync channel request current={current} target={ch}")
+        self._trace(f"Sync channel request current={current} target={ch}")
         self.channel = ch
         self.configure_hostapd()
         # Try runtime channel switch if hostapd supports it; if not, keep AP
@@ -301,6 +301,25 @@ address=/#/{self.ip}
             log.warning("Dnsmasq not running, starting...")
             self._systemctl("start", "dnsmasq")
 
+    def set_password(self, new_password: str) -> tuple:
+        """Update AP password and apply it by restarting hostapd.
+        Returns (ok, message).
+        """
+        if not new_password or len(new_password) < 8 or len(new_password) > 63:
+            return False, "Password must be 8-63 characters"
+
+        if self.password == new_password:
+            return True, "AP password unchanged"
+
+        self.password = new_password
+        self.configure_hostapd()
+        # WPA passphrase change requires hostapd reload/restart to apply.
+        self._systemctl("restart", "hostapd")
+        time.sleep(2)
+        if not self.is_running():
+            return False, "hostapd failed to start after password update"
+        return True, "AP password updated"
+
     # ========== Client Management ==========
 
     def get_connected_clients(self) -> list:
@@ -317,11 +336,57 @@ address=/#/{self.ip}
                 m = re.match(r"Station\s+([0-9a-fA-F:]{17})", line)
                 if m:
                     current = m.group(1).lower()
-                    parsed[current] = {"mac": current, "signal": None, "hostname": None, "ip": None}
+                    parsed[current] = {
+                        "mac": current,
+                        "signal": None,
+                        "hostname": None,
+                        "ip": None,
+                        "inactive_time_ms": None,
+                        "tx_bitrate": None,
+                        "rx_bitrate": None,
+                        "connected_time_s": None,
+                        "beacon_interval": None,
+                        "dtim_period": None,
+                        "authorized": None,
+                        "authenticated": None,
+                        "associated": None
+                    }
+                elif not current:
+                    continue
+                elif "inactive time:" in line:
+                    v = re.search(r"inactive time:\s*(\d+)", line)
+                    if v:
+                        parsed[current]["inactive_time_ms"] = int(v.group(1))
                 elif current and "signal:" in line:
                     sig_match = re.search(r"signal:\s*(-?\d+)", line)
                     if sig_match:
                         parsed[current]["signal"] = int(sig_match.group(1))
+                elif "tx bitrate:" in line:
+                    v = re.search(r"tx bitrate:\s*(.+)$", line)
+                    if v:
+                        parsed[current]["tx_bitrate"] = v.group(1).strip()
+                elif "rx bitrate:" in line:
+                    v = re.search(r"rx bitrate:\s*(.+)$", line)
+                    if v:
+                        parsed[current]["rx_bitrate"] = v.group(1).strip()
+                elif "connected time:" in line:
+                    v = re.search(r"connected time:\s*(\d+)", line)
+                    if v:
+                        parsed[current]["connected_time_s"] = int(v.group(1))
+                elif "beacon interval:" in line:
+                    v = re.search(r"beacon interval:\s*(\d+)", line)
+                    if v:
+                        parsed[current]["beacon_interval"] = int(v.group(1))
+                elif "DTIM period:" in line:
+                    v = re.search(r"DTIM period:\s*(\d+)", line)
+                    if v:
+                        parsed[current]["dtim_period"] = int(v.group(1))
+                elif "authorized:" in line:
+                    parsed[current]["authorized"] = "yes" if "yes" in line.lower() else "no"
+                elif "authenticated:" in line:
+                    parsed[current]["authenticated"] = "yes" if "yes" in line.lower() else "no"
+                elif "associated:" in line:
+                    parsed[current]["associated"] = "yes" if "yes" in line.lower() else "no"
             return parsed
 
         stations = {}
@@ -344,7 +409,21 @@ address=/#/{self.ip}
             for line in (sta_output or "").splitlines():
                 mac = line.strip().lower()
                 if re.match(r"^([0-9a-f]{2}:){5}[0-9a-f]{2}$", mac):
-                    stations[mac] = {"mac": mac, "signal": None, "hostname": None, "ip": None}
+                    stations[mac] = {
+                        "mac": mac,
+                        "signal": None,
+                        "hostname": None,
+                        "ip": None,
+                        "inactive_time_ms": None,
+                        "tx_bitrate": None,
+                        "rx_bitrate": None,
+                        "connected_time_s": None,
+                        "beacon_interval": None,
+                        "dtim_period": None,
+                        "authorized": None,
+                        "authenticated": None,
+                        "associated": None
+                    }
             self._trace(f"hostapd list_sta parse count={len(stations)}")
 
         # Cross-reference with DHCP leases for hostname and IP.
