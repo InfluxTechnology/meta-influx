@@ -18,8 +18,25 @@ BLINK_DURATION=0.1
 prev_tx=0
 prev_rx=0
 
+get_default_if() {
+    # Read /proc/net/route directly - no process spawns
+    # Fields: Iface Destination Gateway ... (tab-separated)
+    # Default route has Destination=00000000
+    while IFS='	' read -r iface dest _; do
+        if [ "$dest" = "00000000" ]; then
+            echo "$iface"
+            return
+        fi
+    done < /proc/net/route
+}
+
+read_stat() {
+    read -r val < "$1" 2>/dev/null
+    echo "${val:-0}"
+}
+
 while true; do
-    DEFAULT_IF=$(ip route | awk '/^default/ {for (i=1;i<=NF;i++) if ($i=="dev") print $(i+1); exit}')
+    DEFAULT_IF=$(get_default_if)
 
     if [ -n "$DEFAULT_IF" ]; then
         # Choose LED based on default interface
@@ -36,11 +53,11 @@ while true; do
         echo $BLINK_OFF > "$LTE_LED"
 
         if [ -n "$LED" ]; then
-            tx=$(cat /sys/class/net/$DEFAULT_IF/statistics/tx_bytes)
-            rx=$(cat /sys/class/net/$DEFAULT_IF/statistics/rx_bytes)
+            tx=$(read_stat /sys/class/net/$DEFAULT_IF/statistics/tx_bytes)
+            rx=$(read_stat /sys/class/net/$DEFAULT_IF/statistics/rx_bytes)
 
-            if [ "$tx" -ne "$prev_tx" ] || [ "$rx" -ne "$prev_rx" ]; then
-                # Traffic flowing - custom blink
+            if [ "$tx" != "$prev_tx" ] || [ "$rx" != "$prev_rx" ]; then
+                # Traffic flowing - double blink then wait
                 echo $BLINK_ON > "$LED"
                 sleep $BLINK_DURATION
                 echo $BLINK_OFF > "$LED"
@@ -48,7 +65,7 @@ while true; do
                 echo $BLINK_ON > "$LED"
                 sleep $BLINK_DURATION
                 echo $BLINK_OFF > "$LED"
-                sleep $BLINK_DURATION
+                sleep $CHECK_INTERVAL
             else
                 # No traffic - solid LED
                 echo $BLINK_ON > "$LED"
@@ -57,6 +74,8 @@ while true; do
 
             prev_tx=$tx
             prev_rx=$rx
+        else
+            sleep $CHECK_INTERVAL
         fi
     else
         # No default route = No internet - blink both LEDs slowly

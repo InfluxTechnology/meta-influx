@@ -14,12 +14,12 @@ SRC_URI += "file://LICENSE \
 	file://etc/ppp/peers/quectel-chat-disconnect \
 	file://etc/ppp/peers/quectel-ppp \
 	file://etc/systemd/network/20-wireless-wlan0.network \
+	file://etc/systemd/system/rexgen_sn_to_hostname.service \
 	file://etc/systemd/system/autostart.service \
 	file://etc/systemd/system/lte-ppp.service \
 	file://etc/systemd/system/net-failover.service \
 	file://etc/systemd/system/net-failover.timer \
 	file://etc/systemd/system/release_check.service \
-	file://etc/systemd/system/rexgen_sn_to_hostname.service \
 	file://opt/influx/Release-notes \
 	file://opt/influx/autostart.sh \
 	file://opt/influx/blt_start.sh \
@@ -176,8 +176,6 @@ pkg_postinst:${PN}() {
         sync
 
         echo "Wi-Fi module postinstall setup complete."
-        # Do not reboot here!
-        # echo "WIFI_SETUP_DONE" > /tmp/.wifi_setup_done
     else
         echo "Postinstall will run on first boot"
     fi

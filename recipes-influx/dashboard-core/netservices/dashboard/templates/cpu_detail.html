@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Usage</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 17px; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%); }
+        a { color: #20b2aa; cursor: pointer; text-decoration: none; } a:hover { color: #5ed8d1; }
+        .container { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 640px; width: 94%; }
+        .top-switch { display: flex; background: #f5f5f7; border-radius: 16px 16px 0 0; overflow: hidden; margin: -20px -20px 12px -20px; }
+        .top-switch a { flex: 1; height: 64px; text-decoration: none; color: #20b2aa; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .top-switch a.active { background: #fff; color: #178a83; }
+        .top-switch svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .top-switch .tab-label { font-size: 0.62em; font-weight: 600; line-height: 1; white-space: nowrap; text-align: center; }
+        .detail-header { display: flex; align-items: center; margin-bottom: 14px; }
+        .back-btn { font-size: 1.25em; margin-right: 10px; text-decoration: none; line-height: 1; }
+        .detail-title { font-size: 1.05em; font-weight: 600; color: #333; flex: 1; text-align: center; margin-right: 18px; }
+        .detail-subtitle { margin: -8px 0 10px 0; text-align: center; color: #86868b; font-size: 0.85em; }
+        .nav-bar { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; font-size: 0.8em; }
+        .nav-bar a { color: #20b2aa; text-decoration: none; cursor: pointer; }
+        .nav-bar a:active { opacity: 0.6; }
+        .error { text-align: center; color: #c62828; padding: 10px; }
+        .summary { margin-bottom: 14px; padding: 12px 14px; background: #f8fafa; border-radius: 10px; }
+        .summary-main { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+        .summary-pct { font-size: 1.6em; font-weight: 700; color: #178a83; min-width: 62px; text-align: center; }
+        .summary-bar-wrap { flex: 1; }
+        .summary-label { font-size: 0.72em; color: #86868b; margin-bottom: 4px; }
+        .summary-bar { height: 8px; background: #e5efed; border-radius: 4px; overflow: hidden; }
+        .summary-bar-fill { height: 100%; background: #20b2aa; border-radius: 4px; transition: width 0.4s; }
+        .summary-bar-fill.warn { background: #e6a23c; }
+        .summary-bar-fill.crit { background: #c62828; }
+        .summary-stats { font-size: 0.78em; margin-top: 10px; }
+        .stat-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #eef3f2; }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: #86868b; }
+        .stat-val { color: #333; font-weight: 500; }
+        .stat-val .sep { color: #c7c7cc; margin: 0 2px; }
+        .core-bars { margin-top: 10px; }
+        .core-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .core-label { font-size: 0.72em; color: #86868b; min-width: 44px; }
+        .core-bar { flex: 1; height: 6px; background: #e5efed; border-radius: 3px; overflow: hidden; }
+        .core-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+        .core-pct { font-size: 0.72em; color: #333; min-width: 34px; text-align: right; }
+        .proc-list { font-size: 0.88em; }
+        .proc-item { display: block; border-bottom: 1px solid #eef0f2; padding: 8px 4px; margin: 0 -4px; border-radius: 6px; text-decoration: none; color: inherit; transition: background 0.15s; }
+        .proc-item:hover { background: #f2fbfa; }
+        .proc-item:last-child { border-bottom: none; }
+        .proc-top { display: flex; justify-content: space-between; align-items: baseline; }
+        .proc-name { color: #333; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; margin-right: 8px; }
+        .proc-metric { color: #178a83; font-weight: 600; white-space: nowrap; }
+        .proc-meta { font-size: 0.82em; color: #86868b; margin-top: 1px; }
+        .proc-meta span { margin-right: 10px; }
+        @media (max-width: 500px) { .container { max-width: 420px; } }
+    </style>
+    <style>body { padding-bottom: 64px !important; } .container { margin-top: 36px; }</style>
+</head>
+<body>
+    {% include '_logout.html' %}
+    <div class="container">
+    {% include '_topnav.html' %}
+    <div class="detail-header"><a class="back-btn" href="/device-info">&larr;</a><span class="detail-title">Device Information</span></div>
+    <div class="detail-subtitle">CPU Usage</div>
+    <div class="nav-bar"><a onclick="loadData()">Refresh</a></div>
+    <div id="error" class="error" style="display:none;"></div>
+    <div id="summary"></div>
+    <div id="content"></div>
+    </div>
+    <script>
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+
+    function barClass(pct) {
+        if (pct >= 90) return 'crit';
+        if (pct >= 70) return 'warn';
+        return '';
+    }
+
+    function shortName(full) {
+        var s = String(full || '');
+        var parts = s.split('/');
+        return parts[parts.length - 1] || s;
+    }
+
+    function coreBarColor(pct) {
+        if (pct >= 90) return '#c62828';
+        if (pct >= 70) return '#e6a23c';
+        return '#20b2aa';
+    }
+
+    function renderCpuSummary(s) {
+        var hasPct = s.usage_percent != null && s.usage_percent >= 0;
+        var pct = hasPct ? s.usage_percent : 0;
+        var html = '<div class="summary">';
+        html += '<div class="summary-main">';
+        html += '<div class="summary-pct">' + (hasPct ? esc(pct + '%') : '--') + '</div>';
+        html += '<div class="summary-bar-wrap">';
+        html += '<div class="summary-label">CPU Usage (' + esc(s.cores || '--') + ' cores)</div>';
+        html += '<div class="summary-bar"><div class="summary-bar-fill ' + barClass(pct) + '" style="width:' + Math.min(pct, 100) + '%"></div></div>';
+        html += '</div></div>';
+        var cores = s.per_core || [];
+        if (cores.length > 0) {
+            html += '<div class="core-bars">';
+            cores.forEach(function(cpct, i) {
+                html += '<div class="core-row">';
+                html += '<span class="core-label">Core ' + i + '</span>';
+                html += '<div class="core-bar"><div class="core-bar-fill" style="width:' + Math.min(cpct, 100) + '%;background:' + coreBarColor(cpct) + '"></div></div>';
+                html += '<span class="core-pct">' + esc(cpct + '%') + '</span>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        html += '<div class="summary-stats">';
+        html += '<div class="stat-row"><span class="stat-label">Tasks / Threads / Running</span>';
+        html += '<span class="stat-val">' + esc(s.tasks || '--') + '<span class="sep">/</span>' + esc(s.threads || '--') + '<span class="sep">/</span>' + esc(s.running || '0') + '</span></div>';
+        html += '<div class="stat-row"><span class="stat-label">Load (1 / 5 / 15 min)</span>';
+        html += '<span class="stat-val">' + esc(s.load_1m) + '<span class="sep">/</span>' + esc(s.load_5m) + '<span class="sep">/</span>' + esc(s.load_15m) + '</span></div>';
+        if (s.user_pct != null || s.system_pct != null || s.iowait_pct != null) {
+            html += '<div class="stat-row"><span class="stat-label">User / System / IO Wait</span>';
+            html += '<span class="stat-val">' + esc((s.user_pct || 0) + '%') + '<span class="sep">/</span>' + esc((s.system_pct || 0) + '%') + '<span class="sep">/</span>' + esc((s.iowait_pct || 0) + '%') + '</span></div>';
+        }
+        if (s.irq_pct != null || s.softirq_pct != null) {
+            html += '<div class="stat-row"><span class="stat-label">IRQ / Soft IRQ</span>';
+            html += '<span class="stat-val">' + esc((s.irq_pct || 0) + '%') + '<span class="sep">/</span>' + esc((s.softirq_pct || 0) + '%') + '</span></div>';
+        }
+        if (s.ctxt_per_sec != null || s.intr_per_sec != null) {
+            html += '<div class="stat-row"><span class="stat-label">Ctx switches / Interrupts</span>';
+            html += '<span class="stat-val">' + esc(s.ctxt_per_sec || 0) + '<span class="sep">/s</span><span class="sep"> &middot; </span>' + esc(s.intr_per_sec || 0) + '<span class="sep">/s</span></span></div>';
+        }
+        html += '<div class="stat-row"><span class="stat-label">Temperature</span>';
+        html += '<span class="stat-val">' + (s.temp_c != null ? esc(s.temp_c + '\u00b0C') : '--') + '</span></div>';
+        html += '</div></div>';
+        return html;
+    }
+
+    function renderCpuProcesses(rows) {
+        var html = '<div class="proc-list">';
+        rows.forEach(function(r) {
+            var pid = r[0], name = r[1], cpu = r[2], mem = r[3], state = r[4];
+            html += '<a class="proc-item" href="/process-info?pid=' + encodeURIComponent(pid) + '&from=cpu">';
+            html += '<div class="proc-top"><span class="proc-name">' + esc(shortName(name)) + '</span>';
+            html += '<span class="proc-metric">' + esc(cpu) + '% CPU</span></div>';
+            html += '<div class="proc-meta"><span>PID ' + esc(pid) + '</span><span>MEM ' + esc(mem) + '%</span><span>' + esc(state) + '</span></div>';
+            html += '</a>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function loadData() {
+        var sumEl = document.getElementById('summary');
+        var conEl = document.getElementById('content');
+        document.getElementById('error').style.display = 'none';
+        sumEl.innerHTML = '';
+        conEl.innerHTML = '';
+        fetch('/api/device-status/details/cpu?summary=1')
+            .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })
+            .then(function(resp){
+                if (!resp.ok) return;
+                var d = resp.data || {};
+                sumEl.innerHTML = d.summary ? renderCpuSummary(d.summary) : '';
+            })
+            .catch(function(){});
+        fetch('/api/device-status/details/cpu')
+            .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })
+            .then(function(resp){
+                if (!resp.ok) throw new Error(resp.data.error || 'Failed to load');
+                var d = resp.data || {};
+                sumEl.innerHTML = d.summary ? renderCpuSummary(d.summary) : '';
+                var rows = Array.isArray(d.rows) ? d.rows : [];
+                conEl.innerHTML = rows.length ? renderCpuProcesses(rows) : '';
+            })
+            .catch(function(e){
+                document.getElementById('error').textContent = e.message || 'Failed to load';
+                document.getElementById('error').style.display = 'block';
+            });
+    }
+
+    loadData();
+    setInterval(function() {
+        fetch('/api/device-status/details/cpu')
+            .then(function(r){
+                if (r.status === 503) { window.location.replace('/updating'); return null; }
+                return r.json().then(function(d){ return {ok:r.ok,data:d}; });
+            })
+            .then(function(resp){
+                if (!resp || !resp.ok) return;
+                var d = resp.data || {};
+                var sumEl = document.getElementById('summary');
+                if (d.summary) sumEl.innerHTML = renderCpuSummary(d.summary);
+            })
+            .catch(function(){});
+    }, 3000);
+    </script>
+    {% include '_footer.html' %}
+</body>
+</html>

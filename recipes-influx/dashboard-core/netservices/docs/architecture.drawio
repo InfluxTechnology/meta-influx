@@ -1,0 +1,467 @@
+<mxfile host="app.diagrams.net" modified="2024-02-06T10:00:00.000Z" agent="Claude" version="22.1.0">
+  <diagram name="Network Manager Architecture" id="network-manager-arch">
+    <mxGraphModel dx="1434" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="ReXgen Pro Network Manager Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="20" width="400" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- External Network Box -->
+        <mxCell id="ext-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="200" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-label" value="External Network" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="70" y="90" width="140" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Web Browser -->
+        <mxCell id="browser" value="Web Browser&#xa;(Config UI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="70" y="130" width="100" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- WiFi Router -->
+        <mxCell id="router" value="WiFi Router&#xa;(Internet)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="70" y="220" width="100" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- LAN Network -->
+        <mxCell id="lan-net" value="LAN&#xa;Network" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="70" y="310" width="100" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Internet/LTE -->
+        <mxCell id="inet" value="Internet&#xa;(LTE)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="70" y="400" width="100" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ReXgen Pro Box -->
+        <mxCell id="rexgen-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="280" y="80" width="1280" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="rexgen-label" value="ReXgen Pro (Linux)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="820" y="90" width="200" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== INTERFACES ==================== -->
+
+        <!-- Interfaces Box -->
+        <mxCell id="iface-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="300" y="120" width="280" height="640" as="geometry" />
+        </mxCell>
+        <mxCell id="iface-label" value="Network Interfaces" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="370" y="130" width="140" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- WLAN1 (AP) -->
+        <mxCell id="wlan1-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b3d9ff;strokeColor=#0066cc;" vertex="1" parent="1">
+          <mxGeometry x="320" y="160" width="240" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="wlan1" value="wlan1 (AP Mode)&#xa;192.168.51.1/24" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0066cc;strokeColor=#004080;fontColor=#ffffff;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="340" y="170" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="hostapd" value="hostapd" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcc80;strokeColor=#e65100;" vertex="1" parent="1">
+          <mxGeometry x="340" y="220" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="dnsmasq" value="dnsmasq&#xa;(DHCP)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcc80;strokeColor=#e65100;" vertex="1" parent="1">
+          <mxGeometry x="430" y="220" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ap-config" value="/etc/hostapd.conf&#xa;/etc/dnsmasq.conf" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="340" y="255" width="170" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- WLAN0 (Client) -->
+        <mxCell id="wlan0-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b3d9ff;strokeColor=#0066cc;" vertex="1" parent="1">
+          <mxGeometry x="320" y="310" width="240" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="wlan0" value="wlan0 (Client/STA)&#xa;DHCP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0066cc;strokeColor=#004080;fontColor=#ffffff;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="340" y="320" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="wpa-supp" value="wpa_supplicant" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcc80;strokeColor=#e65100;" vertex="1" parent="1">
+          <mxGeometry x="340" y="370" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="udhcpc" value="udhcpc" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcc80;strokeColor=#e65100;" vertex="1" parent="1">
+          <mxGeometry x="450" y="370" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="wlan0-config" value="/etc/wpa_supplicant.conf" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="340" y="410" width="170" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="wlan0-note" value="Virtual from wlan0:&#xa;iw dev wlan0 interface add wlan1 type __ap" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=8;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="490" y="175" width="60" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ETH0 -->
+        <mxCell id="eth0" value="eth0 (LAN)&#xa;Priority: 100" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#808080;strokeColor=#404040;fontColor=#ffffff;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="340" y="480" width="140" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- PPP0 (LTE) -->
+        <mxCell id="ppp0-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#cc0000;" vertex="1" parent="1">
+          <mxGeometry x="320" y="540" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="ppp0" value="ppp0 (LTE)&#xa;Priority: 300" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cc0000;strokeColor=#800000;fontColor=#ffffff;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="340" y="550" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="wdm" value="wdm&#xa;(Quectel)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcc80;strokeColor=#e65100;" vertex="1" parent="1">
+          <mxGeometry x="340" y="600" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- LEDs -->
+        <mxCell id="led-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffcc;strokeColor=#cccc00;" vertex="1" parent="1">
+          <mxGeometry x="320" y="660" width="240" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="led-wifi" value="JA35&#xa;WiFi LED" style="ellipse;whiteSpace=wrap;html=1;fillColor=#00cc00;strokeColor=#008000;" vertex="1" parent="1">
+          <mxGeometry x="350" y="665" width="60" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="led-lte" value="JA33&#xa;LTE LED" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ff6600;strokeColor=#cc5200;" vertex="1" parent="1">
+          <mxGeometry x="470" y="665" width="60" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== PYTHON SERVICES ==================== -->
+
+        <!-- Services Box -->
+        <mxCell id="services-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9e6;strokeColor=#d4a500;" vertex="1" parent="1">
+          <mxGeometry x="600" y="120" width="460" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="services-label" value="Python Services (ap_flask/services/)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="130" width="260" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- wifi_manager.py -->
+        <mxCell id="wifi-mgr" value="wifi_manager.py&#xa;(Main Orchestrator)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffff00;strokeColor=#d4a500;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="730" y="160" width="150" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ap_manager.py -->
+        <mxCell id="ap-mgr" value="ap_manager.py&#xa;• Create wlan1&#xa;• Configure hostapd&#xa;• Configure dnsmasq" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#0066cc;align=left;spacingLeft=5" vertex="1" parent="1">
+          <mxGeometry x="620" y="230" width="130" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- client_manager.py -->
+        <mxCell id="client-mgr" value="client_manager.py&#xa;• wpa_cli commands&#xa;• Scan networks&#xa;• Connect/disconnect" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#0066cc;align=left;spacingLeft=5" vertex="1" parent="1">
+          <mxGeometry x="760" y="230" width="130" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- connectivity_checker.py -->
+        <mxCell id="conn-check" value="connectivity_checker.py&#xa;• Check link status&#xa;• Check IP address&#xa;• Ping test (-I iface)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#0066cc;align=left;spacingLeft=5" vertex="1" parent="1">
+          <mxGeometry x="900" y="230" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- net_failover.py -->
+        <mxCell id="failover" value="net_failover.py&#xa;• Priority: eth0 > wlan0 > ppp0&#xa;• WiFi fail count (max 3)&#xa;• Switch to LTE on failure&#xa;• Recovery check" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffff00;strokeColor=#d4a500;align=left;spacingLeft=5;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="330" width="180" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- routing_manager.py -->
+        <mxCell id="routing" value="routing_manager.py&#xa;• ip route del/add&#xa;• Set metrics&#xa;• Default route mgmt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#0066cc;align=left;spacingLeft=5" vertex="1" parent="1">
+          <mxGeometry x="820" y="330" width="140" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- shared_state.py -->
+        <mxCell id="shared-state" value="shared_state.py&#xa;IPC via JSON files" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6ccff;strokeColor=#9933ff;" vertex="1" parent="1">
+          <mxGeometry x="730" y="440" width="150" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- IPC Files -->
+        <mxCell id="ipc-files" value="/tmp/rexgen/&#xa;├─ wifi_state.json&#xa;├─ scan_request&#xa;└─ connect_request.json" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;spacingLeft=5;fontFamily=Courier New;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="700" y="490" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== DASHBOARD ==================== -->
+
+        <!-- Dashboard Box -->
+        <mxCell id="dashboard-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="600" y="570" width="460" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="dashboard-label" value="Web Dashboard (ap_flask/dashboard/)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="580" width="260" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Flask App -->
+        <mxCell id="flask-app" value="app.py&#xa;Flask Web Server&#xa;Port 80" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff9900;strokeColor=#cc7a00;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="620" y="610" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- REST API -->
+        <mxCell id="rest-api" value="REST API:&#xa;GET  /api/status&#xa;POST /api/scan&#xa;POST /api/connect" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcc99;strokeColor=#cc7a00;align=left;spacingLeft=5;fontFamily=Courier New;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="760" y="610" width="130" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- index.html -->
+        <mxCell id="index-html" value="index.html&#xa;iOS-style UI&#xa;• Network list&#xa;• Connect form" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcc99;strokeColor=#cc7a00;align=left;spacingLeft=5" vertex="1" parent="1">
+          <mxGeometry x="910" y="610" width="130" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- URL -->
+        <mxCell id="dashboard-url" value="http://192.168.51.1/" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11;fontStyle=3" vertex="1" parent="1">
+          <mxGeometry x="620" y="680" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== SYSTEMD SERVICES ==================== -->
+
+        <!-- Systemd Box -->
+        <mxCell id="systemd-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="120" width="460" height="280" as="geometry" />
+        </mxCell>
+        <mxCell id="systemd-label" value="Systemd Services" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1230" y="130" width="160" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- wifi-manager.service -->
+        <mxCell id="svc-wifi-mgr" value="wifi-manager.service&#xa;After: autostart, wpa_supplicant@wlan0&#xa;Requires: wpa_supplicant@wlan0" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff6666;strokeColor=#cc0000;fontColor=#ffffff;align=left;spacingLeft=5" vertex="1" parent="1">
+          <mxGeometry x="1100" y="160" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- wifi-dashboard.service -->
+        <mxCell id="svc-dashboard" value="wifi-dashboard.service&#xa;After: wifi-manager&#xa;Port: 80" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff6666;strokeColor=#cc0000;fontColor=#ffffff;align=left;spacingLeft=5" vertex="1" parent="1">
+          <mxGeometry x="1320" y="160" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- led-blink.service -->
+        <mxCell id="svc-led" value="led-blink.service&#xa;led_blink.sh&#xa;Network status LEDs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff6666;strokeColor=#cc0000;fontColor=#ffffff;align=left;spacingLeft=5" vertex="1" parent="1">
+          <mxGeometry x="1100" y="240" width="150" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- wpa_supplicant@wlan0.service -->
+        <mxCell id="svc-wpa" value="wpa_supplicant@wlan0.service&#xa;(System)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#cc0000;align=left;spacingLeft=5" vertex="1" parent="1">
+          <mxGeometry x="1270" y="240" width="180" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- autostart.service -->
+        <mxCell id="svc-autostart" value="autostart.service&#xa;• Preserved files (OTA)&#xa;• local_settings.sh&#xa;• Start wpa_supplicant" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#cc0000;align=left;spacingLeft=5" vertex="1" parent="1">
+          <mxGeometry x="1100" y="320" width="160" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- hostapd.service -->
+        <mxCell id="svc-hostapd" value="hostapd.service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#cc0000;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="300" width="110" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- dnsmasq.service -->
+        <mxCell id="svc-dnsmasq" value="dnsmasq.service" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#cc0000;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="300" width="110" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== LOGS ==================== -->
+
+        <!-- Logs Box -->
+        <mxCell id="logs-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6e6e6;strokeColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="420" width="460" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="logs-label" value="Log Files" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1270" y="425" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="logs-content" value="/var/log/wifi_manager.log&#xa;/var/log/net_failover.log&#xa;/var/log/wifi_dashboard.log&#xa;journalctl -u wifi-manager" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontFamily=Courier New;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="1100" y="450" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== EXTERNAL SYSTEMS ==================== -->
+
+        <!-- External Box -->
+        <mxCell id="ext-sys-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="540" width="460" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="ext-sys-label" value="External Systems (Future Integration)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1180" y="550" width="260" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Rexgen Service -->
+        <mxCell id="rexgen-svc" value="Rexgen Service&#xa;(Core Data)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#99ff99;strokeColor=#009900;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="580" width="120" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- RexgenPro Settings -->
+        <mxCell id="rexgen-settings" value="RexgenPro&#xa;Settings" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#99ff99;strokeColor=#009900;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="580" width="100" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Rexdesk -->
+        <mxCell id="rexdesk" value="Rexdesk&#xa;(Cloud)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#99ff99;strokeColor=#009900;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="580" width="100" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Passthru -->
+        <mxCell id="passthru" value="Passthru" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#99ff99;strokeColor=#009900;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="650" width="100" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Linux Settings -->
+        <mxCell id="linux-settings" value="Linux Settings&#xa;(sysctl, etc)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#99ff99;strokeColor=#009900;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="650" width="100" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ==================== CONNECTIONS ==================== -->
+
+        <!-- Browser to AP -->
+        <mxCell id="conn-browser-ap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;strokeWidth=2;" edge="1" parent="1" source="browser" target="wlan1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn-browser-label" value="WiFi" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="200" y="140" width="40" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Router to WLAN0 -->
+        <mxCell id="conn-router-wlan0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;strokeWidth=2;" edge="1" parent="1" source="router" target="wlan0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn-router-label" value="WiFi" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="200" y="240" width="40" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- LAN to eth0 -->
+        <mxCell id="conn-lan-eth0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=2;" edge="1" parent="1" source="lan-net" target="eth0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn-lan-label" value="Ethernet" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="200" y="330" width="50" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Internet to ppp0 -->
+        <mxCell id="conn-inet-ppp0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#cc0000;strokeWidth=2;" edge="1" parent="1" source="inet" target="ppp0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn-inet-label" value="LTE" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9" vertex="1" parent="1">
+          <mxGeometry x="200" y="430" width="40" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- wifi_manager to modules -->
+        <mxCell id="conn-mgr-ap" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d4a500;strokeWidth=1;dashed=1;" edge="1" parent="1" source="wifi-mgr" target="ap-mgr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn-mgr-client" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d4a500;strokeWidth=1;dashed=1;" edge="1" parent="1" source="wifi-mgr" target="client-mgr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn-mgr-conn" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d4a500;strokeWidth=1;dashed=1;" edge="1" parent="1" source="wifi-mgr" target="conn-check">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="conn-mgr-failover" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#d4a500;strokeWidth=1;dashed=1;" edge="1" parent="1" source="wifi-mgr" target="failover">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- failover to routing -->
+        <mxCell id="conn-failover-routing" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9933ff;strokeWidth=2;" edge="1" parent="1" source="failover" target="routing">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- shared_state to IPC -->
+        <mxCell id="conn-state-ipc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9933ff;strokeWidth=1;dashed=1;" edge="1" parent="1" source="shared-state" target="ipc-files">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Flask to IPC -->
+        <mxCell id="conn-flask-ipc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9933ff;strokeWidth=1;dashed=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="flask-app" target="ipc-files">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="680" y="570" />
+              <mxPoint x="790" y="570" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ap_manager to wlan1 -->
+        <mxCell id="conn-apmgr-wlan1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;strokeWidth=1;" edge="1" parent="1" source="ap-mgr" target="wlan1-box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- client_manager to wlan0 -->
+        <mxCell id="conn-climgr-wlan0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0066cc;strokeWidth=1;" edge="1" parent="1" source="client-mgr" target="wlan0-box">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="270" />
+              <mxPoint x="600" y="385" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- conn_check to interfaces -->
+        <mxCell id="conn-check-ifaces" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#82b366;strokeWidth=1;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="conn-check" target="eth0">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="590" y="270" />
+              <mxPoint x="590" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- LED service to LEDs -->
+        <mxCell id="conn-ledsvc-leds" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#cccc00;strokeWidth=1;" edge="1" parent="1" source="svc-led" target="led-box">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1060" y="270" />
+              <mxPoint x="1060" y="800" />
+              <mxPoint x="440" y="800" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ==================== LEGEND ==================== -->
+        <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="510" width="200" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="520" width="80" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg-iface" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0066cc;strokeColor=#004080;" vertex="1" parent="1">
+          <mxGeometry x="60" y="550" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-iface-t" value="Network Interface" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="90" y="547" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg-daemon" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcc80;strokeColor=#e65100;" vertex="1" parent="1">
+          <mxGeometry x="60" y="575" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-daemon-t" value="System Daemon" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="90" y="572" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg-py" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffff00;strokeColor=#d4a500;" vertex="1" parent="1">
+          <mxGeometry x="60" y="600" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-py-t" value="Python Service (main)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="90" y="597" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg-mod" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#0066cc;" vertex="1" parent="1">
+          <mxGeometry x="60" y="625" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-mod-t" value="Python Module" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="90" y="622" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg-svc" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff6666;strokeColor=#cc0000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="650" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-svc-t" value="Systemd Service" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="90" y="647" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg-web" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff9900;strokeColor=#cc7a00;" vertex="1" parent="1">
+          <mxGeometry x="60" y="675" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-web-t" value="Web Component" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="90" y="672" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg-ipc" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6ccff;strokeColor=#9933ff;" vertex="1" parent="1">
+          <mxGeometry x="60" y="700" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-ipc-t" value="IPC / State" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="90" y="697" width="100" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="leg-ext" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#99ff99;strokeColor=#009900;" vertex="1" parent="1">
+          <mxGeometry x="60" y="725" width="20" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-ext-t" value="External System" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="90" y="722" width="100" height="20" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

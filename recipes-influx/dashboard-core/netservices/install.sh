@@ -190,9 +190,36 @@ echo "  Phase 4 complete."
 echo ""
 
 # -------------------------------------------------------
-# Phase 5: Install and activate services
+# Phase 5: Deploy SSL CA certificate
 # -------------------------------------------------------
-echo "--- Phase 5: Installing service files ---"
+echo "--- Phase 5: Deploying SSL CA certificate ---"
+
+SSL_DEST="/data/rexgen/config/ssl"
+SSL_SRC="$DEST/ssl"
+
+mkdir -p "$SSL_DEST"
+chmod 700 "$SSL_DEST"
+
+if [ -f "$SSL_SRC/ca.crt" ] && [ -f "$SSL_SRC/ca.key" ]; then
+    echo "  Copying CA certificate and key to $SSL_DEST ..."
+    cp "$SSL_SRC/ca.crt" "$SSL_DEST/ca.crt"
+    cp "$SSL_SRC/ca.key" "$SSL_DEST/ca.key"
+    # Force server certificate re-issue from the currently deployed CA.
+    rm -f "$SSL_DEST/dashboard.crt" "$SSL_DEST/dashboard.key"
+    chmod 644 "$SSL_DEST/ca.crt"
+    chmod 600 "$SSL_DEST/ca.key"
+    echo "  CA deployed."
+else
+    echo "  [WARN] ssl/ca.crt or ssl/ca.key not found in $SSL_SRC — HTTPS will not work!"
+fi
+
+echo "  Phase 5 complete."
+echo ""
+
+# -------------------------------------------------------
+# Phase 6: Install and activate services
+# -------------------------------------------------------
+echo "--- Phase 6: Installing service files ---"
 
 if [ ! -d "$DEST/systemd" ]; then
     echo "  [ERROR] $DEST/systemd/ not found! Cannot install service files."

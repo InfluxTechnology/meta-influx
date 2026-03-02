@@ -1,0 +1,28 @@
+<?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+
+<service-group>
+  <!-- Instance name exactly equals hostname (your serial) -->
+  <name replace-wildcards="yes">%h</name>
+
+  <!-- CMD service -->
+  <service>
+    <type>_rexgenpro-cmd._tcp</type>
+    <port>5053</port>
+    <txt-record>role=cmd</txt-record>
+    <txt-record>release=****</txt-record>
+    <txt-record>model=RexgenPro</txt-record>
+    <txt-record>prot_ver=1.1</txt-record>
+  </service>
+
+  <!-- STREAM service -->
+  <service>
+    <type>_rexgenpro-stream._tcp</type>
+    <port>5054</port>
+    <txt-record>role=stream</txt-record>
+    <txt-record>release=****</txt-record>
+    <txt-record>model=RexgenPro</txt-record>
+    <txt-record>prot_ver=1.1</txt-record>
+  </service>
+
+</service-group>

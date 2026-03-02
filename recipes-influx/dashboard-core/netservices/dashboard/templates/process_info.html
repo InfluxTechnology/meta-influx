@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process Info</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 17px; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%); }
+        a { color: #20b2aa; cursor: pointer; text-decoration: none; } a:hover { color: #5ed8d1; }
+        .container { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 640px; width: 94%; }
+        .top-switch { display: flex; background: #f5f5f7; border-radius: 16px 16px 0 0; overflow: hidden; margin: -20px -20px 12px -20px; }
+        .top-switch a { flex: 1; height: 64px; text-decoration: none; color: #20b2aa; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .top-switch a.active { background: #fff; color: #178a83; }
+        .top-switch svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .top-switch .tab-label { font-size: 0.62em; font-weight: 600; line-height: 1; white-space: nowrap; text-align: center; }
+        .detail-header { display: flex; align-items: center; margin-bottom: 14px; }
+        .back-btn { font-size: 1.3em; margin-right: 10px; text-decoration: none; line-height: 1; }
+        .detail-title { font-size: 1.05em; font-weight: 600; color: #333; flex: 1; text-align: center; margin-right: 18px; }
+        .detail-subtitle { margin: -8px 0 10px 0; text-align: center; color: #86868b; font-size: 0.85em; word-break: break-word; }
+        .nav-bar { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; font-size: 0.8em; }
+        .nav-bar a { color: #20b2aa; text-decoration: none; cursor: pointer; }
+        .nav-bar a:active { opacity: 0.6; }
+        .card { margin-top: 12px; overflow: hidden; }
+        .card:first-of-type { margin-top: 0; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 15px; background: #f5f5f7; }
+        .section-label { font-size: 0.75em; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1; }
+        .info-table { font-size: 0.9em; }
+        .info-row { display: grid; grid-template-columns: auto 1fr; border-bottom: 1px solid #eef0f2; }
+        .info-row:last-child { border-bottom: none; }
+        .info-key, .info-val { padding: 7px 12px; }
+        .info-key { color: #86868b; white-space: nowrap; }
+        .info-val { color: #333; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .info-val.wrap { white-space: normal; word-break: break-all; }
+        .state-badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.88em; font-weight: 500; }
+        .state-S { background: #e8f5e9; color: #2e7d32; }
+        .state-R { background: #e3f2fd; color: #1565c0; }
+        .state-D { background: #fff3e0; color: #e65100; }
+        .state-Z { background: #fce4ec; color: #c62828; }
+        .state-T { background: #f3e5f5; color: #7b1fa2; }
+        .error { text-align: center; color: #c62828; padding: 10px; }
+        @media (max-width: 500px) { .container { max-width: 420px; } }
+    </style>
+    <!-- footer-safe-space -->    <style>body { padding-bottom: 64px !important; } .container { margin-top: 36px; }</style>
+</head>
+<body>
+    {% include '_logout.html' %}
+    <div class="container">
+    {% include '_topnav.html' %}
+    <div class="detail-header"><a class="back-btn" id="backBtn" href="javascript:history.back()">&larr;</a><span class="detail-title">Device Information</span></div>
+    <div id="subtitle" class="detail-subtitle">Process Info: Loading...</div>
+    <div id="error" class="error" style="display:none;"></div>
+    <div class="nav-bar"><a onclick="loadData()">Refresh</a></div>
+    <div id="content"></div>
+    </div>
+    <script>
+    function q(name) { return new URLSearchParams(location.search).get(name) || ''; }
+    function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+    var pid = q('pid');
+    var from = q('from') || 'cpu';
+
+    document.getElementById('subtitle').textContent = 'Process Info: ' + (pid ? 'PID ' + pid : 'Unknown');
+    var backUrls = { cpu: '/cpu-detail', memory: '/memory-detail', disk: '/disk-detail' };
+    document.getElementById('backBtn').href = backUrls[from] || '/cpu-detail';
+
+    function stateLabel(raw) {
+        if (!raw) return '--';
+        var code = raw.charAt(0).toUpperCase();
+        var names = { S: 'Sleeping', R: 'Running', D: 'Disk Wait', Z: 'Zombie', T: 'Stopped', I: 'Idle' };
+        var label = names[code] || raw;
+        return '<span class="state-badge state-' + code + '">' + esc(label) + '</span>';
+    }
+
+    function renderSection(title, rows) {
+        var html = '<div class="card"><div class="section-header"><span class="section-label">' + esc(title) + '</span></div><div class="info-table">';
+        rows.forEach(function(r) {
+            var cls = r[2] ? ' wrap' : '';
+            var val = r[2] === 'html' ? r[1] : esc(r[1]);
+            html += '<div class="info-row"><div class="info-key">' + esc(r[0]) + '</div><div class="info-val' + cls + '">' + val + '</div></div>';
+        });
+        html += '</div></div>';
+        return html;
+    }
+
+    function loadData() {
+        if (!pid) return;
+        document.getElementById('error').style.display = 'none';
+        fetch('/api/process-info/' + encodeURIComponent(pid))
+            .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })
+            .then(function(resp){
+                if (!resp.ok) throw new Error(resp.data.error || 'Process not found');
+                var d = resp.data || {};
+                document.getElementById('subtitle').textContent = 'Process Info: ' + (d.name || ('PID ' + pid));
+
+                var html = '';
+
+                html += renderSection('General', [
+                    ['PID', d.pid || '--'],
+                    ['State', stateLabel(d.state), 'html'],
+                    ['Parent PID', d.ppid || '--'],
+                    ['UID / GID', (d.uid || '--') + ' / ' + (d.gid || '--')],
+                    ['Threads', d.threads || '--'],
+                    ['Uptime', d.uptime || '--']
+                ]);
+
+                html += renderSection('CPU & Scheduling', [
+                    ['CPU Time', d.cpu_time || '--'],
+                    ['User / System', (d.user_time || '--') + ' / ' + (d.sys_time || '--')],
+                    ['Priority', d.priority || '--'],
+                    ['Nice', d.nice || '--'],
+                    ['Ctx Switches (vol)', d.vol_ctx || '--'],
+                    ['Ctx Switches (invol)', d.nonvol_ctx || '--']
+                ]);
+
+                html += renderSection('Memory', [
+                    ['RSS', d.vm_rss || '--'],
+                    ['Virtual Size', d.vm_size || '--'],
+                    ['VM Peak', d.vm_peak || '--'],
+                    ['Swap', d.vm_swap || '--'],
+                    ['OOM Score', d.oom_score || '--']
+                ]);
+
+                html += renderSection('I/O & Resources', [
+                    ['Read', d.io_read || '--'],
+                    ['Written', d.io_write || '--'],
+                    ['Open FDs', d.open_fds || '--']
+                ]);
+
+                html += renderSection('Paths', [
+                    ['Executable', d.exe || '--', 'wrap'],
+                    ['Working Dir', d.cwd || '--', 'wrap'],
+                    ['Command Line', d.cmdline || '--', 'wrap']
+                ]);
+
+                document.getElementById('content').innerHTML = html;
+            })
+            .catch(function(e){
+                document.getElementById('error').textContent = e.message || 'Failed to load process info';
+                document.getElementById('error').style.display = 'block';
+            });
+    }
+
+    if (pid) loadData(); else { document.getElementById('error').textContent = 'No PID specified'; document.getElementById('error').style.display = 'block'; }
+
+</script>
+    {% include '_footer.html' %}
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install Certificate</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 17px; margin: 0; padding: 24px 16px 80px; background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%); min-height: 100vh; }
+        a { color: #20b2aa; }
+        a:hover { color: #5ed8d1; }
+        .container { background: #fff; padding: 24px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 600px; margin: 0 auto; }
+        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .back-btn { font-size: 1.3em; color: #20b2aa; text-decoration: none; line-height: 1; }
+        .back-btn:hover { color: #5ed8d1; }
+        .title { font-size: 1.1em; font-weight: 600; color: #333; }
+        .why-box { background: #f0faf9; border-left: 3px solid #20b2aa; border-radius: 0 8px 8px 0; padding: 14px 16px; margin-bottom: 20px; font-size: 0.88em; color: #444; line-height: 1.6; }
+        .why-box b { color: #178a83; }
+        .section-label { font-size: 0.72em; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 10px; }
+        .os-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+        .os-tab { padding: 7px 18px; border-radius: 20px; border: 1.5px solid #e0e0e0; background: #f5f5f7; color: #555; font-size: 0.85em; cursor: pointer; font-weight: 500; transition: all 0.15s; }
+        .os-tab.active { border-color: #20b2aa; background: #20b2aa; color: #fff; }
+        .os-tab:hover:not(.active) { border-color: #20b2aa; color: #20b2aa; }
+        .steps { display: none; }
+        .steps.active { display: block; }
+        .step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px; }
+        .step-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: #20b2aa; color: #fff; font-size: 0.85em; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+        .step-text { font-size: 0.9em; color: #333; line-height: 1.55; }
+        .step-text code { background: #f0f0f3; border-radius: 4px; padding: 1px 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; color: #178a83; }
+        .step-note { font-size: 0.82em; color: #86868b; margin-top: 4px; }
+        .download-btn { display: inline-block; margin: 8px 0 20px; padding: 12px 28px; background: #20b2aa; color: #fff; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.95em; }
+        .download-btn:hover { background: #178a83; color: #fff; }
+        .skip-note { font-size: 0.82em; color: #86868b; border-top: 1px solid #ececef; padding-top: 14px; margin-top: 4px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/system-settings" class="back-btn">&#8592;</a>
+            <span class="title">Install Certificate (Optional)</span>
+        </div>
+
+        <div class="why-box">
+            <b>Why is this needed?</b><br>
+            This device uses HTTPS to encrypt your connection — so your password and data stay private on the network.
+            Because the certificate is issued by this device itself (not by a global authority like Google or Let's Encrypt),
+            your browser shows a security warning. That warning is safe to bypass here, but if you want
+            <b>no warnings at all</b>, install the certificate below once and your browser will trust it permanently.
+        </div>
+
+        <div class="section-label">Choose your operating system</div>
+        <div class="os-tabs">
+            <button class="os-tab" id="tab-windows" onclick="showOS('windows')">Windows</button>
+            <button class="os-tab" id="tab-macos" onclick="showOS('macos')">macOS</button>
+            <button class="os-tab" id="tab-linux" onclick="showOS('linux')">Linux</button>
+            <button class="os-tab" id="tab-android" onclick="showOS('android')">Android</button>
+            <button class="os-tab" id="tab-ios" onclick="showOS('ios')">iPhone / iPad</button>
+        </div>
+
+        <a class="download-btn" href="/download-ca-cert" download="rexgen-ca.crt">&#8595; Download Certificate</a>
+
+        <!-- Windows -->
+        <div class="steps" id="steps-windows">
+            <div class="step"><div class="step-num">1</div><div class="step-text">Click <b>Download Certificate</b> above — save the file <code>rexgen-ca.crt</code>.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text">Double-click the downloaded file. A dialog will open.</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">Click <b>Install Certificate…</b> → select <b>Local Machine</b> → Next.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">Select <b>Place all certificates in the following store</b> → click <b>Browse</b> → choose <b>Trusted Root Certification Authorities</b> → OK → Next → Finish.</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text">A security prompt may appear — click <b>Yes</b> to confirm.</div></div>
+            <div class="step"><div class="step-num">6</div><div class="step-text">Restart your browser. The warning will be gone.</div></div>
+        </div>
+
+        <!-- macOS -->
+        <div class="steps" id="steps-macos">
+            <div class="step"><div class="step-num">1</div><div class="step-text">Click <b>Download Certificate</b> above — save the file <code>rexgen-ca.crt</code>.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text">Double-click the file. It will open in <b>Keychain Access</b> and be added to your keychain.</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">Open <b>Keychain Access</b>, find <b>ReXgen Control Center CA</b> in the list, and double-click it.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">Expand the <b>Trust</b> section → set <b>When using this certificate</b> to <b>Always Trust</b> → close the window → enter your Mac password when asked.</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text">Restart your browser. The warning will be gone.</div></div>
+        </div>
+
+        <!-- Linux -->
+        <div class="steps" id="steps-linux">
+            <div class="step"><div class="step-num">1</div><div class="step-text">Click <b>Download Certificate</b> above — save the file <code>rexgen-ca.crt</code>.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text">Open a terminal and run:<br>
+                <code>sudo cp ~/Downloads/rexgen-ca.crt /usr/local/share/ca-certificates/</code><br>
+                <code>sudo update-ca-certificates</code>
+                <div class="step-note">On Fedora/RHEL use: <code>sudo cp rexgen-ca.crt /etc/pki/ca-trust/source/anchors/ &amp;&amp; sudo update-ca-trust</code></div>
+            </div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">For <b>Chrome / Chromium</b>: go to <code>Settings → Privacy → Manage certificates → Authorities</code> → Import the file → check <b>Trust for websites</b> → OK.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">For <b>Firefox</b>: go to <code>Settings → Privacy &amp; Security → View Certificates → Authorities</code> → Import → check <b>Trust to identify websites</b> → OK.</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text">Restart your browser. The warning will be gone.</div></div>
+        </div>
+
+        <!-- Android -->
+        <div class="steps" id="steps-android">
+            <div class="step"><div class="step-num">1</div><div class="step-text">Click <b>Download Certificate</b> above on your Android device.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text">Go to <b>Settings → Security → More security settings → Install from storage</b> (exact name varies by manufacturer).</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">Select <code>rexgen-ca.crt</code> from your Downloads folder → choose <b>CA certificate</b> when prompted → confirm with your PIN or fingerprint.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">Reopen Chrome — the warning will be gone.
+                <div class="step-note">Note: Android may show a persistent notification about a network monitor. This is normal for user-installed certificates.</div>
+            </div></div>
+        </div>
+
+        <!-- iOS -->
+        <div class="steps" id="steps-ios">
+            <div class="step"><div class="step-num">1</div><div class="step-text">Tap <b>Download Certificate</b> above on your iPhone or iPad.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text">A message appears: <i>"This website is trying to download a configuration profile"</i> — tap <b>Allow</b>.</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">Go to <b>Settings → General → VPN &amp; Device Management</b> → tap the downloaded profile → tap <b>Install</b> → enter your passcode → tap <b>Install</b> again.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">Go to <b>Settings → General → About → Certificate Trust Settings</b> → toggle <b>ReXgen Control Center CA</b> to <b>on</b> → tap Continue.</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text">Reopen Safari or Chrome — the warning will be gone.</div></div>
+        </div>
+
+        <div class="skip-note">
+            <b>Don't want to install it?</b> That's fine — you can still use this dashboard by clicking
+            <b>"Advanced" → "Proceed anyway"</b> on the browser warning page. Your connection is still encrypted;
+            the warning only means the browser cannot automatically verify who issued the certificate.
+        </div>
+    </div>
+
+    <script>
+        function detectOS() {
+            var ua = navigator.userAgent;
+            if (/android/i.test(ua)) return 'android';
+            if (/iphone|ipad|ipod/i.test(ua)) return 'ios';
+            if (/macintosh|mac os x/i.test(ua) && !/iphone|ipad/i.test(ua)) return 'macos';
+            if (/linux/i.test(ua)) return 'linux';
+            return 'windows';
+        }
+
+        function showOS(os) {
+            ['windows', 'macos', 'linux', 'android', 'ios'].forEach(function(o) {
+                document.getElementById('steps-' + o).classList.remove('active');
+                document.getElementById('tab-' + o).classList.remove('active');
+            });
+            document.getElementById('steps-' + os).classList.add('active');
+            document.getElementById('tab-' + os).classList.add('active');
+        }
+
+        showOS(detectOS());
+    </script>
+</body>
+</html>

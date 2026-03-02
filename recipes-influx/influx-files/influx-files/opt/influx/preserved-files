@@ -1,5 +1,0 @@
-# Add here files or folders, you want be preserved after image update
-
-/etc/wpa_supplicant.conf
-/etc/mender/mender.conf
-/etc/fw_env.config

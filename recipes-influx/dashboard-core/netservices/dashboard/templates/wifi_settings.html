@@ -6,8 +6,11 @@
     <title>Wi-Fi Settings</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 17px; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%); }
-        .container { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 420px; width: 94%; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 17px; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%); }
+        a { color: #20b2aa; }
+        a:hover { color: #5ed8d1; }
+        .top-switch a:hover, .section-link:hover, .nav-bar a:hover, .back-btn:hover { color: #5ed8d1; }
+        .container { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 640px; width: 94%; }
         .header { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
         .title { font-size: 1.1em; font-weight: 600; color: #333; text-align: center; width: 100%; }
         .status { text-align: center; padding: 10px; margin-top: 15px; border-radius: 8px; display: none; transition: opacity 0.5s ease-out; }
@@ -45,6 +48,7 @@
         .detail-header { display: flex; align-items: center; margin-bottom: 14px; }
         .back-btn { font-size: 1.3em; color: #20b2aa; cursor: pointer; margin-right: 10px; text-decoration: none; line-height: 1; }
         .detail-title { font-size: 1.1em; font-weight: 600; color: #333; flex: 1; }
+        .detail-subtitle { margin: -8px 0 10px 0; text-align: center; color: #86868b; font-size: 0.85em; }
         .detail-signal { display: flex; align-items: center; justify-content: center; margin: 12px 0; gap: 10px; }
         .detail-signal .wifi-bars { height: 24px; gap: 3px; }
         .detail-signal .wifi-bars .bar { width: 4px; border-radius: 2px; }
@@ -72,30 +76,23 @@
         .top-switch a.active { background: #fff; color: #178a83; }
         .top-switch svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         .top-switch .tab-label { font-size: 0.62em; font-weight: 600; line-height: 1; white-space: nowrap; text-align: center; }
-    </style>
+    
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear { display: none; }
+        input[type="password"]::-webkit-credentials-auto-fill-button {
+            visibility: hidden;
+            display: none !important;
+            pointer-events: none;
+        }
+</style>
+    <!-- footer-safe-space -->    <style>body { padding-bottom: 64px !important; } .container { margin-top: 36px; }</style>
 </head>
 <body>
+    {% include '_logout.html' %}
     <div class="container">
         <!-- Main WiFi list view -->
         <div id="mainView">
-            <div class="top-switch">
-                <a href="/device-info" title="Device Information" aria-label="Device Information">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="11.5" x2="12" y2="16"></line><circle cx="12" cy="7" r="0.75"></circle></svg>
-                    <span class="tab-label">Device</span>
-                </a>
-                <a href="/wifi-settings" class="active" title="Wi-Fi Settings" aria-label="Wi-Fi Settings">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9a12 12 0 0 1 16 0"></path><path d="M7 12a8 8 0 0 1 10 0"></path><path d="M10 15a4 4 0 0 1 4 0"></path><circle cx="12" cy="19" r="1"></circle></svg>
-                    <span class="tab-label">Wi-Fi</span>
-                </a>
-                <a href="/ap-settings" title="Access Point Settings" aria-label="Access Point Settings">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="11" width="16" height="7" rx="2"></rect><path d="M8 11V8"></path><path d="M12 11V7"></path><path d="M16 11V9"></path><circle cx="9" cy="14.5" r="0.8"></circle><circle cx="13" cy="14.5" r="0.8"></circle></svg>
-                    <span class="tab-label">AP</span>
-                </a>
-                <a href="/rexgend-settings" title="rexgend Settings" aria-label="rexgend Settings">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4.8a7 7 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 0 0-1.7 1l-2.4-.8-2 3.5 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.4-.8a7 7 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7 7 0 0 0 1.7-1l2.4.8 2-3.5-2-1.5c.1-.3.1-.7.1-1z"></path></svg>
-                    <span class="tab-label">rexgend</span>
-                </a>
-            </div>
+            {% include '_topnav.html' %}
             <div class="header">
                 <span class="title">Wi-Fi Settings</span>
             </div>
@@ -117,7 +114,6 @@
         <div id="detailView" style="display:none;">
             <div id="detailContent"></div>
         </div>
-
     </div>
     <script>
         const CONNECT_ALLOWED = {{ 'true' if connect_allowed else 'false' }};
@@ -192,8 +188,12 @@
             if (connectLockTimer) return;
             connectLockTimer = setInterval(function() {
                 fetch('/api/status')
-                    .then(function(res) { return res.json(); })
+                    .then(function(res) {
+                        if (res.status === 503) { window.location.replace('/updating'); return null; }
+                        return res.json();
+                    })
                     .then(function(data) {
+                        if (!data) return;
                         connectStatusFailures = 0;
                         updateDeviceInfo(data);
                         if (data.connect_in_progress) {
@@ -253,6 +253,13 @@
             if (dbm >= -80) return 'Weak';
             return 'Very weak';
         }
+        function signalPercent(dbm) {
+            if (isNaN(dbm)) return 0;
+            var p = Math.round(((dbm + 100) / 50) * 100);
+            if (p < 0) p = 0;
+            if (p > 100) p = 100;
+            return p;
+        }
 
         // Parse frequency to band/technology/channel
         function freqInfo(freq) {
@@ -295,6 +302,30 @@
             else if (flags.indexOf('TKIP') >= 0) sec.push('TKIP');
             return sec.length > 0 ? sec.join(' / ') : 'Open';
         }
+        function parseSecurityDetails(flags) {
+            var f = flags || '';
+            var auth = 'Open';
+            var cipher = 'Open';
+            var caps = [];
+
+            if (f.indexOf('PSK') >= 0) auth = 'Personal (PSK)';
+            else if (f.indexOf('EAP') >= 0) auth = 'Enterprise (EAP)';
+
+            if (f.indexOf('CCMP') >= 0 && f.indexOf('TKIP') >= 0) cipher = 'CCMP + TKIP';
+            else if (f.indexOf('CCMP') >= 0) cipher = 'CCMP';
+            else if (f.indexOf('TKIP') >= 0) cipher = 'TKIP';
+            else if (f.indexOf('WEP') >= 0) cipher = 'WEP';
+
+            if (f.indexOf('WPS') >= 0) caps.push('WPS');
+            if (f.indexOf('MFP') >= 0 || f.indexOf('PMF') >= 0) caps.push('PMF');
+            if (f.indexOf('ESS') >= 0) caps.push('Infrastructure');
+            if (f.indexOf('P2P') >= 0) caps.push('P2P');
+            return {
+                auth: auth,
+                cipher: cipher,
+                caps: caps.length ? caps.join(' / ') : '--'
+            };
+        }
 
         // Render signal bars HTML
         function renderBars(dbm) {
@@ -308,7 +339,7 @@
 
         // Render info button
         function renderInfoBtn(ssid) {
-            return '<div class="info-btn" onclick="event.stopPropagation(); showDetail(\'' + ssid.replace(/'/g, "\\'") + '\')">i</div>';
+            return '<a class="info-btn" href="/wifi-network-info?ssid=' + encodeURIComponent(ssid) + '" onclick="event.stopPropagation()">i</a>';
         }
 
         // ========== Detail page ==========
@@ -323,12 +354,16 @@
             var bands = net ? netBands(net) : [];
             var techSupport = techSupportFromBands(bands);
             var security = parseSecurity(flags);
+            var secd = parseSecurityDetails(flags);
             var isConn = (ssid === connectedSsid);
+            var isSaved = isKnownNetwork(ssid);
+            var sigPct = signalPercent(sig);
 
             var html = '<div class="detail-header">' +
                 '<a class="back-btn" onclick="showMainView()">&larr;</a>' +
-                '<span class="detail-title">' + ssid + '</span>' +
-            '</div>';
+                '<span class="detail-title">Wi-Fi Settings</span>' +
+            '</div>' +
+            '<div class="detail-subtitle">' + ssid + '</div>';
 
             // Signal bars (large)
             html += '<div class="detail-signal">' +
@@ -342,9 +377,15 @@
                 html += '<tr><td>Status</td><td>Connected</td></tr>';
                 if (clientIp) html += '<tr><td>IP Address</td><td>' + clientIp + '</td></tr>';
                 if (clientMac) html += '<tr><td>MAC Address</td><td>' + clientMac.toUpperCase() + '</td></tr>';
+            } else {
+                html += '<tr><td>Status</td><td>Not connected</td></tr>';
             }
+            html += '<tr><td>Saved</td><td>' + (isSaved ? 'Yes' : 'No') + '</td></tr>';
             html += '<tr><td>Signal</td><td>' + sig + ' dBm</td></tr>';
+            html += '<tr><td>Signal Quality</td><td>' + sigPct + '%</td></tr>';
             html += '<tr><td>Security</td><td>' + security + '</td></tr>';
+            html += '<tr><td>Authentication</td><td>' + secd.auth + '</td></tr>';
+            html += '<tr><td>Cipher</td><td>' + secd.cipher + '</td></tr>';
             html += '<tr><td>Technology</td><td>' + fi.tech + '</td></tr>';
             if (techSupport.length > 1) {
                 html += '<tr><td>Technology Support</td><td>' + techSupport.join(' / ') + '</td></tr>';
@@ -359,6 +400,12 @@
             }
             if (freq) {
                 html += '<tr><td>Frequency</td><td>' + freq + ' MHz</td></tr>';
+            }
+            if (secd.caps !== '--') {
+                html += '<tr><td>Capabilities</td><td>' + secd.caps + '</td></tr>';
+            }
+            if (flags) {
+                html += '<tr><td>Raw Flags</td><td style="font-size:0.8em">' + flags + '</td></tr>';
             }
             html += '</table>';
 
@@ -748,8 +795,11 @@
 
         function pollStatus() {
             fetch('/api/status')
-                .then(function(res) { return res.json(); })
-                .then(function(data) { applyStatusSnapshot(data); })
+                .then(function(res) {
+                    if (res.status === 503) { window.location.replace('/updating'); return null; }
+                    return res.json();
+                })
+                .then(function(data) { if (data) applyStatusSnapshot(data); })
                 .catch(function() {});
         }
 
@@ -761,5 +811,6 @@
             });
         setInterval(pollStatus, 5000);
     </script>
+    {% include '_footer.html' %}
 </body>
 </html>

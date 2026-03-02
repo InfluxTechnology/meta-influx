@@ -4,6 +4,7 @@ Client Manager - Manages WiFi client connections on wlan0
 Connects to external WiFi networks using wpa_cli
 """
 
+import hashlib
 import logging
 import os
 import re
@@ -13,6 +14,13 @@ from pathlib import Path
 from typing import Optional, List
 
 log = logging.getLogger(__name__)
+
+
+def _derive_wpa_psk(ssid: str, passphrase: str) -> str:
+    """Derive 64-hex WPA PSK from passphrase and SSID (PBKDF2-HMAC-SHA1, 4096 iters)."""
+    return hashlib.pbkdf2_hmac(
+        "sha1", passphrase.encode("utf-8"), ssid.encode("utf-8"), 4096, 32
+    ).hex()
 CONNECT_FORENSICS = os.environ.get("REXGEN_CONNECT_FORENSICS", "0") == "1"
 STATE_FILE = "/tmp/rexgen/wifi_state.json"
 
@@ -500,6 +508,99 @@ class ClientManager:
         networks = self.wpa.list_networks()
         return [net["ssid"] for net in networks]
 
+    @staticmethod
+    def _parse_saved_networks_from_wpa_config() -> list:
+        """Parse saved SSID/password pairs from wpa_supplicant.conf."""
+        try:
+            content = Path(WPA_CONFIG).read_text()
+        except Exception:
+            return []
+
+        out = []
+        for match in re.finditer(r"network\s*=\s*\{([^}]*)\}", content, re.DOTALL):
+            block = match.group(1) or ""
+            ssid_m = re.search(r'^\s*ssid\s*=\s*"([^"]*)"\s*$', block, re.MULTILINE)
+            if not ssid_m:
+                continue
+            ssid = ssid_m.group(1)
+            if not ssid:
+                continue
+
+            # Open network if key_mgmt=NONE; otherwise extract PSK.
+            key_none = re.search(r'^\s*key_mgmt\s*=\s*NONE\s*$', block, re.MULTILINE) is not None
+            psk_hex_m = re.search(r'^\s*psk\s*=\s*([0-9a-fA-F]{64})\s*$', block, re.MULTILINE)
+            psk_quoted_m = re.search(r'^\s*psk\s*=\s*"([^"]*)"\s*$', block, re.MULTILINE)
+            psk = ""
+            if not key_none:
+                if psk_hex_m:
+                    # Pre-derived PSK stored as 64-hex (new format).
+                    psk = psk_hex_m.group(1).lower()
+                elif psk_quoted_m:
+                    # Legacy plaintext passphrase — derive PSK on read so it's never
+                    # written back to netservices.conf in plaintext.
+                    passphrase = psk_quoted_m.group(1) or ""
+                    if passphrase:
+                        psk = _derive_wpa_psk(ssid, passphrase)
+
+            out.append({"ssid": ssid, "psk": psk})
+        return out
+
+    def export_saved_networks(self) -> list:
+        """Export saved STA networks with passwords for persistent backup."""
+        return self._parse_saved_networks_from_wpa_config()
+
+    def import_saved_networks(self, networks: list):
+        """Apply saved STA networks from persistent config as source-of-truth."""
+        target = []
+        for item in (networks or []):
+            if not isinstance(item, dict):
+                continue
+            ssid = (item.get("ssid") or "").strip()
+            if not ssid:
+                continue
+            # "password" takes priority: user may have manually set it in the conf
+            # file to update a network. Derive PSK from it and let the next
+            # _persist_runtime_settings() call clear the plaintext field.
+            password = (item.get("password") or "").strip()
+            psk_hex = (item.get("psk") or "").strip().lower()
+            if password:
+                psk_hex = _derive_wpa_psk(ssid, password)
+            target.append({"ssid": ssid, "psk": psk_hex})
+
+        target_ssids = {n["ssid"] for n in target}
+        current_ssids = set(self.get_known_networks())
+
+        # Remove networks not present in persistent config.
+        for ssid in current_ssids - target_ssids:
+            self.remove_network(ssid)
+
+        # Add/update configured networks.
+        for net in target:
+            self._add_network_with_psk(net["ssid"], net["psk"])
+
+    def _add_network_with_psk(self, ssid: str, psk_hex: str) -> Optional[int]:
+        """Add a network using a pre-derived 64-hex PSK (skips passphrase derivation)."""
+        self.remove_network(ssid)
+        net_id = self.wpa.add_network()
+        if net_id is None:
+            log.error(f"Failed to allocate network slot for '{ssid}'")
+            return None
+        if not self.wpa.set_network(net_id, "ssid", ssid):
+            self.wpa.remove_network(net_id)
+            return None
+        self.wpa.set_network(net_id, "scan_ssid", "1", quoted=False)
+        if psk_hex:
+            if not self.wpa.set_network(net_id, "psk", psk_hex, quoted=False):
+                log.error(f"Failed to set PSK for '{ssid}'")
+                self.wpa.remove_network(net_id)
+                return None
+        else:
+            self.wpa.set_network(net_id, "key_mgmt", "NONE", quoted=False)
+        self.wpa.enable_network(net_id)
+        self.wpa.save_config()
+        log.info(f"Imported network '{ssid}' (psk={'set' if psk_hex else 'open'})")
+        return net_id
+
     def add_network(self, ssid: str, password: str) -> Optional[int]:
         """Add a network using wpa_cli with validation"""
         # Validate inputs
@@ -533,8 +634,9 @@ class ClientManager:
 
         # Set password or open network
         if password:
-            # WPA/WPA2 network with password
-            if not self.wpa.set_network(net_id, "psk", password):
+            # WPA/WPA2: pre-derive 64-hex PSK so plaintext is never stored on disk.
+            psk_hex = _derive_wpa_psk(ssid, password)
+            if not self.wpa.set_network(net_id, "psk", psk_hex, quoted=False):
                 log.error(f"Failed to set PSK for network {net_id}")
                 self.wpa.remove_network(net_id)
                 return None

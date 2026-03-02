@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone='no'?><!--*-nxml-*-->
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+
+<service-group>
+  <!-- %h expands to the current host name (your serial hostname) -->
+  <name replace-wildcards="yes">%h</name>
+
+  <service>
+    <type>_http._tcp</type>
+    <port>80</port>
+
+    <!-- Optional TXT records -->
+    <txt-record>path=/</txt-record>
+    <txt-record>ui=dashboard</txt-record>
+  </service>
+</service-group>

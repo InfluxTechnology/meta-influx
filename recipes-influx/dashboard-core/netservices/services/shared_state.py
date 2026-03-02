@@ -13,8 +13,8 @@ from pathlib import Path
 
 # ========== Configuration ==========
 
-# State file location (use /tmp or /data for embedded systems)
-STATE_DIR = "/tmp/rexgen"
+# State file location — /data/rexgen/tmp persists across reboots and Mender OTA updates
+STATE_DIR = "/data/rexgen/tmp"
 STATE_FILE = f"{STATE_DIR}/wifi_state.json"
 
 # Heartbeat timeout (seconds)
@@ -50,6 +50,7 @@ class WifiState:
     def _write(self, state: dict):
         """Write state to file atomically"""
         temp_file = f"{STATE_FILE}.tmp"
+        os.makedirs(os.path.dirname(temp_file), exist_ok=True)
         with open(temp_file, 'w') as f:
             json.dump(state, f, indent=2)
         os.rename(temp_file, STATE_FILE)

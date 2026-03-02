@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP Client Info</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 17px; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%); }
+        a { color: #20b2aa; } a:hover { color: #5ed8d1; }
+        .container { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 640px; width: 94%; }
+        .top-switch { display: flex; background: #f5f5f7; border-radius: 16px 16px 0 0; overflow: hidden; margin: -20px -20px 12px -20px; }
+        .top-switch a { flex: 1; height: 64px; text-decoration: none; color: #20b2aa; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .top-switch a.active { background: #fff; color: #178a83; }
+        .top-switch svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .top-switch .tab-label { font-size: 0.62em; font-weight: 600; line-height: 1; white-space: nowrap; text-align: center; }
+        .detail-header { display: flex; align-items: center; margin-bottom: 14px; }
+        .back-btn { font-size: 1.3em; margin-right: 10px; text-decoration: none; line-height: 1; }
+        .detail-title { font-size: 1.1em; font-weight: 600; color: #333; flex: 1; text-align: center; margin-right: 18px; }
+        .detail-subtitle { margin: -8px 0 10px 0; text-align: center; color: #86868b; font-size: 0.85em; word-break: break-word; }
+        .info-table { font-size: 0.95em; }
+        .info-row { display: grid; grid-template-columns: auto 1fr; border-bottom: 1px solid #e5e5e7; }
+        .info-row:last-child { border-bottom: none; }
+        .info-key, .info-val { padding: 10px 0; }
+        .info-key { color: #86868b; white-space: nowrap; }
+        .info-val { color: #333; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .error { text-align: center; color: #c62828; padding: 10px; }
+    </style>
+    <!-- footer-safe-space -->    <style>body { padding-bottom: 64px !important; } .container { margin-top: 36px; }</style>
+</head>
+<body>
+    {% include '_logout.html' %}
+    <div class="container">
+    {% include '_topnav.html' %}
+    <div class="detail-header"><a class="back-btn" href="/ap-settings">&larr;</a><span class="detail-title">Access Point Settings</span></div>
+    <div id="clientTitle" class="detail-subtitle">Loading...</div>
+    <div id="error" class="error" style="display:none;"></div>
+    <div id="table" class="info-table"></div>
+    </div>
+    <script>
+    function q(name) { return new URLSearchParams(location.search).get(name) || ''; }
+    function esc(s) { return String(s || '').replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+    function fmt(seconds) {
+        var s = parseInt(seconds, 10); if (!(s >= 0)) return '--';
+        var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+        if (h > 0) return h + 'h ' + m + 'm ' + sec + 's';
+        if (m > 0) return m + 'm ' + sec + 's';
+        return sec + 's';
+    }
+    var mac = q('mac').toLowerCase();
+    if (!mac) {
+        document.getElementById('clientTitle').textContent = 'Unknown client';
+        document.getElementById('error').textContent = 'MAC is missing';
+        document.getElementById('error').style.display = 'block';
+    } else {
+        fetch('/api/ap-clients')
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                var c = (data.clients || []).find(function(x){ return String(x.mac || '').toLowerCase() === mac; });
+                if (!c) {
+                    document.getElementById('clientTitle').textContent = mac.toUpperCase();
+                    document.getElementById('error').textContent = 'Client not found';
+                    document.getElementById('error').style.display = 'block';
+                    return;
+                }
+                var name = c.hostname || String(c.mac || '--').toUpperCase();
+                document.getElementById('clientTitle').textContent = name;
+                var rows = [
+                    ['Status', 'Connected'],
+                    ['IP Address', c.ip || '--'],
+                    ['MAC Address', String(c.mac || '--').toUpperCase()],
+                    ['Connected Time', fmt(c.connected_time_s)],
+                    ['Inactive Time', (c.inactive_time_ms == null ? '--' : String(parseInt(c.inactive_time_ms, 10) + ' ms'))],
+                    ['TX Bitrate', c.tx_bitrate || '--'],
+                    ['RX Bitrate', c.rx_bitrate || '--'],
+                    ['Beacon Interval', c.beacon_interval == null ? '--' : c.beacon_interval],
+                    ['DTIM Period', c.dtim_period == null ? '--' : c.dtim_period],
+                    ['Associated', c.associated || '--'],
+                    ['Authenticated', c.authenticated || '--'],
+                    ['Authorized', c.authorized || '--']
+                ];
+                var html = '';
+                rows.forEach(function(r){ html += '<div class="info-row"><div class="info-key">' + esc(r[0]) + '</div><div class="info-val">' + esc(r[1]) + '</div></div>'; });
+                document.getElementById('table').innerHTML = html;
+            })
+            .catch(function(){
+                document.getElementById('clientTitle').textContent = mac.toUpperCase();
+                document.getElementById('error').textContent = 'Failed to load client details';
+                document.getElementById('error').style.display = 'block';
+            });
+    }
+
+</script>
+    {% include '_footer.html' %}
+</body>
+</html>

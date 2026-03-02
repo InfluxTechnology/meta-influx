@@ -11,28 +11,43 @@ DESCRIPTION = " Create a virtual wlan1 interface \
 SRC_URI += "\
         file://dashboard/app.py \
         file://dashboard/__init__.py \
+	file://dashboard/templates/_footer.html \
+        file://dashboard/templates/_logout.html \
+        file://dashboard/templates/_topnav.html \
+        file://dashboard/templates/ap_client_info.html \
         file://dashboard/templates/ap_settings.html \
+        file://dashboard/templates/cpu_detail.html \
         file://dashboard/templates/device_info.html \
-        file://dashboard/templates/index.html \
+        file://dashboard/templates/disk_detail.html \
+        file://dashboard/templates/install_certificate.html \
+        file://dashboard/templates/login.html \
         file://dashboard/templates/manage_networks.html \
+        file://dashboard/templates/memory_detail.html \
+        file://dashboard/templates/pipe_output.html \
+        file://dashboard/templates/process_info.html \
         file://dashboard/templates/rexgend_settings.html \
-        file://dashboard/templates/settings.html \
-        file://dashboard/templates/settings_ap_password.html \
-        file://dashboard/templates/settings_device_info.html \
-        file://dashboard/templates/settings_rexgend_config.html \
+        file://dashboard/templates/service_info.html \
+        file://dashboard/templates/services.html \
+        file://dashboard/templates/system_settings.html \
+        file://dashboard/templates/terminal.html \
+        file://dashboard/templates/updating.html \
+        file://dashboard/templates/wifi_network_info.html \
+        file://dashboard/templates/wifi_settings.html \
         file://services/__init__.py \
         file://services/ap_clients_config.json \
         file://services/ap_manager.py \
         file://services/client_manager.py \
+        file://services/netservices_config.py \
         file://services/network_scan_config.json \
         file://services/shared_state.py \
         file://services/wifi_manager.py \
+	file://ssl/ca.crt \
+        file://ssl/ca.key \
         file://scripts/led_blink.sh \
         file://systemd/led-blink.service \
         file://systemd/wifi-dashboard.service \
         file://systemd/wifi-manager.service \
 "
-#        file://docs/architecture.drawio 
 
 LICENSE = "CLOSED"
 
@@ -46,11 +61,11 @@ INFLUX_DIRS = "\
     ${INFLUX_DIR}/netservices/dashboard/templates/ \
     ${INFLUX_DIR}/netservices/scripts/ \
     ${INFLUX_DIR}/netservices/services/ \
+    ${INFLUX_DIR}/netservices/ssl/ \               
     /etc/systemd/system/ \
     /usr/lib/systemd/system/ \
     /usr/lib/systemd/system/multi-user.target.wants/ \
 "
-#    ${INFLUX_DIR}/netservices/docs/ 
 
 INFLUX_FILES = "\
     ${S}/docs/ \
@@ -58,6 +73,7 @@ INFLUX_FILES = "\
     ${S}/dashboard/templates/ \
     ${S}/scripts/ \
     ${S}/services/ \
+    ${S}/ssl/ \
 "
 
 do_install:prepend() {
@@ -74,14 +90,13 @@ do_install () {
     install -m 0755 ${S}/scripts/*.sh ${D}${INFLUX_DIR}/netservices/scripts/
     install -m 0755 ${S}/services/*.py ${D}${INFLUX_DIR}/netservices/services/
     install -m 0755 ${S}/services/*.json ${D}${INFLUX_DIR}/netservices/services/
+    install -m 0755 ${S}/ssl/ca.* ${D}${INFLUX_DIR}/netservices/ssl/
     install -m 0644 ${S}/systemd/*.service ${D}/etc/systemd/system/
 
     ln -sf /etc/systemd/system/led-blink.service ${D}/usr/lib/systemd/system/multi-user.target.wants/led-blink.service
     ln -sf /etc/systemd/system/wifi-dashboard.service ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi-dashboard.service
     ln -sf /etc/systemd/system/wifi-manager.service ${D}/usr/lib/systemd/system/multi-user.target.wants/wifi-manager.service
 }
-
-#    install -m 0755 ${S}/docs/architecture.drawio ${D}${INFLUX_DIR}/netservices/docs/
 
 SYSTEMD_AUTO_ENABLE = "enable"
 SYSTEMD_SERVICE:${PN} = "\

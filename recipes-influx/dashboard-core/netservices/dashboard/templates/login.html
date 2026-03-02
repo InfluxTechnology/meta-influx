@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReXgen Control Center Login</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%);
+            padding: 20px 16px 70px 16px;
+        }
+        .card {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .head {
+            background: #f5f5f7;
+            padding: 16px 20px 12px 20px;
+            border-bottom: 1px solid #e8eaee;
+        }
+        .title {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 600;
+            margin: 0;
+        }
+        .subtitle {
+            margin-top: 6px;
+            font-size: 0.85em;
+            color: #86868b;
+        }
+        form { padding: 18px 20px 22px 20px; }
+        label {
+            display: block;
+            font-size: 0.84em;
+            color: #666;
+            margin-bottom: 6px;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dfe3e8;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            font-size: 0.95em;
+            outline: none;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #20b2aa;
+        }
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear { display: none; }
+        input[type="password"]::-webkit-credentials-auto-fill-button {
+            visibility: hidden;
+            display: none !important;
+            pointer-events: none;
+        }
+        .pwd-wrap { position: relative; }
+        .pwd-wrap input { padding-right: 40px; margin-bottom: 14px; }
+        .pwd-eye {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: transparent;
+            color: #20b2aa;
+            cursor: pointer;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pwd-eye svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .pwd-eye .slash { display: none; }
+        .pwd-eye.shown .slash { display: inline; }
+        .error {
+            margin-bottom: 12px;
+            color: #c62828;
+            font-size: 0.84em;
+        }
+        button {
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, #20b2aa 0%, #178a83 100%);
+            color: #fff;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .hint {
+            margin-top: 12px;
+            color: #8b8f95;
+            font-size: 0.78em;
+            text-align: center;
+        }
+        .secure-upgrade {
+            margin: 10px 20px 0 20px;
+            border: 1px solid #d8ece9;
+            background: #f5fbfa;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.8em;
+            color: #355;
+            line-height: 1.45;
+        }
+        .secure-upgrade a {
+            display: inline-block;
+            margin-top: 8px;
+            font-weight: 600;
+            color: #178a83;
+            text-decoration: none;
+        }
+        .footer-version {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            text-align: center;
+            font-size: 0.72em;
+            color: #6f7680;
+            pointer-events: none;
+            z-index: 40;
+            background: rgba(245,247,248,0.95);
+            border-top: 1px solid #d8dde2;
+            padding: 6px 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="head">
+            <h1 class="title">ReXgen Control Center</h1>
+            <div class="subtitle">Sign in to continue</div>
+        </div>
+        {% if ap_http_upgrade %}
+        <div class="secure-upgrade">
+            Secure mode is enabled. You opened the AP page over HTTP for captive onboarding.
+            Redirecting to HTTPS now.
+            <a id="secureLink" href="{{ ap_secure_target }}">Open Secure Page</a>
+        </div>
+        {% endif %}
+        <form method="post" action="/login" autocomplete="off">
+            <input type="hidden" name="next" value="{{ next_path or '/' }}">
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text" maxlength="64" autocomplete="username" required>
+            <label for="password">Password</label>
+            <div class="pwd-wrap">
+                <input id="password" name="password" type="password" maxlength="128" autocomplete="current-password" required>
+                <button id="loginPwdEye" class="pwd-eye" type="button" aria-label="Show password" onclick="togglePwd()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <line class="slash" x1="4" y1="20" x2="20" y2="4"></line>
+                    </svg>
+                </button>
+            </div>
+            <button type="submit">Sign In</button>
+            <div class="hint">Default login is configured for first start only.</div>
+        </form>
+    </div>
+    <script>
+        function togglePwd() {
+            var input = document.getElementById('password');
+            var eye = document.getElementById('loginPwdEye');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.classList.add('shown');
+                eye.setAttribute('aria-label', 'Hide password');
+            } else {
+                input.type = 'password';
+                eye.classList.remove('shown');
+                eye.setAttribute('aria-label', 'Show password');
+            }
+        }
+        {% if ap_http_upgrade %}
+        (function() {
+            var nextVal = "{{ (next_path or '/')|e }}";
+            var target = "{{ ap_secure_target|e }}";
+            if (nextVal && nextVal !== "/") {
+                target += "?next=" + encodeURIComponent(nextVal);
+            }
+            var link = document.getElementById('secureLink');
+            if (link) link.href = target;
+            setTimeout(function() { window.location.replace(target); }, 1600);
+        })();
+        {% endif %}
+    </script>
+    <div class="footer-version">ReXgen Control Center Version {{ version }}</div>
+</body>
+</html>

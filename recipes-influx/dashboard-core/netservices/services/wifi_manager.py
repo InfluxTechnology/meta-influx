@@ -15,7 +15,6 @@ import sys
 import subprocess
 import time
 import logging
-import json
 from pathlib import Path
 
 # Add current directory to path
@@ -24,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from shared_state import wifi_state
 from ap_manager import APManager
 from client_manager import ClientManager, cleanup_wpa_config
+from netservices_config import NetservicesConfig
 
 # ========== Configuration ==========
 
@@ -37,8 +37,6 @@ LOG_FILE = "/var/log/wifi_manager.log"
 # Timing intervals (seconds)
 # Keep loop responsive; expensive operations are throttled by cache windows.
 MAIN_LOOP_INTERVAL = 1
-NETWORK_SCAN_CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "network_scan_config.json")
-AP_CLIENTS_CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ap_clients_config.json")
 DEFAULT_NETWORK_SCAN_CONFIG = {
     "cache_seconds": 10,
     "auto_scan_requires_dashboard_client": True
@@ -67,8 +65,8 @@ class WifiManager:
     def __init__(self):
         self._loop_id = 0
         self.serial = self._get_serial()
-        self.network_scan_cfg = self._load_json_config(NETWORK_SCAN_CONFIG_FILE, DEFAULT_NETWORK_SCAN_CONFIG)
-        self.ap_clients_cfg = self._load_json_config(AP_CLIENTS_CONFIG_FILE, DEFAULT_AP_CLIENTS_CONFIG)
+        self.network_scan_cfg = dict(DEFAULT_NETWORK_SCAN_CONFIG)
+        self.ap_clients_cfg = dict(DEFAULT_AP_CLIENTS_CONFIG)
 
         # Clean up wpa_supplicant.conf on startup
         removed = cleanup_wpa_config()
@@ -78,6 +76,11 @@ class WifiManager:
         # Initialize managers
         self.ap = APManager(self.serial, self._run)
         self.client = ClientManager(self._run, self._set_led)
+        self.persist_cfg = NetservicesConfig()
+        self._sta_restore_done = False
+        self._sta_restore_succeeded = False
+        self._sta_restore_retries = 0
+        self._apply_or_bootstrap_persistent_ap_psk()
 
         # Cache tracking
         self._last_ap_clients_update = 0
@@ -91,6 +94,97 @@ class WifiManager:
         })
         log.info(f"WiFi Manager initialized. Serial: {self.serial}")
         self._trace(f"verbose={TRACE_VERBOSE} scan_cfg={self.network_scan_cfg} ap_cfg={self.ap_clients_cfg}")
+
+    def _apply_or_bootstrap_persistent_ap_psk(self):
+        """Apply AP PSK from persistent config, or bootstrap config on first run."""
+        try:
+            if self.persist_cfg.exists():
+                data = self.persist_cfg.read()
+                persisted_psk = (data.get("ap_psk") or "").strip().lower()
+                if self.ap._is_valid_psk_hex(persisted_psk):
+                    self.ap.psk = persisted_psk
+                    log.info("Applied AP PSK from /data/rexgen/config/netservices.conf")
+                else:
+                    # Legacy migration path: AP.password in config.
+                    legacy_password = (data.get("ap_password") or "").strip()
+                    if 8 <= len(legacy_password) <= 63:
+                        self.ap.psk = self.ap._derive_psk(self.ap.ssid, legacy_password)
+                        self.persist_cfg.write_ap_psk(self.ap.psk)
+                        log.info("Migrated legacy AP password to AP PSK in netservices.conf")
+                    else:
+                        hostapd_psk = (self.ap.get_configured_psk() or "").strip().lower()
+                        if self.ap._is_valid_psk_hex(hostapd_psk):
+                            self.ap.psk = hostapd_psk
+                            self.persist_cfg.write_ap_psk(hostapd_psk)
+                            log.info("Persistent AP PSK missing/invalid; synced from /etc/hostapd.conf")
+            else:
+                hostapd_psk = (self.ap.get_configured_psk() or "").strip().lower()
+                if self.ap._is_valid_psk_hex(hostapd_psk):
+                    self.ap.psk = hostapd_psk
+                self.persist_cfg.write_all(self.ap.psk, self.client.export_saved_networks())
+                log.info("Created /data/rexgen/config/netservices.conf from current runtime settings")
+        except Exception as e:
+            log.warning(f"Persistent AP PSK setup failed: {e}")
+
+    def _restore_sta_networks_from_persistent(self):
+        """Apply STA saved networks from persistent config. Retries if wpa_supplicant not ready."""
+        if self._sta_restore_done:
+            return
+        _MAX_RETRIES = 15
+        if self._sta_restore_retries >= _MAX_RETRIES:
+            log.warning("STA restore: gave up after %d attempts (wpa_supplicant not ready)", _MAX_RETRIES)
+            self._sta_restore_done = True
+            return
+        self._sta_restore_retries += 1
+        try:
+            if not self.persist_cfg.exists():
+                self._sta_restore_done = True
+                self._sta_restore_succeeded = True
+                return
+            data = self.persist_cfg.read()
+            networks = data.get("sta_networks") or []
+            if not networks:
+                self._sta_restore_done = True
+                self._sta_restore_succeeded = True
+                return
+            self.client.import_saved_networks(networks)
+            # Verify wpa_supplicant actually accepted the networks (socket was ready)
+            if self.client.get_known_networks():
+                self._sta_restore_done = True
+                self._sta_restore_succeeded = True
+                log.info(
+                    "Applied %d saved STA networks from netservices.conf (attempt %d)",
+                    len(networks), self._sta_restore_retries
+                )
+            else:
+                log.warning(
+                    "STA restore attempt %d/%d: wpa_supplicant not ready, will retry",
+                    self._sta_restore_retries, _MAX_RETRIES
+                )
+        except Exception as e:
+            log.warning(f"STA restore from persistent config failed: {e}")
+            self._sta_restore_done = True
+
+    def _persist_runtime_settings(self):
+        """Persist AP PSK and STA saved networks to /data."""
+        try:
+            exported = self.client.export_saved_networks()
+            # Guard: if wpa_supplicant.conf is empty but restore hasn't succeeded yet,
+            # only update the PSK to avoid wiping saved networks due to a startup race
+            # (e.g. wpa_supplicant not ready when restore ran after a firmware update).
+            if not exported and not self._sta_restore_succeeded:
+                existing = (self.persist_cfg.read() or {}).get("sta_networks") or []
+                if existing:
+                    log.warning(
+                        "Skipping STA persist: wpa_supplicant.conf empty but %d networks in "
+                        "persistent config (restore not confirmed). Updating PSK only.",
+                        len(existing)
+                    )
+                    self.persist_cfg.write_ap_psk(self.ap.psk)
+                    return
+            self.persist_cfg.write_all(self.ap.psk, exported)
+        except Exception as e:
+            log.warning(f"Failed to persist netservices settings: {e}")
 
     def _trace(self, msg: str):
         if TRACE_VERBOSE:
@@ -129,22 +223,6 @@ class WifiManager:
         except Exception:
             return -1, []
 
-    @staticmethod
-    def _load_json_config(path: str, defaults: dict) -> dict:
-        """Load optional JSON config; create with defaults if missing/invalid."""
-        cfg = dict(defaults)
-        p = Path(path)
-        try:
-            if p.exists():
-                loaded = json.loads(p.read_text())
-                if isinstance(loaded, dict):
-                    cfg.update({k: loaded[k] for k in defaults.keys() if k in loaded})
-            else:
-                p.write_text(json.dumps(cfg, indent=2))
-        except Exception:
-            pass
-        return cfg
-
     def _refresh_networks(self, force: bool = False):
         """Refresh scanned networks respecting cache window unless forced."""
         now = time.time()
@@ -182,6 +260,43 @@ class WifiManager:
         })
         self._last_ap_clients_update = now
         self._trace(f"_refresh_ap_clients done clients={len(clients)} blocked={len(blocked)}")
+
+    @staticmethod
+    def _get_mender_artifact() -> str:
+        """Read current Mender artifact name from /etc/mender/artifact_info."""
+        try:
+            content = Path("/etc/mender/artifact_info").read_text()
+            for line in content.splitlines():
+                line = line.strip()
+                if line.startswith("artifact_name="):
+                    return line.split("=", 1)[1].strip()
+        except Exception:
+            pass
+        return ""
+
+    def _check_ota_and_reinit(self) -> bool:
+        """Detect Mender OTA update by comparing artifact_name with stored value.
+
+        Returns True if an update was detected (caller should force AP/dnsmasq restart).
+        Stores the current artifact name in netservices.conf so subsequent boots skip reinit.
+        """
+        current = self._get_mender_artifact()
+        if not current:
+            return False
+        try:
+            stored = self.persist_cfg.read_mender_artifact()
+            if stored == current:
+                return False
+            log.info(
+                "OTA update detected: '%s' -> '%s'. Forcing full re-initialization.",
+                stored or "(none)", current
+            )
+            # Record new artifact immediately so a crash/restart doesn't re-trigger.
+            self.persist_cfg.write_mender_artifact(current)
+            return True
+        except Exception as e:
+            log.warning(f"OTA artifact check failed: {e}")
+            return False
 
     def _get_serial(self) -> str:
         """Read device serial number"""
@@ -417,6 +532,7 @@ class WifiManager:
                     "connect_finished_at": time.time(),
                     "connect_trace_id": connect_trace_id
                 })
+                self._persist_runtime_settings()
             else:
                 self._trace(f"connect failed trace_id={connect_trace_id} ssid='{ssid}' error='{error}'")
                 wifi_state.update({
@@ -456,6 +572,7 @@ class WifiManager:
                         "saved_network_error": None,
                         "saved_network_last_action": f"Saved '{ssid}'"
                     })
+                    self._persist_runtime_settings()
             elif action == "delete":
                 if not ssid:
                     wifi_state.update({"saved_network_error": "SSID is required"})
@@ -466,6 +583,7 @@ class WifiManager:
                         "saved_network_error": None,
                         "saved_network_last_action": f"Deleted '{ssid}'"
                     })
+                    self._persist_runtime_settings()
                 else:
                     wifi_state.update({"saved_network_error": f"Network '{ssid}' not found"})
             return
@@ -480,6 +598,7 @@ class WifiManager:
                     "ap_settings_error": None,
                     "ap_settings_last_action": msg
                 })
+                self._persist_runtime_settings()
             else:
                 wifi_state.update({
                     "ap_settings_error": msg
@@ -546,8 +665,18 @@ class WifiManager:
         log.info(f"Client (wlan0): Ready")
         log.info("=" * 50)
 
-        # Start AP (always on)
-        self.ap.start()
+        # Check for Mender OTA update; force full AP reinit if artifact name changed.
+        ota_detected = self._check_ota_and_reinit()
+        if ota_detected:
+            # Reset STA restore state so wpa_supplicant config is re-applied cleanly.
+            self._sta_restore_done = False
+            self._sta_restore_succeeded = False
+            self._sta_restore_retries = 0
+
+        # Start AP (always on); force=True on OTA ensures hostapd/dnsmasq restart
+        # even if services appear "active" with a stale pre-update config.
+        self.ap.start(force=ota_detected)
+        self._restore_sta_networks_from_persistent()
 
         # Initial scan and populate state BEFORE trying to connect
         # This ensures dashboard has networks to display immediately
@@ -559,6 +688,10 @@ class WifiManager:
         # Try to connect client to known network (doesn't rescan, just connects)
         self._try_known_networks_no_scan(networks)
 
+        # Persist current state — ensures any legacy plaintext passwords in
+        # netservices.conf are immediately migrated to the 64-hex PSK format.
+        self._persist_runtime_settings()
+
         # Update initial state
         self.update_state()
 
@@ -568,6 +701,8 @@ class WifiManager:
         while True:
             try:
                 self._loop_id += 1
+                # Retry STA restore until wpa_supplicant is ready (handles post-update races)
+                self._restore_sta_networks_from_persistent()
                 # Ensure AP is running
                 self.ap.ensure_running()
 

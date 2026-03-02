@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal</title>
+    <link rel="stylesheet" href="https://unpkg.com/xterm@5.3.0/css/xterm.css">
+    <script src="https://unpkg.com/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://unpkg.com/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0d0d0d;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #111111;
+            border-bottom: 1px solid #222222;
+            padding: 8px 16px;
+            flex-shrink: 0;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .back-btn { color: #20b2aa; text-decoration: none; font-size: 0.85em; font-weight: 600; }
+        .back-btn:hover { color: #5ed8d1; }
+        .topbar-title { color: #e0e0e0; font-size: 0.85em; font-weight: 600; letter-spacing: 0.03em; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; display: inline-block; }
+        .status-dot.connected { background: #20b2aa; }
+        .status-dot.dead { background: #c62828; }
+        #statusLabel { font-size: 0.78em; color: #86868b; }
+        .btn-reconnect {
+            background: none; border: 1px solid #20b2aa; color: #20b2aa;
+            border-radius: 6px; padding: 4px 12px; font-size: 0.78em; cursor: pointer; font-weight: 600;
+        }
+        .btn-reconnect:hover { background: #20b2aa22; }
+        #terminal-wrap { flex: 1; padding: 8px; overflow: hidden; }
+        #terminal-container { width: 100%; height: 100%; }
+        .xterm { height: 100%; }
+        .xterm-viewport { overflow-y: auto !important; }
+
+        /* Password gate overlay */
+        #authGate {
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.96);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .auth-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+            padding: 32px 28px 28px;
+            width: 320px;
+            text-align: center;
+        }
+        .auth-card .logo {
+            width: 52px; height: 52px; margin: 0 auto 8px;
+            display: block;
+        }
+        .auth-card .brand { font-size: 0.62em; font-weight: 700; letter-spacing: 0.22em; color: #333; text-transform: uppercase; margin-bottom: 18px; }
+        .auth-card h2 { font-size: 1em; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+        .auth-card p { font-size: 0.8em; color: #86868b; margin-bottom: 20px; }
+        .auth-card input[type="password"] {
+            width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0;
+            border-radius: 8px; font-size: 0.9em; margin-bottom: 10px; outline: none;
+        }
+        .auth-card input[type="password"]:focus { border-color: #20b2aa; }
+        .auth-card .err { font-size: 0.8em; color: #c62828; min-height: 1.2em; margin-bottom: 8px; }
+        .auth-card button {
+            width: 100%; padding: 10px; background: #20b2aa; color: #fff;
+            border: none; border-radius: 8px; font-size: 0.92em; font-weight: 600;
+            cursor: pointer; margin-bottom: 10px;
+        }
+        .auth-card button:disabled { background: #a0d8d6; cursor: default; }
+        .auth-card button:not(:disabled):hover { background: #178a83; }
+        .auth-card .cancel-link { font-size: 0.8em; color: #86868b; text-decoration: none; }
+        .auth-card .cancel-link:hover { color: #20b2aa; }
+    </style>
+</head>
+<body>
+    <!-- Root password gate -->
+    <div id="authGate">
+        <div class="auth-card">
+            <svg class="logo" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4"  y="4"  width="19" height="30" rx="4" fill="#20b2aa"/>
+                <rect x="4"  y="40" width="19" height="28" rx="4" fill="#178a83"/>
+                <rect x="27" y="4"  width="18" height="14" rx="4" fill="#178a83"/>
+                <rect x="27" y="24" width="18" height="44" rx="4" fill="#20b2aa"/>
+                <rect x="49" y="4"  width="19" height="30" rx="4" fill="#20b2aa"/>
+                <rect x="49" y="40" width="19" height="28" rx="4" fill="#178a83"/>
+            </svg>
+            <div class="brand">ReXgen</div>
+            <h2>Root Access Required</h2>
+            <p>Enter the Linux root password to open a terminal session.</p>
+            <input type="password" id="rootPwInput" placeholder="Root password" maxlength="128" autocomplete="current-password">
+            <div class="err" id="authErr"></div>
+            <button id="authBtn" onclick="submitAuth()">Connect</button>
+            <a href="/system-settings" class="cancel-link">Cancel</a>
+        </div>
+    </div>
+
+    <div class="topbar">
+        <div class="topbar-left">
+            <a href="/system-settings" class="back-btn">&#8592; System</a>
+            <span class="topbar-title">Linux Terminal &mdash; root@rexgen</span>
+        </div>
+        <div class="topbar-right">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusLabel">Connecting…</span>
+            <button class="btn-reconnect" id="btnReconnect" style="display:none" onclick="reconnect()">Reconnect</button>
+        </div>
+    </div>
+    <div id="terminal-wrap">
+        <div id="terminal-container"></div>
+    </div>
+
+    <script>
+    var term = new Terminal({
+        cursorBlink: true,
+        fontSize: 14,
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+        scrollback: 2000,
+        theme: {
+            background:      '#0d0d0d',
+            foreground:      '#f0f0f0',
+            cursor:          '#33ff33',
+            cursorAccent:    '#0d0d0d',
+            selectionBackground: '#33ff3344',
+            black:           '#0d0d0d',
+            red:             '#cc0000',
+            green:           '#33ff33',
+            yellow:          '#ffcc00',
+            blue:            '#4da6ff',
+            magenta:         '#cc66ff',
+            cyan:            '#00cccc',
+            white:           '#cccccc',
+            brightBlack:     '#555555',
+            brightRed:       '#ff3333',
+            brightGreen:     '#66ff66',
+            brightYellow:    '#ffff33',
+            brightBlue:      '#66b3ff',
+            brightMagenta:   '#ff99ff',
+            brightCyan:      '#33ffff',
+            brightWhite:     '#ffffff',
+        }
+    });
+
+    var fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(document.getElementById('terminal-container'));
+    fitAddon.fit();
+
+    var sessionId = null;
+    var pollTimer = null;
+    var dead = false;
+    var inputQueue = [];
+    var inputPending = false;
+    var rootPassword = null;
+
+    // ---- Auth gate ----
+    document.getElementById('rootPwInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') submitAuth();
+    });
+    document.getElementById('rootPwInput').focus();
+
+    function submitAuth() {
+        var pw = document.getElementById('rootPwInput').value;
+        if (!pw) { document.getElementById('authErr').textContent = 'Password is required.'; return; }
+        var btn = document.getElementById('authBtn');
+        btn.disabled = true;
+        btn.textContent = 'Verifying…';
+        document.getElementById('authErr').textContent = '';
+        fetch('/api/console/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ root_password: pw })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(resp) {
+            if (!resp.ok) {
+                document.getElementById('authErr').textContent = resp.data.error || 'Authentication failed.';
+                document.getElementById('rootPwInput').value = '';
+                document.getElementById('rootPwInput').focus();
+                btn.disabled = false;
+                btn.textContent = 'Connect';
+                return;
+            }
+            // Success — hide gate, start session
+            rootPassword = pw;
+            document.getElementById('rootPwInput').value = '';
+            document.getElementById('authGate').style.display = 'none';
+            sessionId = resp.data.session_id;
+            setStatus('connected');
+            sendResize();
+            schedulePoll();
+            term.focus();
+        })
+        .catch(function() {
+            document.getElementById('authErr').textContent = 'Request failed. Try again.';
+            btn.disabled = false;
+            btn.textContent = 'Connect';
+        });
+    }
+
+    // ---- Terminal ----
+    function setStatus(state) {
+        var dot = document.getElementById('statusDot');
+        var lbl = document.getElementById('statusLabel');
+        var btn = document.getElementById('btnReconnect');
+        dot.className = 'status-dot ' + state;
+        if (state === 'connected') { lbl.textContent = 'Connected'; btn.style.display = 'none'; }
+        else if (state === 'dead')  { lbl.textContent = 'Session ended'; btn.style.display = ''; }
+        else                        { lbl.textContent = 'Connecting…'; btn.style.display = 'none'; }
+    }
+
+    function reconnect() {
+        if (!rootPassword) { document.getElementById('authGate').style.display = 'flex'; return; }
+        term.reset();
+        dead = false;
+        sessionId = null;
+        if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+        setStatus('');
+        fetch('/api/console/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ root_password: rootPassword })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.error) { term.writeln('\x1b[31mError: ' + d.error + '\x1b[0m'); setStatus('dead'); return; }
+            sessionId = d.session_id;
+            setStatus('connected');
+            sendResize();
+            schedulePoll();
+        })
+        .catch(function(e) {
+            term.writeln('\x1b[31mFailed: ' + e + '\x1b[0m');
+            setStatus('dead');
+        });
+    }
+
+    function schedulePoll() {
+        if (dead || !sessionId) return;
+        pollTimer = setTimeout(pollOutput, 50);
+    }
+
+    function pollOutput() {
+        if (dead || !sessionId) return;
+        fetch('/api/console/output?session_id=' + sessionId)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.data) {
+                    var bin = atob(d.data);
+                    var bytes = new Uint8Array(bin.length);
+                    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                    term.write(bytes);
+                }
+                if (d.dead) {
+                    dead = true; setStatus('dead');
+                    term.writeln('\x1b[90m\r\n--- Session ended ---\x1b[0m');
+                    return;
+                }
+                schedulePoll();
+            })
+            .catch(function() { pollTimer = setTimeout(pollOutput, 500); });
+    }
+
+    function flushInputQueue() {
+        if (inputPending || inputQueue.length === 0 || !sessionId || dead) return;
+        inputPending = true;
+        var data = inputQueue.join('');
+        inputQueue = [];
+        fetch('/api/console/input', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId, data: data })
+        })
+        .then(function() { inputPending = false; flushInputQueue(); })
+        .catch(function() { inputPending = false; });
+    }
+
+    term.onData(function(data) {
+        if (!sessionId || dead) return;
+        inputQueue.push(data);
+        flushInputQueue();
+    });
+
+    function sendResize() {
+        if (!sessionId) return;
+        fetch('/api/console/resize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId, rows: term.rows, cols: term.cols })
+        });
+    }
+
+    window.addEventListener('resize', function() { fitAddon.fit(); sendResize(); });
+
+    window.addEventListener('beforeunload', function() {
+        if (sessionId) navigator.sendBeacon('/api/console/close', JSON.stringify({ session_id: sessionId }));
+    });
+    </script>
+</body>
+</html>

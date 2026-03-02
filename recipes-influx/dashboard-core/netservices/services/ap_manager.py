@@ -9,6 +9,7 @@ import logging
 import os
 import re
 import time
+import hashlib
 from pathlib import Path
 
 log = logging.getLogger(__name__)
@@ -38,9 +39,9 @@ WIFI_HW_MODE = "g"  # g=2.4GHz, a=5GHz
 
 # Config file paths
 HOSTAPD_CONF = "/etc/hostapd.conf"
-DNSMASQ_CONF = "/etc/dnsmasq.conf"
+DNSMASQ_CONF = "/etc/dnsmasq.d/rexgen-ap.conf"
 HOSTAPD_CTRL_DIR = "/var/run/hostapd"
-BLOCKED_FILE = "/tmp/rexgen/ap_blocked.json"
+BLOCKED_FILE = "/data/rexgen/tmp/ap_blocked.json"
 DHCP_LEASES = "/var/lib/misc/dnsmasq.leases"
 
 # Block duration
@@ -52,13 +53,16 @@ class APManager:
 
     def __init__(self, serial: str, run_cmd):
         self.serial = serial
-        self.ssid = f"INF-{serial}"
-        self.password = AP_PASSWORD
+        self.ssid = f"{serial}"
+        self.psk = self._derive_psk(self.ssid, AP_PASSWORD)
         self.ip = AP_IP
         self.channel = WIFI_CHANNEL
         self.interface = IFACE_AP
         self._run = run_cmd
         self._systemctl = lambda action, svc: run_cmd(f"systemctl {action} {svc}")
+        configured_channel = self.get_configured_channel()
+        if configured_channel:
+            self.channel = configured_channel
 
     def _trace(self, msg: str):
         if TRACE_VERBOSE:
@@ -83,10 +87,71 @@ ieee80211n=1
 wmm_enabled=1
 auth_algs=1
 wpa=2
-wpa_passphrase={self.password}
+wpa_psk={self.psk}
 wpa_key_mgmt=WPA-PSK
 rsn_pairwise=CCMP
 """
+
+    @staticmethod
+    def _derive_psk(ssid: str, passphrase: str) -> str:
+        """WPA-PSK derivation: PBKDF2-HMAC-SHA1(passphrase, ssid, 4096, 32)."""
+        return hashlib.pbkdf2_hmac(
+            "sha1",
+            (passphrase or "").encode("utf-8"),
+            (ssid or "").encode("utf-8"),
+            4096,
+            32
+        ).hex()
+
+    @staticmethod
+    def _is_valid_psk_hex(psk: str) -> bool:
+        if not isinstance(psk, str) or len(psk) != 64:
+            return False
+        return re.fullmatch(r"[0-9a-fA-F]{64}", psk) is not None
+
+    def get_configured_psk(self) -> str:
+        """Best-effort read of configured AP PSK from hostapd config.
+        Supports both legacy wpa_passphrase and current wpa_psk.
+        """
+        try:
+            cfg = Path(HOSTAPD_CONF).read_text()
+        except Exception:
+            return ""
+        ssid = self.ssid
+        m_ssid = re.search(r"^\s*ssid\s*=\s*(.+?)\s*$", cfg, re.MULTILINE)
+        if m_ssid:
+            ssid = (m_ssid.group(1) or "").strip() or self.ssid
+
+        m_psk = re.search(r"^\s*wpa_psk\s*=\s*([0-9a-fA-F]{64})\s*$", cfg, re.MULTILINE)
+        if m_psk:
+            return (m_psk.group(1) or "").lower()
+
+        # Legacy format fallback.
+        m_pass = re.search(r"^\s*wpa_passphrase\s*=\s*(.+?)\s*$", cfg, re.MULTILINE)
+        if not m_pass:
+            return ""
+        passphrase = (m_pass.group(1) or "").strip()
+        if not (8 <= len(passphrase) <= 63):
+            return ""
+        return self._derive_psk(ssid, passphrase)
+
+    @staticmethod
+    def get_configured_channel() -> int:
+        """Best-effort read of configured AP channel from hostapd config."""
+        try:
+            cfg = Path(HOSTAPD_CONF).read_text()
+        except Exception:
+            return 0
+        m = re.search(r"^\s*channel\s*=\s*(\d+)\s*$", cfg, re.MULTILINE)
+        if not m:
+            return 0
+        try:
+            ch = int(m.group(1))
+        except Exception:
+            return 0
+        if 1 <= ch <= 14:
+            return ch
+        return 0
 
     def configure_hostapd(self) -> bool:
         """Write hostapd configuration. Returns True if config changed."""
@@ -127,6 +192,7 @@ address=/#/{self.ip}
                 log.info("Dnsmasq config unchanged")
                 return False
 
+        config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(config)
         log.info("Dnsmasq configured")
         return True
@@ -247,12 +313,11 @@ address=/#/{self.ip}
         else:
             log.info("Hostapd already running with correct config, skipping restart")
 
-        dnsmasq_running = self.is_dnsmasq_running()
-        if force or dnsmasq_changed or not dnsmasq_running:
-            log.info("Starting dnsmasq if not active...")
-            self._systemctl("start", "dnsmasq")
-        else:
-            log.info("Dnsmasq already running with correct config, skipping restart")
+        # Always restart dnsmasq so it binds to wlan1's IP (192.168.51.1).
+        # Using "start" is not enough — if dnsmasq started at boot before wlan1
+        # had its IP assigned, it silently fails to bind and DHCP stops working.
+        log.info("Restarting dnsmasq to ensure DHCP binding on wlan1...")
+        self._systemctl("restart", "dnsmasq")
 
         log.info("AP started successfully")
         return True
@@ -298,8 +363,8 @@ address=/#/{self.ip}
 
         # Check dnsmasq
         if not self.is_dnsmasq_running():
-            log.warning("Dnsmasq not running, starting...")
-            self._systemctl("start", "dnsmasq")
+            log.warning("Dnsmasq not running, restarting...")
+            self._systemctl("restart", "dnsmasq")
 
     def set_password(self, new_password: str) -> tuple:
         """Update AP password and apply it by restarting hostapd.
@@ -308,12 +373,28 @@ address=/#/{self.ip}
         if not new_password or len(new_password) < 8 or len(new_password) > 63:
             return False, "Password must be 8-63 characters"
 
-        if self.password == new_password:
+        new_psk = self._derive_psk(self.ssid, new_password)
+        if self.psk == new_psk:
             return True, "AP password unchanged"
 
-        self.password = new_password
+        self.psk = new_psk
         self.configure_hostapd()
         # WPA passphrase change requires hostapd reload/restart to apply.
+        self._systemctl("restart", "hostapd")
+        time.sleep(2)
+        if not self.is_running():
+            return False, "hostapd failed to start after password update"
+        return True, "AP password updated"
+
+    def set_psk(self, psk_hex: str) -> tuple:
+        """Update AP PSK directly (64-hex) and apply by restarting hostapd."""
+        psk = (psk_hex or "").strip().lower()
+        if not self._is_valid_psk_hex(psk):
+            return False, "Invalid AP PSK format"
+        if self.psk == psk:
+            return True, "AP password unchanged"
+        self.psk = psk
+        self.configure_hostapd()
         self._systemctl("restart", "hostapd")
         time.sleep(2)
         if not self.is_running():
@@ -469,6 +550,7 @@ address=/#/{self.ip}
     def _write_blocked(self, blocked: dict):
         """Write blocked clients file atomically"""
         temp = BLOCKED_FILE + ".tmp"
+        os.makedirs(os.path.dirname(temp), exist_ok=True)
         with open(temp, "w") as f:
             json.dump(blocked, f)
         os.rename(temp, BLOCKED_FILE)

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firmware Update In Progress</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%);
+            padding: 24px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.13);
+            max-width: 420px;
+            width: 100%;
+            padding: 40px 36px 36px;
+            text-align: center;
+        }
+        .logo-mark {
+            margin: 0 auto 10px;
+            width: 72px;
+            height: 72px;
+            display: block;
+        }
+        .brand-name {
+            font-size: 0.65em;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            color: #333;
+            text-transform: uppercase;
+            margin-bottom: 28px;
+        }
+        h1 {
+            font-size: 1.15em;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 0.88em;
+            color: #86868b;
+            line-height: 1.65;
+            margin-bottom: 32px;
+        }
+        .spinner-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e5efed;
+            border-top-color: #20b2aa;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 28px;
+        }
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #c8f0eb;
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse {
+            0%, 80%, 100% { background: #c8f0eb; transform: scale(1); }
+            40% { background: #20b2aa; transform: scale(1.3); }
+        }
+        .status-bar {
+            background: #f4fafa;
+            border: 1px solid #d8efec;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 0.82em;
+            line-height: 1.5;
+        }
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0;
+        }
+        .status-row:not(:last-child) { border-bottom: 1px solid #e8f3f1; }
+        .status-label { color: #86868b; }
+        .status-val { color: #333; font-weight: 500; }
+        .status-val.active { color: #178a83; }
+        @media (max-width: 460px) { .card { padding: 32px 20px 28px; } }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <!-- ReXgen-style block mark -->
+        <svg class="logo-mark" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- left column: tall top block + small bottom block -->
+            <rect x="4"  y="4"  width="19" height="30" rx="4" fill="#20b2aa"/>
+            <rect x="4"  y="40" width="19" height="28" rx="4" fill="#178a83"/>
+            <!-- centre column: small top + tall bottom -->
+            <rect x="27" y="4"  width="18" height="14" rx="4" fill="#178a83"/>
+            <rect x="27" y="24" width="18" height="44" rx="4" fill="#20b2aa"/>
+            <!-- right column: tall top + small bottom (mirror of left) -->
+            <rect x="49" y="4"  width="19" height="30" rx="4" fill="#20b2aa"/>
+            <rect x="49" y="40" width="19" height="28" rx="4" fill="#178a83"/>
+        </svg>
+        <div class="brand-name">ReXgen</div>
+        <h1>Linux Image Update In Progress</h1>
+        <p class="subtitle">
+            The ReXgen device is currently applying an update.<br>
+            Please do not power off or disconnect the device.
+        </p>
+        <div class="spinner-wrap">
+            <div class="spinner"></div>
+        </div>
+        <div class="dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <div class="status-bar">
+            <div class="status-row">
+                <span class="status-label">Status</span>
+                <span class="status-val active" id="statusText">Updating...</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Checking again in</span>
+                <span class="status-val" id="countdown">5s</span>
+            </div>
+        </div>
+    </div>
+    <script>
+    var pollInterval = 5000;
+    var countdown = pollInterval / 1000;
+    var timer = null;
+    var cdTimer = null;
+
+    function startCountdown() {
+        countdown = pollInterval / 1000;
+        document.getElementById('countdown').textContent = countdown + 's';
+        if (cdTimer) clearInterval(cdTimer);
+        cdTimer = setInterval(function() {
+            countdown--;
+            document.getElementById('countdown').textContent = (countdown > 0 ? countdown : 0) + 's';
+        }, 1000);
+    }
+
+    function poll() {
+        fetch('/api/update-status', { cache: 'no-store' })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (!d.updating) {
+                    document.getElementById('statusText').textContent = 'Complete!';
+                    document.getElementById('statusText').classList.remove('active');
+                    document.getElementById('statusText').style.color = '#178a83';
+                    document.getElementById('countdown').textContent = 'Redirecting...';
+                    if (cdTimer) clearInterval(cdTimer);
+                    setTimeout(function() { window.location.replace('/'); }, 2000);
+                    return;
+                }
+                startCountdown();
+                timer = setTimeout(poll, pollInterval);
+            })
+            .catch(function() {
+                startCountdown();
+                timer = setTimeout(poll, pollInterval);
+            });
+    }
+
+    startCountdown();
+    timer = setTimeout(poll, pollInterval);
+    </script>
+</body>
+</html>
