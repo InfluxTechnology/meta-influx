@@ -2,7 +2,9 @@
 Name=wlan0
 
 [Network]
-DHCP=yes
+DHCP=no
+LinkLocalAddressing=no
+IPv6AcceptRA=no
 
 [DHCP]
 RouteMetric=20
