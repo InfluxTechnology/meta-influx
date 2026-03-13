@@ -631,6 +631,12 @@ class WifiManager:
             self._refresh_ap_clients(force=True)
             return
 
+        dns_refresh_req = wifi_state.has_dns_refresh_request()
+        if dns_refresh_req:
+            self._trace("dns refresh request accepted (force=True)")
+            self.client.refresh_dns_settings(force=True)
+            return
+
         # Scan request (with debounce — skip if last scan was recent)
         if wifi_state.has_scan_request() and not wifi_state.get("connect_in_progress", False):
             self._trace("scan request accepted")

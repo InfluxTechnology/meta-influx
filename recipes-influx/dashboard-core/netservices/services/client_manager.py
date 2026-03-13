@@ -13,6 +13,8 @@ import time
 from pathlib import Path
 from typing import Optional, List
 
+from netservices_config import NetservicesConfig
+
 log = logging.getLogger(__name__)
 
 
@@ -32,6 +34,9 @@ IFACE_CLIENT = "wlan0"
 # wpa_supplicant paths
 WPA_CONFIG = "/etc/wpa_supplicant.conf"
 WPA_SOCKET_DIR = "/var/run/wpa_supplicant"
+RESOLV_CONF = "/etc/resolv.conf"
+DEFAULT_DNS_SERVERS = ["223.5.5.5", "9.9.9.9", "1.1.1.1", "8.8.8.8"]
+DEFAULT_DNS_OPTIONS = "timeout:1 attempts:2"
 
 # Config file header (required for wpa_cli to work)
 WPA_CONFIG_HEADER = f"""ctrl_interface={WPA_SOCKET_DIR}
@@ -303,6 +308,12 @@ class ClientManager:
         self._set_led = set_led
         self._systemctl = lambda action, svc: run_cmd(f"systemctl {action} {svc}")
         self.wpa = WpaCli(self.interface, run_cmd)
+        self._persist_cfg = NetservicesConfig()
+        self.ping_hosts = list(DEFAULT_DNS_SERVERS)
+        self._dns_last_sync_ts = 0.0
+        self._dns_sync_interval = 10.0
+        self._last_resolv_payload = ""
+        self.refresh_dns_settings(force=True)
 
     # ========== Network Scanning ==========
 
@@ -470,13 +481,81 @@ class ClientManager:
         output = self._run(f"ip addr show {self.interface} | grep 'inet ' | awk '{{print $2}}' | cut -d/ -f1")
         return output.strip() or None
 
-    # DNS servers to check for connectivity (must reach at least one)
-    PING_HOSTS = ["1.1.1.1", "9.9.9.9", "8.8.8.8"]
+    def refresh_dns_settings(self, force: bool = False):
+        now = time.time()
+        if (not force) and (now - self._dns_last_sync_ts < self._dns_sync_interval):
+            return
+        self._dns_last_sync_ts = now
+        try:
+            dns_cfg = self._persist_cfg.read_dns()
+            base_servers = list(dns_cfg.get("servers") or [])
+            options = (dns_cfg.get("options") or "").strip()
+            if not base_servers:
+                base_servers = list(DEFAULT_DNS_SERVERS)
+            if not options:
+                options = DEFAULT_DNS_OPTIONS
+            vpn_cfg = self._persist_cfg.read_vpn()
+            provider = (vpn_cfg.get("provider") or "none").strip().lower()
+            providers = vpn_cfg.get("providers", {}) if isinstance(vpn_cfg.get("providers"), dict) else {}
+            provider_cfg = providers.get(provider, {}) if isinstance(providers.get(provider), dict) else {}
+            provider_servers = list(provider_cfg.get("dns_servers") or []) if provider != "none" else []
+            # Keep base DNS provider-agnostic: if legacy config accidentally contains
+            # VPN-specific DNS values there, remove them and let only the active
+            # provider re-insert its own DNS with priority.
+            provider_dns_all = set()
+            for cfg in providers.values():
+                if isinstance(cfg, dict):
+                    for s in (cfg.get("dns_servers") or []):
+                        v = (str(s) if s is not None else "").strip()
+                        if v:
+                            provider_dns_all.add(v)
+            if provider_dns_all:
+                base_servers = [s for s in base_servers if s not in provider_dns_all]
+                if not base_servers:
+                    base_servers = list(DEFAULT_DNS_SERVERS)
+        except Exception as e:
+            log.warning(f"Failed to read DNS config from netservices.conf: {e}")
+            base_servers = list(DEFAULT_DNS_SERVERS)
+            options = DEFAULT_DNS_OPTIONS
+            provider_servers = []
+
+        # Provider DNS has priority when provider is active; base DNS remains fallback.
+        servers = []
+        for s in provider_servers + base_servers:
+            if s and s not in servers:
+                servers.append(s)
+        if not servers:
+            servers = list(DEFAULT_DNS_SERVERS)
+
+        lines = [f"nameserver {s}" for s in servers]
+        lines.append(f"options {options}")
+        payload = "\n".join(lines) + "\n"
+        self.ping_hosts = list(servers)
+
+        if payload == self._last_resolv_payload:
+            try:
+                resolv_path = Path(RESOLV_CONF)
+                if (not resolv_path.is_symlink()) and resolv_path.exists() and resolv_path.read_text() == payload:
+                    return
+            except Exception:
+                pass
+        try:
+            resolv_path = Path(RESOLV_CONF)
+            if resolv_path.is_symlink():
+                # Some images keep /etc/resolv.conf under systemd-resolved control.
+                # Replace symlink with a static file so dashboard DNS policy is stable.
+                resolv_path.unlink()
+            resolv_path.write_text(payload)
+            self._last_resolv_payload = payload
+            log.info(f"Applied DNS config to {RESOLV_CONF}: servers={servers}")
+        except Exception as e:
+            log.warning(f"Failed to write {RESOLV_CONF}: {e}")
 
     def can_ping(self, host: str = None) -> bool:
         """Check internet connectivity by pinging multiple DNS servers.
         Returns True if ANY of them is reachable."""
-        hosts = [host] if host else self.PING_HOSTS
+        self.refresh_dns_settings(force=False)
+        hosts = [host] if host else self.ping_hosts
 
         for h in hosts:
             result = subprocess.run(
@@ -500,6 +579,8 @@ class ClientManager:
         self._run(f"ip addr flush dev {self.interface}")
         # Request new IP
         self._run(f"udhcpc -i {self.interface} -n -q")
+        # Keep DNS strictly from netservices.conf order, not from DHCP/Tailscale.
+        self.refresh_dns_settings(force=True)
 
     # ========== Network Management (wpa_cli) ==========
 

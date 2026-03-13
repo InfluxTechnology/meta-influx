@@ -1,8 +1,48 @@
 # Changelog
 
-## 1.1.0 (SVN r8372, 2026-02-25)
+## 1.1.3 (2026-03-09)
+
+### Scope
+- Tailscale runtime behavior updates:
+  - `tailscale up` now always uses `--accept-dns=false` so Tailscale does not overwrite resolver policy.
+  - Tailscale advertise tags are now config-driven (`advertise_tags_enabled`, `advertise_tags`) instead of hardcoded.
+- DNS model refactor for VPN extensibility:
+  - new persistent DNS section in `netservices.conf` (`dns.servers`, `dns.options`) used as base resolver policy.
+  - provider-specific DNS support added under VPN provider config (currently `vpn.providers.tailscale.dns_servers`).
+  - effective DNS order now prepends active-provider DNS, then base DNS fallback with dedupe.
+  - provider DNS is excluded when provider is not active, preventing stale Tailscale DNS leakage after reboot.
+- Connectivity checks:
+  - `client_manager` now builds ping host list from the same effective DNS order used for `/etc/resolv.conf`.
+- DNS apply reliability fixes:
+  - base DNS defaults were corrected to exclude Tailscale DNS from `dns.servers` (Tailscale DNS stays provider-specific).
+  - resolver apply now handles systems where `/etc/resolv.conf` is a symlink (replaces with static file for deterministic policy).
+  - resolver cache skip logic now verifies actual file state, preventing stale external overwrites from being silently kept.
+  - VPN Save now triggers immediate DNS refresh in `wifi-manager` through shared-state request (`dns_refresh_request`) instead of waiting for reconnect/reboot.
+
+## 1.1.2 (2026-03-06)
+
+### Scope
+- VPN control expanded for Tailscale operational flow:
+  - `tailscaled.service` is now explicitly managed (enable/start when VPN provider is `tailscale`, stop/disable when provider is `disabled`).
+  - startup apply includes image/artifact change awareness and re-apply path.
+  - Tailscale auth status persistence refined (`auth_status`, key hash, last error) with clearer status reporting.
+- VPN UI and status behavior updates:
+  - dedicated VPN section behavior refined for provider-specific controls.
+  - reduced popup noise by surfacing operational errors through VPN status line.
+  - Tailscale effective hostname surfaced from runtime status.
+- Device Info interface presentation updates:
+  - interface rows now show concise `IP / MAC` format.
+  - explicit hostname rows for `wlan0/wlan1` and `tailscale0`.
+  - interface list includes Tailscale runtime context when selected.
+- Version metadata:
+  - `DASHBOARD_VERSION` bumped to `1.1.2`.
+  - removed stale `DASHBOARD_BUILD` constant.
+
+## 1.1.0 (SVN r8375, 2026-02-25)
 Baseline: **1.0.0 (SVN r8368, 2026-02-24)**  
-Release commit: **r8372** (`version 1.1.0 - added security options`)
+Release commits:  
+- **r8372** (`version 1.1.0 - added security options`)  
+- **r8375** (`last version 1.1.0 including CA sert`)
 
 ### Scope of technical delta
 - Main backend redesign in `dashboard/app.py`:
@@ -167,7 +207,7 @@ Release commit: **r8372** (`version 1.1.0 - added security options`)
   - `/api/update-status` (GET)
   - `/download-ca-cert` (GET)
 
-### File-level delta (SVN summarize r8368 -> r8372)
+### File-level delta (SVN summarize r8368 -> r8375)
 - **Modified**
   - `install.sh`
   - `scpme.sh`
@@ -183,6 +223,8 @@ Release commit: **r8372** (`version 1.1.0 - added security options`)
   - `dashboard/templates/device_info.html`
   - `dashboard/templates/service_info.html`
 - **Added**
+  - `ssl/ca.crt`
+  - `ssl/ca.key`
   - `dashboard/templates/disk_detail.html`
   - `dashboard/templates/wifi_settings.html`
   - `dashboard/templates/services.html`
@@ -198,86 +240,175 @@ Release commit: **r8372** (`version 1.1.0 - added security options`)
 ---
 
 ## 1.1.1 (SVN r8384, 2026-02-27)
-Baseline: **1.1.0 (SVN r8372, 2026-02-25)**
-Release commit: **r8384** (`v1.1.1: OTA detection and re-init, AP DHCP fix, persistent state, WPA PSK derivation, experimental flag, rexgend settings fix`)
+Baseline: **1.1.0 final (SVN r8375, 2026-02-25)**  
+Feature commits in range: **r8377, r8380, r8383, r8384**  
+Release commit: **r8384** (`v1.1.1: OTA detection and re-init, AP DHCP fix (dnsmasq restart), persistent state to /data/rexgen/tmp, WPA PSK pre-derivation, experimental flag, rexgend settings JS fix`)
 
 ### Scope of technical delta
-- OTA/Mender update detection and forced full re-initialization in `services/wifi_manager.py`.
-- AP DHCP reliability fix in `services/ap_manager.py` (dnsmasq always restarted, config path corrected).
-- Runtime state persistence moved from `/tmp/rexgen/` to `/data/rexgen/tmp/` in `services/ap_manager.py` and `services/shared_state.py`.
-- WPA PSK security improvement in `services/client_manager.py` — no plaintext passwords stored.
-- Experimental feature flag added to config model (`services/netservices_config.py`) and dashboard injected context (`dashboard/app.py`).
-- Bug fix: rexgend settings page JS functions unreachable when experimental flag off (`dashboard/templates/rexgend_settings.html`).
-- systemd unit hardening (`systemd/wifi-manager.service`).
+- New browser terminal subsystem (PTY shell over authenticated polling API).
+- New live pipe-read subsystem for rexgend runtime pipes.
+- OTA artifact detection + forced AP/DHCP re-init after image change.
+- AP DHCP reliability fix (`dnsmasq` restart semantics + config path update).
+- State persistence moved from volatile `/tmp` to persistent `/data/rexgen/tmp`.
+- Wi-Fi credentials model migrated to pre-derived WPA PSK (64-hex), no plaintext writeback.
+- Config schema extended with theme/lang/experimental and system OTA metadata fields.
+- Rexgend settings JS render-path bug fixed (core config JS now always rendered).
+- Service-status fetch load reduced (`SERVICE_STATUS_CACHE_SECONDS`: `5` -> `30`).
 
-### OTA detection and re-initialization
-- Added `_get_mender_artifact()` static method in `WifiManager`:
-  - reads `/etc/mender/artifact_info`, extracts `artifact_name` field.
-- Added `_check_ota_and_reinit()` method:
-  - compares stored artifact name (`netservices.conf["system"]["mender_artifact"]`) against current value.
-  - returns `True` and writes new artifact name when a change is detected.
-- `run()` now calls OTA check before AP start:
-  - on OTA detected: resets STA restore state flags, passes `force=True` to `ap.start()`.
-  - ensures hostapd and dnsmasq are fully restarted after a Mender image swap.
-- New `netservices.conf` field: `system.mender_artifact` (string, default `""`).
-- New read/write accessors: `read_mender_artifact()`, `write_mender_artifact()`.
+### Commit-level map (1.1.0 -> 1.1.1)
+- `r8377`: HTTPS GUI text/links improvements (`system_settings.html`).
+- `r8380`: terminal feature (`app.py`, `system_settings.html`, `terminal.html`).
+- `r8383`: live pipe support (`app.py`, `pipe_output.html`, `rexgend_settings.html`).
+- `r8384`: OTA/AP/DHCP/persistence/PSK/config/theme/footer/topnav/device/rexgend/service-unit updates.
 
-### AP DHCP fix — dnsmasq always restarted
-- `ap_manager.py` `start()`: changed from conditional `systemctl start` to unconditional `systemctl restart dnsmasq`.
-  - Fixes "obtaining IP address" failure on AP clients after OTA or boot, caused by dnsmasq binding before wlan1 had its IP.
-- `ap_manager.py` `ensure_running()`: similarly uses `restart` when dnsmasq is found not running.
-- `DNSMASQ_CONF` path changed from `/etc/dnsmasq.conf` to `/etc/dnsmasq.d/rexgen-ap.conf` (drop-in directory, avoids conflict with base config).
-- `configure_dnsmasq()`: added `config_path.parent.mkdir(parents=True, exist_ok=True)` before write.
+### Web terminal subsystem (`r8380`)
+- Added route:
+  - `GET /terminal` -> `terminal.html`
+- Added terminal session backend in `dashboard/app.py`:
+  - `_ConsoleSession` class
+  - PTY lifecycle via `pty.openpty()`
+  - interactive shell spawn: `['/bin/bash', '-i']`
+  - session-leader/controlling-TTY setup via `os.setsid()` + `TIOCSCTTY`
+  - async read loop using `select.select()` and in-memory ring-like byte buffer
+  - runtime resize via `TIOCSWINSZ`
+  - idle/dead cleanup thread (`_console_cleanup_loop`, 30 s tick, 600 s idle timeout)
+- Added terminal API:
+  - `POST /api/console/start`
+  - `GET /api/console/output?session_id=...`
+  - `POST /api/console/input`
+  - `POST /api/console/resize`
+  - `POST /api/console/close`
+- Protocol specifics:
+  - output payload is base64-encoded binary stream
+  - input payload is UTF-8 text chunk
+  - root password is verified against `/etc/shadow` before session creation
+- `system_settings.html` adds "Terminal" action row in System section linking to `/terminal`.
 
-### Persistent state directory
-- `BLOCKED_FILE` in `ap_manager.py` moved from `/tmp/rexgen/ap_blocked.json` to `/data/rexgen/tmp/ap_blocked.json`.
-  - AP block state now survives reboots.
-- `STATE_DIR` in `shared_state.py` moved from `/tmp/rexgen` to `/data/rexgen/tmp`.
-  - `_write()` now calls `os.makedirs(os.path.dirname(temp_file), exist_ok=True)` before writing.
-- `_write_blocked()` in `ap_manager.py`: added `os.makedirs(os.path.dirname(temp), exist_ok=True)`.
+### Pipe streaming subsystem (`r8383`)
+- Added pipe reader primitives in `dashboard/app.py`:
+  - `_PipeReader` background reader for named pipes
+  - incremental sequence-based read model
+  - in-memory bounded line deque (`maxlen=300`)
+  - idle reader cleanup thread (5 min stale timeout)
+- Added routes:
+  - `GET /api/pipes` (enumerate available runtime pipes)
+  - `GET /api/pipes/read?pipe=...&seq=...` (poll new lines since sequence)
+  - `GET /pipe-output?pipe=...` (viewer page)
+- Added new template:
+  - `dashboard/templates/pipe_output.html`
+  - polling UI with pause/clear/status indicators and line class styling by channel/type
+- `rexgend_settings.html` gains experimental sensor card with per-pipe tabs and polling integration.
 
-### WPA PSK pre-derivation — no plaintext passwords in config
-- Added module-level `_derive_wpa_psk(ssid, passphrase)` in `client_manager.py`:
-  - `hashlib.pbkdf2_hmac("sha1", passphrase, ssid, 4096, 32).hex()` → 64-character hex PSK.
-- `add_network()`: derives 64-hex PSK before handing to `wpa_cli set_network`, never stores passphrase.
-- `_parse_saved_networks_from_wpa_config()`: handles both formats:
-  - `psk=<64hex>` — stored as-is.
-  - `psk="passphrase"` (legacy quoted) — derives PSK at import time.
-- `import_saved_networks()`: `password` field takes priority over `psk` field; derives PSK if password non-empty, then clears.
-- Added `_add_network_with_psk(ssid, psk_hex)` internal helper used by `import_saved_networks()`.
-- `netservices_config.py` `_clean_networks()`: always emits both `psk` (64-hex) and `password` (empty string) fields.
-  - `password` field is intentionally retained: users may populate it manually in the conf file; startup auto-converts and clears it.
-- `run()` in `WifiManager` calls `_persist_runtime_settings()` unconditionally after initial network connect to ensure PSK migration on first startup after upgrade.
+### OTA detection and AP re-initialization (`r8384`)
+- `services/wifi_manager.py`:
+  - added `_get_mender_artifact()` (reads `/etc/mender/artifact_info`)
+  - added `_check_ota_and_reinit()` (compares stored/current artifact, persists new value)
+  - on detected artifact change:
+    - resets STA restore state machine
+    - calls `ap.start(force=True)` to force hostapd/dnsmasq re-initialization
+- `services/netservices_config.py`:
+  - added `system.mender_artifact`
+  - added `read_mender_artifact()` / `write_mender_artifact()`
 
-### Experimental feature flag
-- New `netservices.conf` field: `dashboard.experimental` (bool, default `False`).
-- `_normalize()` propagates the field; `read_experimental()` accessor added.
-- `_inject_globals()` in `app.py` now injects `"experimental": _PERSIST_CFG.read_experimental()` into all template contexts.
-- `rexgend_settings.html`: sensor chart card HTML and all sensor JS code wrapped in `{% if experimental %}...{% endif %}`.
+### AP DHCP reliability and path corrections (`r8384`)
+- `services/ap_manager.py`:
+  - `DNSMASQ_CONF`: `/etc/dnsmasq.conf` -> `/etc/dnsmasq.d/rexgen-ap.conf`
+  - dnsmasq lifecycle:
+    - previous: conditional `systemctl start dnsmasq`
+    - new: unconditional `systemctl restart dnsmasq` when AP starts
+  - `ensure_running()` now uses restart semantics for dnsmasq recovery
+  - ensures parent directory exists before writing dnsmasq config
+- Resulting behavior: fixes stale-bind scenarios when dnsmasq started before wlan1 IP was ready.
 
-### Bug fix — rexgend settings page always functional
-- Root cause: all JavaScript in `rexgend_settings.html` (sensor chart code AND rexgend config functions `setStatus`, `setValues`, `loadConfig`, `saveConfig`) was inside a single `{% if experimental %}` block.
-- When `experimental=False`, none of the JS was rendered; `loadConfig()` call on page load and Reload button `onclick` both silently failed.
-- Fix: `{% endif %}` moved to close immediately after `loadSensors()`. Config functions are now always rendered regardless of the flag.
+### Persistent state migration (`r8384`)
+- `services/shared_state.py`:
+  - state dir: `/tmp/rexgen` -> `/data/rexgen/tmp`
+  - atomic writer now creates target directory proactively
+- `services/ap_manager.py`:
+  - blocked clients file: `/tmp/rexgen/ap_blocked.json` -> `/data/rexgen/tmp/ap_blocked.json`
+  - blocked-state writer now ensures parent directory exists
+- `systemd/wifi-manager.service`:
+  - adds `ExecStartPre` mkdir for:
+    - `/data/rexgen/tmp`
+    - `/data/rexgen/config`
+    - `/var/run/wpa_supplicant`
 
-### systemd unit hardening
-- `wifi-manager.service`:
-  - `Requires=wpa_supplicant.service` → `Wants=wpa_supplicant.service` to avoid hard dependency failure.
-  - `ExecStartPre` now creates required persistent directories:
-    `/data/rexgen/tmp`, `/data/rexgen/config`, `/var/run/wpa_supplicant`.
+### Wi-Fi credential hardening (`r8384`)
+- `services/client_manager.py`:
+  - adds `_derive_wpa_psk(ssid, passphrase)` using `PBKDF2-HMAC-SHA1(iter=4096,len=32)` -> 64-hex PSK
+  - `add_network()` now sets unquoted hex `psk` (never plaintext passphrase)
+  - parser accepts:
+    - `psk=<64hex>` (native)
+    - legacy `psk="passphrase"` (derived on import)
+  - `import_saved_networks()` prioritizes explicit `password` when present, derives PSK, and imports via `_add_network_with_psk()`
+- `services/netservices_config.py`:
+  - `sta.networks` entries now normalized with both fields:
+    - `psk` (derived hex)
+    - `password` (typically empty, retained for manual migration path)
+- `services/wifi_manager.py`:
+  - `_persist_runtime_settings()` runs after initial connect path to migrate legacy data immediately
+  - guards added to avoid wiping persistent STA list when wpa_supplicant is not ready yet
+  - STA restore now has retry loop (`_MAX_RETRIES=15`) and success tracking flags
 
-### File-level delta (SVN r8373 -> r8384)
+### Config schema extensions (`r8384`)
+- `dashboard` section extended:
+  - `theme` (`light|dark`)
+  - `lang` (`en|zh|bg`)
+  - `experimental` (bool)
+- `system` section extended:
+  - `mender_artifact` (string)
+- New accessors in `netservices_config.py`:
+  - `read_theme()/write_theme()`
+  - `read_lang()/write_lang()`
+  - `read_experimental()`
+  - `read_mender_artifact()/write_mender_artifact()`
+- `dashboard/app.py` context injection now includes:
+  - `theme`
+  - `experimental`
+
+### UI and UX changes (`r8377-r8384`)
+- `system_settings.html`:
+  - HTTPS info label/text adjusted
+  - CA install callout made explicit
+  - Terminal action added in System section
+- `device_info.html`:
+  - service count fetch decoupled from core device status fetch
+  - service count loaded in a separate function and triggered after device-info fetch completion
+- `_topnav.html`:
+  - tab labels annotated with `data-i18n` attributes (`nav.device`, `nav.wifi`, `nav.ap`, `nav.system`)
+- `_footer.html`:
+  - dark theme CSS coverage greatly expanded
+  - theme applied via Jinja context (`{{ theme }}` -> `html.dark`)
+  - exposes `window._t = function(s){ return s; }` identity translator
+
+### Backend runtime tweaks (`r8384`)
+- `DASHBOARD_VERSION`: `1.1.0` -> `1.1.1`
+- `SERVICE_STATUS_CACHE_SECONDS`: `5` -> `30`
+- Added `GET /api/theme?set=dark|light` endpoint (writes theme and redirects back)
+- Added explicit `GET /favicon.ico` route returning `204`
+
+### systemd unit delta (`r8384`)
+- `systemd/wifi-manager.service`:
+  - removed hard `Requires=wpa_supplicant@wlan0.service`
+  - expanded `Wants=... wpa_supplicant@wlan0.service`
+  - added `ExecStartPre=/bin/mkdir -p /data/rexgen/tmp /data/rexgen/config /var/run/wpa_supplicant`
+
+### File-level delta (SVN summarize r8375 -> r8384)
+- **Added**
+  - `dashboard/templates/terminal.html`
+  - `dashboard/templates/pipe_output.html`
 - **Modified**
   - `dashboard/app.py`
-  - `dashboard/templates/_footer.html`
-  - `dashboard/templates/_topnav.html`
-  - `dashboard/templates/device_info.html`
+  - `dashboard/templates/system_settings.html`
   - `dashboard/templates/rexgend_settings.html`
-  - `services/ap_manager.py`
+  - `dashboard/templates/device_info.html`
+  - `dashboard/templates/_topnav.html`
+  - `dashboard/templates/_footer.html`
+  - `services/wifi_manager.py`
   - `services/client_manager.py`
+  - `services/ap_manager.py`
   - `services/netservices_config.py`
   - `services/shared_state.py`
-  - `services/wifi_manager.py`
   - `systemd/wifi-manager.service`
 
 ---

@@ -1,47 +1,145 @@
 # ReXgen Control Center Release Notes
 
-## ReXgen Control Center 1.1.1 - Reliability & Security Update
+## ReXgen Control Center 1.1.3 - VPN-Aware DNS Policy and Tailscale Resolver Guard
 
-Release type: Reliability, security, and bug fix update
-Baseline: 1.1.0
-Primary goal: harden WiFi manager behavior across Mender OTA updates, eliminate plaintext credential storage, and fix rexgend settings page loading.
+Release type: Networking policy and VPN integration refinement  
+Baseline: 1.1.2  
+Primary goal: make DNS resolution deterministic across VPN state transitions and future multi-provider VPN support.
 
-### 1. Mender OTA detection and automatic re-initialization
-- WiFi manager now detects when a Mender OTA update has been applied (by comparing the stored Mender artifact name against the currently installed one).
-- On first startup after an OTA update, the AP and DHCP subsystem are fully re-initialized to ensure correct operation on the updated rootfs.
-- Detected artifact version is persisted in `netservices.conf` (`system.mender_artifact`) for change tracking across restarts.
+### Highlights
+- Dashboard version bump to `1.1.3`.
+- Tailscale `up` path now forces `--accept-dns=false` to avoid resolver overwrite from Tailscale.
+- Tailscale tags moved from hardcoded defaults to optional config-driven values.
+- Added persistent DNS policy section in `netservices.conf`:
+  - base DNS list and resolver options (`dns.servers`, `dns.options`)
+  - provider DNS list support (`vpn.providers.<provider>.dns_servers`, currently Tailscale)
+- Effective DNS behavior:
+  - active provider DNS is applied first (priority)
+  - base DNS follows as fallback
+  - duplicates removed, order preserved
+  - inactive-provider DNS is excluded from resolver/ping flow (fixes stale Tailscale DNS after reboot when provider is disabled)
+- Connectivity probing now reuses the same effective DNS order used to build `/etc/resolv.conf`.
+- Post-integration DNS behavior fixes:
+  - base DNS defaults no longer include Tailscale DNS; Tailscale DNS is kept only in provider-specific config.
+  - resolver writer now replaces `/etc/resolv.conf` symlink with a static file when needed (for images using `systemd-resolved` symlink mode).
+  - resolver write-skip cache now validates real file state before skipping.
+  - VPN Save now sends immediate DNS refresh request to `wifi-manager`, so resolver is updated immediately after provider change.
 
-### 2. AP DHCP reliability fix
-- Fixed an issue where AP clients (phones/PCs) could get stuck on "Obtaining IP address" after an OTA update or cold boot.
-- Root cause: dnsmasq started at boot before wlan1 had its IP assigned, then silently failed to bind; a subsequent `systemctl start` was a no-op on the already-failed service.
-- Fix: AP manager now always issues `systemctl restart dnsmasq` when starting the AP, ensuring a clean DHCP binding regardless of prior state.
-- dnsmasq configuration moved to the drop-in directory (`/etc/dnsmasq.d/rexgen-ap.conf`) for cleaner separation from base system config.
+## ReXgen Control Center 1.1.2 - VPN Operational Integration and Interface Visibility
 
-### 3. Persistent runtime state
-- AP block state and WiFi manager runtime state files moved from `/tmp/rexgen/` to `/data/rexgen/tmp/`.
-- State now survives reboots and OTA updates (the `/data` partition is preserved across Mender image swaps).
-- Required directories are created automatically on service start via systemd `ExecStartPre`.
+Release type: Operational behavior update  
+Baseline: 1.1.1  
+Primary goal: make VPN runtime behavior deterministic across OTA images and improve operator visibility in dashboard pages.
 
-### 4. WiFi password security — no plaintext credentials stored
-- Saved WiFi network passwords are no longer stored as plaintext in `netservices.conf`.
-- Passwords are converted to a 64-hex WPA PSK (using PBKDF2-HMAC-SHA1, the same derivation used by wpa_supplicant) at the moment a network is added.
-- Only the derived PSK is persisted; the original passphrase is discarded.
-- A `password` field is retained in the config (always empty in normal operation). This allows an operator to manually populate it in the conf file; the system will auto-derive the PSK and clear the plaintext on next startup.
-- Legacy configs with quoted plaintext passwords in `wpa_supplicant.conf` or the conf file are automatically migrated to PSK on startup.
+### Highlights
+- Dashboard version bump to `1.1.2` and cleanup of stale build constant usage.
+- Tailscale operational flow hardening:
+  - explicit `tailscaled.service` enable/start/stop/disable management tied to VPN provider state.
+  - startup apply now includes image-change-aware re-apply path.
+  - persistent auth-state/error tracking in VPN config.
+- System Settings VPN UX improvements:
+  - provider-focused controls and status-line-first error reporting.
+  - effective Tailscale hostname shown in VPN section.
+- Device Info updates:
+  - concise interface value format (`IP / MAC`).
+  - hostname rows for Wi-Fi and Tailscale interfaces.
 
-### 5. Experimental feature flag
-- A new `experimental` flag has been added to `netservices.conf` (`dashboard.experimental`, default off).
-- When enabled, advanced/in-development UI sections are shown in the rexgend settings page.
-- Intended for development and evaluation builds; production deployments leave this off.
+## ReXgen Control Center 1.1.1 - Runtime Stability, OTA Recovery, and Operations Tooling
 
-### 6. Bug fix — rexgend settings page not loading
-- Fixed: rexgend settings page showed empty fields and the Reload button did not work.
-- Root cause: all settings page JavaScript was mistakenly placed inside the `{% if experimental %}` template block; when the experimental flag was off, no JS was rendered at all, causing silent failures.
-- Fix: config functions are now always rendered; only the experimental sensor chart section remains conditional.
+Release type: Reliability + security hardening + operator tooling  
+Baseline: 1.1.0 final (`SVN r8375`)  
+Release commit: `SVN r8384`  
+Feature commits in range: `r8377, r8380, r8383, r8384`  
+Primary goal: improve post-OTA networking reliability, remove plaintext Wi-Fi credential persistence, add controlled browser terminal and live pipe diagnostics, and stabilize rexgend settings rendering.
 
-### 7. systemd service hardening
-- `wifi-manager.service` dependency on `wpa_supplicant.service` changed from hard (`Requires`) to soft (`Wants`), preventing service start failure if wpa_supplicant is temporarily unavailable.
-- Service unit now pre-creates all required runtime and persistent directories on start.
+### 1. Browser terminal subsystem (new operator capability)
+- Added dedicated terminal page: `GET /terminal`.
+- Added authenticated PTY API:
+  - `POST /api/console/start`
+  - `GET /api/console/output`
+  - `POST /api/console/input`
+  - `POST /api/console/resize`
+  - `POST /api/console/close`
+- Backend uses a real PTY (`pty.openpty`) with interactive shell (`/bin/bash -i`), proper session/TTY setup (`setsid`, controlling TTY), and asynchronous output buffering.
+- Terminal session open requires root password verification against `/etc/shadow` (separate from dashboard login session).
+- Added idle session cleanup loop (10-minute inactivity timeout) to prevent stale shell accumulation.
+- Added System Settings entry for direct terminal launch.
+
+Operational impact:
+- Field/service users can perform advanced diagnostics without external SSH tooling.
+- Access remains privileged and auditable through explicit root password confirmation.
+
+### 2. OTA artifact tracking and forced AP re-initialization
+- Added artifact detection from `/etc/mender/artifact_info`.
+- Added persistent artifact tracking in `netservices.conf` (`system.mender_artifact`).
+- On artifact change detection after OTA, Wi-Fi manager forces AP/DHCP re-initialization and resets STA restore state.
+- Prevents stale runtime state from carrying across rootfs transition.
+
+Operational impact:
+- AP recovery after OTA is deterministic and does not depend on previous runtime state quality.
+
+### 3. AP DHCP reliability fix (dnsmasq lifecycle correction)
+- AP manager switched dnsmasq config target to `/etc/dnsmasq.d/rexgen-ap.conf`.
+- Startup behavior changed from conditional `systemctl start dnsmasq` to explicit `systemctl restart dnsmasq`.
+- `ensure_running()` path now follows restart semantics as well.
+- Parent directory creation added before config/state writes.
+
+Operational impact:
+- Resolves cases where AP clients remain on "Obtaining IP address" after boot/OTA due to stale dnsmasq bind state.
+
+### 4. Persistent runtime state migration to `/data`
+- Shared state path migrated from `/tmp/rexgen` to `/data/rexgen/tmp`.
+- AP blocked-clients state file moved to `/data/rexgen/tmp/ap_blocked.json`.
+- Added proactive directory creation in state writer and in `wifi-manager.service` (`ExecStartPre`).
+
+Operational impact:
+- Runtime coordination state survives reboot and Mender image switch.
+
+### 5. Wi-Fi credential hardening (no plaintext persistence)
+- `client_manager` now derives WPA PSK via `PBKDF2-HMAC-SHA1` (`4096` iterations, `32` bytes -> `64` hex chars).
+- Save path stores unquoted hex `psk` and does not persist plaintext passphrase.
+- Legacy data migration:
+  - quoted `psk="passphrase"` entries are converted to derived hex PSK,
+  - optional config `password` field is consumed/derived and then cleared on persist path.
+- `sta.networks` schema normalized with both `psk` and `password` keys for migration compatibility.
+
+Security impact:
+- Eliminates long-term plaintext Wi-Fi password exposure in normal runtime persistence flow.
+
+### 6. rexgend settings stability fix
+- Fixed page-initialization regression where core config JS was gated by `{% if experimental %}` and therefore missing when experimental mode was off.
+- Core settings JS now always rendered; only experimental sensor/pipe block remains conditional.
+
+Operational impact:
+- rexgend settings page now loads and reloads consistently in default (non-experimental) deployments.
+
+### 7. Live pipe diagnostics integration
+- Added backend pipe reader service with sequence-based polling and bounded in-memory buffer.
+- Added routes:
+  - `GET /api/pipes`
+  - `GET /api/pipes/read`
+  - `GET /pipe-output`
+- Added `pipe_output.html` viewer and rexgend UI links/tabs for experimental sensor pipe observation.
+
+Operational impact:
+- Enables real-time visibility into selected runtime pipes without SSH.
+
+### 8. Runtime/API and UI adjustments
+- `DASHBOARD_VERSION` bumped to `1.1.1`.
+- `SERVICE_STATUS_CACHE_SECONDS` increased from `5` to `30` to reduce frequent service-enumeration load.
+- Added `GET /api/theme?set=dark|light`.
+- Added explicit `GET /favicon.ico` (`204`) to suppress noisy browser requests.
+- Device page service-count fetch split from core device-info fetch to improve perceived load responsiveness.
+- HTTPS section text/callout cleanup in System Settings.
+- Footer dark-theme coverage extended.
+
+### 9. systemd unit hardening
+- `wifi-manager.service`:
+  - replaced hard `Requires=wpa_supplicant@wlan0.service` with soft `Wants=...`,
+  - added `ExecStartPre` mkdir for `/data/rexgen/tmp`, `/data/rexgen/config`, `/var/run/wpa_supplicant`.
+
+Operational impact:
+- Wi-Fi manager startup is less fragile when wpa_supplicant timing/order varies during boot.
 
 ---
 
@@ -412,4 +510,3 @@ Purpose of visible UI version:
 - Purpose: Process-level details for runtime investigation.  
 - Shows: selected process metrics and context relevant to load/debug scenarios.  
 - Why: Complements hardware/service views with process granularity.
-

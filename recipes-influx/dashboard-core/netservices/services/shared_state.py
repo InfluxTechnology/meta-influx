@@ -217,6 +217,20 @@ class WifiState:
             return True
         return False
 
+    def request_dns_refresh(self):
+        """Request immediate DNS/resolver refresh."""
+        Path(f"{STATE_DIR}/dns_refresh_request").touch()
+        self._trace("request_dns_refresh touched")
+
+    def has_dns_refresh_request(self) -> bool:
+        """Check if DNS refresh was requested."""
+        request_file = Path(f"{STATE_DIR}/dns_refresh_request")
+        if request_file.exists():
+            request_file.unlink()
+            self._trace("has_dns_refresh_request consumed=True")
+            return True
+        return False
+
     def request_ap_password_change(self, password: str):
         """Request AP password change"""
         with open(f"{STATE_DIR}/ap_password_request.json", 'w') as f:

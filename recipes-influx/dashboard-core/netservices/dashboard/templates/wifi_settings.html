@@ -632,8 +632,9 @@
             var container = document.getElementById('networkList');
 
             var connNet = connected ? networks.find(function(n) { return netSsid(n) === connected; }) : null;
-            var savedNets = networks.filter(function(n) { return netSsid(n) !== connected && known.indexOf(netSsid(n)) >= 0; });
-            var otherNets = networks.filter(function(n) { return netSsid(n) !== connected && known.indexOf(netSsid(n)) < 0; });
+            var bySignal = function(a, b) { return netSignal(b) - netSignal(a); };
+            var savedNets = networks.filter(function(n) { return netSsid(n) !== connected && known.indexOf(netSsid(n)) >= 0; }).sort(bySignal);
+            var otherNets = networks.filter(function(n) { return netSsid(n) !== connected && known.indexOf(netSsid(n)) < 0; }).sort(bySignal);
 
             var html = '';
 
@@ -803,11 +804,52 @@
                 .catch(function() {});
         }
 
-        // Initial load
+        // Initial load — fetch status for context, then auto-scan
         fetch('/api/status')
             .then(function(res) { return res.json(); })
             .then(function(data) {
-                applyStatusSnapshot(data);
+                // Apply known/connected/IP context without rendering network list yet
+                if (data.known) knownNetworks = data.known;
+                if (data.connected_ssid !== undefined) connectedSsid = data.connected_ssid;
+                if (data.last_scan !== undefined) lastScanTime = data.last_scan || lastScanTime;
+                updateDeviceInfo(data);
+
+                if (data.connect_in_progress) {
+                    // Already connecting — show status, lock UI, show cached networks
+                    var msg = data.connect_target
+                        ? ("Connecting to '" + data.connect_target + "'... Please wait.")
+                        : 'Connecting... Please wait.';
+                    var statusEl = document.getElementById('status');
+                    if (statusEl) {
+                        statusEl.className = 'status loading';
+                        statusEl.textContent = msg;
+                        statusEl.style.display = 'block';
+                    }
+                    setConnectLock(true, msg);
+                    if (data.networks) updateNetworkList(data.networks, data.known, data.connected_ssid);
+                } else {
+                    // Auto-scan on page load (same as clicking Refresh)
+                    var scanBefore = lastScanTime;
+                    requestScanAndPoll(scanBefore, function(ok, err) {
+                        if (!ok) {
+                            // Scan failed — fall back to cached networks
+                            if (data.networks) updateNetworkList(data.networks, data.known, data.connected_ssid);
+                            if (err) {
+                                var statusEl = document.getElementById('status');
+                                if (statusEl) {
+                                    statusEl.className = 'status error';
+                                    statusEl.textContent = err;
+                                    statusEl.style.display = 'block';
+                                    hideStatusAfter(6000);
+                                }
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(function() {
+                // Initial status failed — scan anyway with no prior context
+                requestScanAndPoll(0, function() {});
             });
         setInterval(pollStatus, 5000);
     </script>

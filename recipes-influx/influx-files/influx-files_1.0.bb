@@ -25,6 +25,7 @@ SRC_URI += "file://LICENSE \
 	file://opt/influx/blt_start.sh \
 	file://opt/influx/escape.minicom \
 	file://opt/influx/cellular_module_start.sh \
+	file://opt/influx/check_taiscale_status.sh \
 	file://opt/influx/gnssdata_start.sh \
 	file://opt/influx/gnssinit_quectel.py \
 	file://opt/influx/gnssinit_ublox.py \

@@ -95,7 +95,6 @@
                     <label>Remote Shell (SSH) Login</label>
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                         <input type="checkbox" id="ssh_enabled" style="width:18px;height:18px;accent-color:#20b2aa;">
-                        <span id="ssh_label" style="font-size:0.85em;color:#86868b;"></span>
                     </label>
                 </div>
                 <div class="divider"></div>
@@ -105,7 +104,34 @@
             </div>
         </div>
 
-        <!-- 3. HTTPS -->
+        <!-- 3. VPN -->
+        <div class="card">
+            <div class="section-header">
+                <span class="section-label">VPN</span>
+                <span class="section-links">
+                    <a onclick="saveVpnSettings()">Save</a>
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <label>VPN Service</label>
+                    <select id="vpn_provider" style="width:220px;padding:8px;border:1px solid #e0e0e0;border-radius:6px;font-size:0.9em;">
+                        <option value="none">Disabled</option>
+                        <option value="tailscale">Tailscale</option>
+                    </select>
+                </div>
+                <div class="row" id="vpn_tailscale_row">
+                    <label>Tailscale Reusable Auth Key</label>
+                    <input id="vpn_tailscale_auth_key" type="password" maxlength="256" placeholder="tskey-auth-...">
+                </div>
+                <div id="vpn_effective_row" style="display:none;font-size:0.78em;color:#5f6670;margin-top:2px;">
+                    Effective hostname: <span id="vpn_effective_name">-</span>
+                </div>
+                <div style="font-size:0.82em;color:#5f6670;margin-top:4px;" id="vpn_status_line">VPN Status: loading...</div>
+            </div>
+        </div>
+
+        <!-- 4. HTTPS -->
         <div class="card">
             <div class="section-header">
                 <span class="section-label">HTTPS</span>
@@ -119,7 +145,6 @@
                     <label>Enable HTTPS</label>
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                         <input type="checkbox" id="https_enabled" style="width:18px;height:18px;accent-color:#20b2aa;">
-                        <span id="https_label" style="font-size:0.85em;color:#86868b;"></span>
                     </label>
                 </div>
                 <div class="row">
@@ -153,7 +178,7 @@
             </div>
         </div>
 
-        <!-- 4. Remote Update -->
+        <!-- 5. Remote Update -->
         <div class="card">
             <div class="section-header">
                 <span class="section-label">Remote Update</span>
@@ -168,7 +193,7 @@
             </div>
         </div>
 
-        <!-- 5. System -->
+        <!-- 6. System -->
         <div class="card">
             <div class="section-header">
                 <span class="section-label">System</span>
@@ -193,6 +218,7 @@
     </div>
     <script>
         var initialSshEnabled = true;
+        var initialVpnProvider = 'none';
 
         function setValues(data) {
             if (data.error) { alert(data.error); }
@@ -224,30 +250,65 @@
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     var cb = document.getElementById('ssh_enabled');
-                    var lbl = document.getElementById('ssh_label');
                     if (!data.available) {
                         cb.disabled = true;
-                        lbl.textContent = 'Not available';
                         return;
                     }
                     var effective = (typeof data.enabled === 'boolean') ? data.enabled : true;
                     var desired = (typeof data.desired_enabled === 'boolean') ? data.desired_enabled : effective;
                     cb.checked = desired;
                     initialSshEnabled = desired;
-                    lbl.textContent = desired ? 'Allowed' : 'Blocked';
+                })
+                .catch(function() {});
+        }
+
+        function loadVpnSettings() {
+            fetch('/api/vpn-settings')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var provider = (data.provider || 'none');
+                    document.getElementById('vpn_provider').value = provider;
+                    var savedKey = (data.providers && data.providers.tailscale && data.providers.tailscale.auth_key) ? data.providers.tailscale.auth_key : '';
+                    document.getElementById('vpn_tailscale_auth_key').value = savedKey;
+                    initialVpnProvider = provider;
+                    applyVpnProviderUi();
+                })
+                .catch(function() {});
+        }
+
+        function loadVpnStatus() {
+            fetch('/api/vpn/status')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var line = document.getElementById('vpn_status_line');
+                    var text = (data && data.status_text) ? data.status_text : 'VPN Status: status unavailable.';
+                    line.textContent = text;
+                    var effectiveRow = document.getElementById('vpn_effective_row');
+                    var effectiveName = document.getElementById('vpn_effective_name');
+                    var isTailscale = data && data.provider === 'tailscale';
+                    var name = (data && data.effective_name) ? data.effective_name : '';
+                    effectiveRow.style.display = isTailscale ? '' : 'none';
+                    effectiveName.textContent = name || '(not assigned yet)';
                 })
                 .catch(function() {
-                    document.getElementById('ssh_label').textContent = 'Unknown';
+                    document.getElementById('vpn_status_line').textContent = 'VPN Status: status unavailable.';
+                    document.getElementById('vpn_effective_row').style.display = 'none';
                 });
         }
 
-        function sshStatusText(enabled) {
-            return enabled ? 'Allowed' : 'Blocked';
+        function applyVpnProviderUi() {
+            var provider = document.getElementById('vpn_provider').value || 'none';
+            var tsRow = document.getElementById('vpn_tailscale_row');
+            var keyInput = document.getElementById('vpn_tailscale_auth_key');
+            var effectiveRow = document.getElementById('vpn_effective_row');
+            var showTs = provider === 'tailscale';
+            tsRow.style.display = showTs ? '' : 'none';
+            effectiveRow.style.display = showTs ? '' : 'none';
+            keyInput.disabled = !showTs;
         }
 
         function saveLinuxAccess() {
             var cb = document.getElementById('ssh_enabled');
-            var lbl = document.getElementById('ssh_label');
             var desiredSsh = cb.checked;
             var sshChanged = desiredSsh !== initialSshEnabled;
             var currentPassword = document.getElementById('root_current_password').value || '';
@@ -272,7 +333,6 @@
 
             function saveSshIfNeeded() {
                 if (!sshChanged) { return Promise.resolve({ ok: true }); }
-                lbl.textContent = 'Applying...';
                 return fetch('/api/ssh-status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -298,7 +358,6 @@
                     }
                     if (sshChanged) {
                         initialSshEnabled = desiredSsh;
-                        lbl.textContent = sshStatusText(desiredSsh);
                     }
                     return saveRootIfNeeded();
                 })
@@ -316,8 +375,39 @@
                 .catch(function(err) {
                     alert(err.message || 'Request failed');
                     cb.checked = initialSshEnabled;
-                    lbl.textContent = sshStatusText(initialSshEnabled);
                 });
+        }
+
+        function saveVpnSettings() {
+            var vpnProvider = document.getElementById('vpn_provider').value || 'none';
+            var vpnAuthKey = (document.getElementById('vpn_tailscale_auth_key').value || '').trim();
+            var vpnChanged = (vpnProvider !== initialVpnProvider) || !!vpnAuthKey;
+            if (!vpnChanged) { return; }
+
+            fetch('/api/vpn-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    provider: vpnProvider,
+                    providers: { tailscale: { auth_key: vpnAuthKey } },
+                    apply: true
+                })
+            })
+            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+            .then(function(resp) {
+                if (!resp.ok || (resp.data && resp.data.status === 'error')) {
+                    var err = (resp.data && (resp.data.status_text || resp.data.error)) || 'Failed to update VPN setting';
+                    document.getElementById('vpn_status_line').textContent = err.indexOf('VPN Status:') === 0 ? err : ('VPN Status: Error. ' + err);
+                    return;
+                }
+                initialVpnProvider = vpnProvider;
+                document.getElementById('vpn_tailscale_auth_key').value = '';
+                loadVpnSettings();
+                loadVpnStatus();
+            })
+            .catch(function() {
+                document.getElementById('vpn_status_line').textContent = 'VPN Status: Save request failed.';
+            });
         }
 
         function saveConfig() {
@@ -382,7 +472,6 @@
                 .then(function(data) {
                     var cb = document.getElementById('https_enabled');
                     cb.checked = data.https_enabled !== false;
-                    document.getElementById('https_label').textContent = cb.checked ? 'Enabled' : 'Disabled';
                     document.getElementById('https_hostname').value = data.https_hostname || '';
                     var hint = 'Leave blank to use default: ' + (data.https_hostname_default || 'device-host.local');
                     document.getElementById('https_hostname_hint').textContent = hint;
@@ -391,9 +480,6 @@
                 .catch(function() {});
         }
 
-        document.getElementById('https_enabled').addEventListener('change', function() {
-            document.getElementById('https_label').textContent = this.checked ? 'Enabled' : 'Disabled';
-        });
 
         function saveHttps() {
             var enabled = document.getElementById('https_enabled').checked;
@@ -441,10 +527,10 @@
         loadConfig();
         loadAccountSecurity();
         loadSshStatus();
-        document.getElementById('ssh_enabled').addEventListener('change', function() {
-            document.getElementById('ssh_label').textContent = sshStatusText(this.checked) + (this.checked === initialSshEnabled ? '' : ' (unsaved)');
-        });
+        loadVpnSettings();
+        loadVpnStatus();
         loadHttps();
+        document.getElementById('vpn_provider').addEventListener('change', applyVpnProviderUi);
     </script>
     {% include '_footer.html' %}
 </body>

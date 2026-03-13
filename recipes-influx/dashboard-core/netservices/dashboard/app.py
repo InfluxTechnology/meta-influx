@@ -27,6 +27,7 @@ import termios
 import uuid
 import base64
 import collections
+import hashlib
 from datetime import timedelta
 from pathlib import Path
 
@@ -59,7 +60,7 @@ MENDER_CONFIG_FILE = "/etc/mender/mender.conf"
 MENDER_SERVICES = ["mender-authd.service", "mender-updated.service"]
 CONTROL_CENTER_DEFAULT_USER = "admin"
 CONTROL_CENTER_DEFAULT_PASS = "admin"
-DASHBOARD_VERSION = "1.1.1"
+DASHBOARD_VERSION = "1.1.3"
 LOGIN_ATTEMPT_WINDOW_SECONDS = 600
 LOGIN_LOCK_SECONDS = 900
 LOGIN_MAX_FAILURES = 5
@@ -171,6 +172,45 @@ def _load_or_init_system_settings() -> dict:
 
 def _save_system_settings(data: dict):
     _PERSIST_CFG.write_system(data)
+
+
+def _load_or_init_vpn_settings() -> dict:
+    data = _PERSIST_CFG.read_vpn()
+    provider = (data.get("provider") or "none").strip().lower()
+    if provider not in ("none", "tailscale"):
+        provider = "none"
+    providers = data.get("providers") if isinstance(data.get("providers"), dict) else {}
+    tailscale = providers.get("tailscale") if isinstance(providers.get("tailscale"), dict) else {}
+    openvpn = providers.get("openvpn") if isinstance(providers.get("openvpn"), dict) else {}
+    ts_auth_key = (tailscale.get("auth_key") or "").strip()
+    ts_auth_status = (tailscale.get("auth_status") or "never").strip().lower()
+    ts_last_key_sha = (tailscale.get("last_auth_key_sha256") or "").strip()
+    ts_last_error = (tailscale.get("last_error") or "").strip()
+    ts_advertise_tags_enabled = bool(tailscale.get("advertise_tags_enabled", False))
+    ts_advertise_tags = (tailscale.get("advertise_tags") or "").strip()
+    ovpn_cfg = (openvpn.get("config") or "").strip()
+    ovpn_user = (openvpn.get("username") or "").strip()
+    ovpn_pass = (openvpn.get("password") or "").strip()
+    if data.get("provider") != provider:
+        _PERSIST_CFG.write_vpn({"provider": provider})
+    return {
+        "provider": provider,
+        "providers": {
+            "tailscale": {
+                "auth_key": ts_auth_key,
+                "auth_status": ts_auth_status if ts_auth_status in ("never", "ok", "pending", "error") else "never",
+                "last_auth_key_sha256": ts_last_key_sha,
+                "last_error": ts_last_error,
+                "advertise_tags_enabled": ts_advertise_tags_enabled,
+                "advertise_tags": ts_advertise_tags,
+            },
+            "openvpn": {"config": ovpn_cfg, "username": ovpn_user, "password": ovpn_pass},
+        },
+    }
+
+
+def _save_vpn_settings(data: dict):
+    _PERSIST_CFG.write_vpn(data)
 
 
 def _normalize_https_hostname(value: str) -> str:
@@ -527,6 +567,87 @@ def _read_ipv4_address(iface: str) -> str:
     return ""
 
 
+def _read_ipv6_addresses(iface: str) -> str:
+    vals = []
+    try:
+        out = subprocess.run(
+            ["ip", "-6", "-o", "addr", "show", "dev", iface],
+            capture_output=True, text=True, timeout=3
+        ).stdout or ""
+        for line in out.splitlines():
+            m = re.search(r"\binet6\s+([0-9a-fA-F:]+)/", line)
+            if not m:
+                continue
+            addr = m.group(1).strip().lower()
+            if not addr or addr.startswith("fe80:"):
+                continue
+            vals.append(addr)
+    except Exception:
+        return ""
+    if not vals:
+        return ""
+    seen = []
+    for v in vals:
+        if v not in seen:
+            seen.append(v)
+    return ", ".join(seen)
+
+
+def _read_iface_state(iface: str) -> str:
+    state = _read_text(f"/sys/class/net/{iface}/operstate").lower()
+    if state in ("up", "down", "unknown", "dormant", "lowerlayerdown"):
+        return state
+    return "--"
+
+
+def _build_network_interface_rows() -> list:
+    try:
+        present = set(name for name in os.listdir("/sys/class/net") if name and name != "lo")
+    except Exception:
+        present = set()
+
+    local_host = os.uname().nodename if hasattr(os, "uname") else ""
+    vpn = _load_or_init_vpn_settings()
+    vpn_provider = (vpn.get("provider") or "none").strip().lower()
+    ts_details = _tailscale_status_details() if vpn_provider == "tailscale" else {}
+    ts_effective = (ts_details.get("self_dns_name") or ts_details.get("self_name") or "").strip()
+    ts_ips = ts_details.get("tailscale_ips") or []
+    ts_ipv4 = ts_ips[0] if ts_ips else ""
+
+    def _mk(iface: str) -> dict:
+        ipv4 = _read_ipv4_address(iface)
+        return {
+            "iface": iface,
+            "state": _read_iface_state(iface),
+            "ipv4": ipv4 or "--",
+            "ipv6": _read_ipv6_addresses(iface) or "--",
+            "mac": _read_mac_address(iface) or "--",
+            "hostname": (local_host if iface in ("wlan0", "wlan1") else "--"),
+        }
+
+    rows = []
+    for iface in ("wlan0", "wlan1"):
+        rows.append(_mk(iface))
+
+    if "tailscale0" in present:
+        r = _mk("tailscale0")
+        r["hostname"] = ts_effective or "--"
+        if ts_ipv4 and (r.get("ipv4") in ("", "--")):
+            r["ipv4"] = ts_ipv4
+        rows.append(r)
+    elif vpn_provider == "tailscale":
+        rows.append({
+            "iface": "tailscale0",
+            "state": "initializing",
+            "ipv4": ts_ipv4 or "--",
+            "ipv6": "--",
+            "mac": "--",
+            "hostname": ts_effective or "--",
+        })
+
+    return rows
+
+
 def _format_iface_ip_mac(iface: str) -> str:
     ip = _read_ipv4_address(iface) or "--"
     mac = _read_mac_address(iface) or "--"
@@ -663,9 +784,7 @@ def _restart_mender_services() -> tuple:
     return tuple(restarted)
 
 
-def get_device_info() -> dict:
-    """Read device metadata from rexgend var files and Linux system info."""
-    base = "/home/root/rexusb/var"
+def _read_system_image_version() -> str:
     image_version = ""
     try:
         res = subprocess.run(
@@ -685,6 +804,13 @@ def get_device_info() -> dict:
                 break
     if not image_version:
         image_version = "2.04"
+    return image_version
+
+
+def get_device_info() -> dict:
+    """Read device metadata from rexgend var files and Linux system info."""
+    base = "/home/root/rexusb/var"
+    image_version = _read_system_image_version()
 
     mender = _read_mender_details()
     return {
@@ -709,6 +835,7 @@ def get_device_info() -> dict:
         "iface_wlan0": _format_iface_ip_mac("wlan0"),
         "iface_wlan1": _format_iface_ip_mac("wlan1"),
         "network_interfaces": _read_network_interfaces(),
+        "interface_rows": _build_network_interface_rows(),
         "mender_client_version": mender.get("mender_client_version", ""),
         "mender_bootloader_integration": mender.get("mender_bootloader_integration", ""),
     }
@@ -2283,6 +2410,221 @@ def _apply_ssh_state(enable: bool, unit: str, kind: str):
         subprocess.run(["systemctl", "stop", f"{stem}.service"], capture_output=True, text=True, timeout=10)
 
 
+def _tailscale_cli_available() -> bool:
+    return shutil.which("tailscale") is not None
+
+
+def _tailscaled_unit() -> str:
+    return "tailscaled.service"
+
+
+def _tailscaled_service_loaded() -> bool:
+    unit = _tailscaled_unit()
+    try:
+        r = subprocess.run(
+            ["systemctl", "show", "--no-pager", "--property=LoadState", unit],
+            capture_output=True, text=True, timeout=5,
+        )
+        return r.returncode == 0 and "LoadState=loaded" in (r.stdout or "")
+    except Exception:
+        return False
+
+
+def _set_tailscaled_service(enable: bool):
+    unit = _tailscaled_unit()
+    if not _tailscaled_service_loaded():
+        raise RuntimeError(f"{unit} not found")
+    if enable:
+        subprocess.run(["systemctl", "enable", unit], capture_output=True, text=True, timeout=10)
+        subprocess.run(["systemctl", "start", unit], capture_output=True, text=True, timeout=15, check=True)
+        return
+    subprocess.run(["systemctl", "stop", unit], capture_output=True, text=True, timeout=15)
+    subprocess.run(["systemctl", "disable", unit], capture_output=True, text=True, timeout=10)
+
+
+def _extract_tailscale_auth_url(text: str) -> str:
+    m = re.search(r"(https://login\.tailscale\.com/\S+)", text or "")
+    if not m:
+        return ""
+    return m.group(1).rstrip(".,;")
+
+
+def _tailscale_status_details() -> dict:
+    details = {
+        "backend_state": "unknown",
+        "logged_in": False,
+        "needs_login": False,
+        "auth_url": "",
+        "tailscale_ips": [],
+        "self_dns_name": "",
+        "self_name": "",
+        "self_online": False,
+    }
+    if not _tailscale_cli_available():
+        return details
+
+    try:
+        r = subprocess.run(
+            ["tailscale", "status", "--json"],
+            capture_output=True, text=True, timeout=8,
+        )
+        if r.returncode != 0:
+            return details
+        parsed = json.loads(r.stdout or "{}")
+        backend_state = (parsed.get("BackendState") or "unknown").strip().lower()
+        details["backend_state"] = backend_state
+        details["needs_login"] = backend_state in ("needslogin", "needsmachineauth", "nostate")
+        details["logged_in"] = backend_state not in ("needslogin", "needsmachineauth", "nostate", "unknown")
+        details["auth_url"] = (parsed.get("AuthURL") or "").strip()
+        details["tailscale_ips"] = [str(v).strip() for v in (parsed.get("TailscaleIPs") or []) if str(v).strip()]
+        self_data = parsed.get("Self")
+        if isinstance(self_data, dict):
+            dns_name = (self_data.get("DNSName") or "").strip().rstrip(".")
+            name = (self_data.get("HostName") or dns_name or "").strip().rstrip(".")
+            details["self_dns_name"] = dns_name
+            details["self_name"] = name
+            details["self_online"] = bool(self_data.get("Online", False))
+        return details
+    except Exception:
+        return details
+
+
+def _apply_tailscale_state(enable: bool, auth_key: str = "", advertise_tags: list | None = None):
+    if not _tailscale_cli_available():
+        raise RuntimeError("Tailscale CLI is not installed")
+    if enable:
+        _set_tailscaled_service(True)
+        cmd = ["tailscale", "up", "--accept-dns=false"]
+        tags = advertise_tags if isinstance(advertise_tags, list) else _tailscale_advertise_tags()
+        if tags:
+            cmd.append("--advertise-tags=" + ",".join(tags))
+        if auth_key:
+            cmd.extend(["--auth-key", auth_key])
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        if r.returncode != 0:
+            err = (r.stderr or r.stdout or "").strip()
+            raise RuntimeError(err or "tailscale up failed")
+        return
+    # "down" is best-effort; when daemon isn't running we still consider desired state reached.
+    subprocess.run(["tailscale", "down"], capture_output=True, text=True, timeout=15)
+    _set_tailscaled_service(False)
+
+
+def _tailscale_key_sha256(auth_key: str) -> str:
+    v = (auth_key or "").strip()
+    if not v:
+        return ""
+    return hashlib.sha256(v.encode("utf-8")).hexdigest()
+
+
+def _friendly_vpn_error(exc: Exception) -> str:
+    if isinstance(exc, subprocess.TimeoutExpired):
+        return "Tailscale command timed out after 30 seconds."
+    msg = (str(exc) or "").strip()
+    if "timed out" in msg.lower():
+        return "Tailscale command timed out after 30 seconds."
+    return msg or "Failed to apply VPN settings."
+
+
+def _normalize_tailscale_tags(tags_raw: str) -> list:
+    tags = []
+    seen = set()
+    for part in re.split(r"[,\s]+", tags_raw or ""):
+        v = part.strip().lower()
+        if not v:
+            continue
+        if not v.startswith("tag:"):
+            v = f"tag:{v}"
+        if v in seen:
+            continue
+        seen.add(v)
+        tags.append(v)
+    return tags
+
+
+def _tailscale_advertise_tags(vpn: dict | None = None) -> list:
+    data = vpn if isinstance(vpn, dict) else _load_or_init_vpn_settings()
+    ts = data.get("providers", {}).get("tailscale", {}) if isinstance(data.get("providers"), dict) else {}
+    if not bool(ts.get("advertise_tags_enabled", False)):
+        return []
+    return _normalize_tailscale_tags((ts.get("advertise_tags") or "").strip())
+
+
+def _should_use_auth_key_for_up(vpn: dict, details: dict, force: bool = False) -> bool:
+    ts = vpn.get("providers", {}).get("tailscale", {}) if isinstance(vpn.get("providers"), dict) else {}
+    auth_key = (ts.get("auth_key") or "").strip()
+    if not auth_key:
+        return False
+    if force:
+        return True
+    auth_status = (ts.get("auth_status") or "never").strip().lower()
+    last_hash = (ts.get("last_auth_key_sha256") or "").strip()
+    current_hash = _tailscale_key_sha256(auth_key)
+    already_authorized = bool(details.get("logged_in", False)) and (not bool(details.get("needs_login", False)))
+    same_key = bool(current_hash) and (current_hash == last_hash)
+    if already_authorized and same_key and auth_status == "ok":
+        return False
+    return True
+
+
+def _get_current_mender_artifact() -> str:
+    try:
+        content = Path("/etc/mender/artifact_info").read_text()
+        for line in content.splitlines():
+            line = line.strip()
+            if line.startswith("artifact_name="):
+                return line.split("=", 1)[1].strip()
+    except Exception:
+        pass
+    return ""
+
+
+def _is_new_image_boot() -> bool:
+    current = _get_current_mender_artifact()
+    if not current:
+        return False
+    try:
+        stored = _PERSIST_CFG.read_mender_artifact()
+        if stored == current:
+            return False
+        _PERSIST_CFG.write_mender_artifact(current)
+        log.info(f"Dashboard detected image change: '{stored or '(none)'}' -> '{current}'")
+        return True
+    except Exception as e:
+        log.warning(f"Dashboard image-change check failed: {e}")
+        return False
+
+
+def _tailscale_status_payload(settings: dict | None = None) -> dict:
+    vpn = settings if isinstance(settings, dict) else _load_or_init_vpn_settings()
+    details = _tailscale_status_details()
+    desired_enabled = (vpn.get("provider") == "tailscale")
+    unit = _tailscaled_unit()
+    service_loaded = _tailscaled_service_loaded()
+    service_active_state = _systemctl_state("is-active", unit) if service_loaded else "not-found"
+    service_enabled_state = _systemctl_state("is-enabled", unit) if service_loaded else "not-found"
+    return {
+        "available": _tailscale_cli_available(),
+        "installed": _tailscale_cli_available(),
+        "enabled": bool(details.get("logged_in", False)) or (details.get("backend_state") == "running"),
+        "desired_enabled": desired_enabled,
+        "provider": "tailscale",
+        "service_unit": unit,
+        "service_loaded": service_loaded,
+        "service_active_state": service_active_state,
+        "service_enabled_state": service_enabled_state,
+        "backend_state": details.get("backend_state", "unknown"),
+        "logged_in": bool(details.get("logged_in", False)),
+        "needs_login": bool(details.get("needs_login", False)),
+        "auth_url": details.get("auth_url") or "",
+        "tailscale_ips": details.get("tailscale_ips") or [],
+        "self_dns_name": details.get("self_dns_name") or "",
+        "self_name": details.get("self_name") or "",
+        "effective_name": (details.get("self_dns_name") or details.get("self_name") or "").strip(),
+        "self_online": bool(details.get("self_online", False)),
+    }
+
+
 @app.route('/api/ssh-status', methods=['GET'])
 def api_ssh_status_get():
     ctl = _ssh_control_unit()
@@ -2342,6 +2684,238 @@ def api_ssh_status_set():
     })
 
 
+@app.route('/api/vpn/login', methods=['POST'])
+def api_vpn_login():
+    if not _tailscale_cli_available():
+        return jsonify({"error": "Tailscale CLI is not installed"}), 404
+    data = request.get_json() or {}
+    provider = (data.get("provider") or "tailscale").strip().lower()
+    if provider != "tailscale":
+        return jsonify({"error": "Unsupported VPN provider"}), 400
+    req_key = (data.get("auth_key") or "").strip()
+    vpn = _load_or_init_vpn_settings()
+    saved_key = (vpn.get("providers", {}).get("tailscale", {}).get("auth_key") or "").strip()
+    auth_key = req_key or saved_key
+
+    try:
+        _set_tailscaled_service(True)
+        cmd = ["tailscale", "up", "--accept-dns=false"]
+        tags = _tailscale_advertise_tags(vpn)
+        if tags:
+            cmd.append("--advertise-tags=" + ",".join(tags))
+        if auth_key:
+            cmd.extend(["--auth-key", auth_key])
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        raw = (r.stdout or "").strip()
+        err = (r.stderr or "").strip()
+        combined = "\n".join([s for s in (raw, err) if s]).strip()
+        auth_url = _extract_tailscale_auth_url(combined)
+        details = _tailscale_status_details()
+        if not auth_url:
+            auth_url = details.get("auth_url") or ""
+        output_lines = [line.strip() for line in combined.splitlines() if line.strip()]
+        output_summary = "\n".join(output_lines[-5:])
+        return jsonify({
+            "status": "ok" if r.returncode == 0 else "pending",
+            "provider": "tailscale",
+            "auth_url": auth_url,
+            "backend_state": details.get("backend_state", "unknown"),
+            "used_auth_key": bool(auth_key),
+            "output": output_summary,
+        })
+    except subprocess.TimeoutExpired:
+        details = _tailscale_status_details()
+        return jsonify({
+            "status": "pending",
+            "provider": "tailscale",
+            "auth_url": details.get("auth_url") or "",
+            "backend_state": details.get("backend_state", "unknown"),
+            "output": "tailscale up timed out; refresh status.",
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/vpn/logout', methods=['POST'])
+def api_vpn_logout():
+    if not _tailscale_cli_available():
+        return jsonify({"error": "Tailscale CLI is not installed"}), 404
+    data = request.get_json() or {}
+    provider = (data.get("provider") or "tailscale").strip().lower()
+    if provider != "tailscale":
+        return jsonify({"error": "Unsupported VPN provider"}), 400
+    try:
+        subprocess.run(["tailscale", "logout"], capture_output=True, text=True, timeout=15)
+    except Exception:
+        pass
+    return jsonify({"status": "ok", "provider": "tailscale"})
+
+
+@app.route('/api/vpn-settings', methods=['GET'])
+def api_vpn_settings_get():
+    vpn = _load_or_init_vpn_settings()
+    ts = vpn.get("providers", {}).get("tailscale", {})
+    ts_key = (ts.get("auth_key") or "").strip()
+    ts_auth_status = (ts.get("auth_status") or "never").strip().lower()
+    ovpn = vpn.get("providers", {}).get("openvpn", {})
+    ovpn_configured = bool((ovpn.get("config") or "").strip() or (ovpn.get("username") or "").strip() or (ovpn.get("password") or "").strip())
+    return jsonify({
+        "provider": vpn.get("provider", "none"),
+        "providers_available": ["none", "tailscale"],
+        "providers": {
+            "tailscale": {
+                "auth_key_present": bool(ts_key),
+                "auth_status": ts_auth_status,
+                "auth_key": ts_key,
+                "advertise_tags_enabled": bool(ts.get("advertise_tags_enabled", False)),
+                "advertise_tags": (ts.get("advertise_tags") or "").strip(),
+            },
+            "openvpn": {"configured": ovpn_configured},
+        },
+    })
+
+
+@app.route('/api/vpn-settings', methods=['POST'])
+def api_vpn_settings_set():
+    data = request.get_json() or {}
+    provider = (data.get("provider") or "none").strip().lower()
+    if provider not in ("none", "tailscale"):
+        return jsonify({"error": "Unsupported VPN provider"}), 400
+    providers = data.get("providers") if isinstance(data.get("providers"), dict) else {}
+    tailscale = providers.get("tailscale") if isinstance(providers.get("tailscale"), dict) else {}
+    openvpn = providers.get("openvpn") if isinstance(providers.get("openvpn"), dict) else {}
+    auth_key = (tailscale.get("auth_key") or "").strip()
+    has_adv_tags_enabled = "advertise_tags_enabled" in tailscale
+    adv_tags_enabled = bool(tailscale.get("advertise_tags_enabled", False))
+    has_adv_tags = "advertise_tags" in tailscale
+    adv_tags_raw = (tailscale.get("advertise_tags") or "").strip()
+    clear_auth_key = bool(data.get("clear_auth_key", False))
+    if auth_key and len(auth_key) > 256:
+        return jsonify({"error": "Tailscale auth key is too long"}), 400
+    if has_adv_tags and len(adv_tags_raw) > 512:
+        return jsonify({"error": "Tailscale advertise tags are too long"}), 400
+    adv_tags_normalized = ",".join(_normalize_tailscale_tags(adv_tags_raw))
+
+    current = _load_or_init_vpn_settings()
+    write_payload = {"provider": provider}
+    provider_payload = {}
+    if provider == "tailscale":
+        ts_payload = {}
+        if auth_key:
+            ts_payload["auth_key"] = auth_key
+        elif clear_auth_key:
+            ts_payload["auth_key"] = ""
+        if has_adv_tags_enabled:
+            ts_payload["advertise_tags_enabled"] = adv_tags_enabled
+        if has_adv_tags:
+            ts_payload["advertise_tags"] = adv_tags_normalized
+        if ts_payload:
+            provider_payload["tailscale"] = ts_payload
+    if openvpn:
+        provider_payload["openvpn"] = {
+            "config": (openvpn.get("config") or "").strip(),
+            "username": (openvpn.get("username") or "").strip(),
+            "password": (openvpn.get("password") or "").strip(),
+        }
+    if provider_payload:
+        write_payload["providers"] = provider_payload
+    _save_vpn_settings(write_payload)
+    updated = _load_or_init_vpn_settings()
+    wifi_state.request_dns_refresh()
+
+    apply_now = bool(data.get("apply", True))
+    if apply_now:
+        try:
+            if provider == "tailscale":
+                eff_key = (updated.get("providers", {}).get("tailscale", {}).get("auth_key") or "").strip()
+                details_before = _tailscale_status_details()
+                use_auth_key = _should_use_auth_key_for_up(updated, details_before)
+                _apply_tailscale_state(
+                    True,
+                    auth_key=eff_key if use_auth_key else "",
+                    advertise_tags=_tailscale_advertise_tags(updated),
+                )
+                details_after = _tailscale_status_details()
+                auth_ok = bool(details_after.get("logged_in", False)) and (not bool(details_after.get("needs_login", False)))
+                ts_update = {"auth_status": "ok" if auth_ok else "pending", "last_error": ""}
+                if use_auth_key and eff_key:
+                    ts_update["last_auth_key_sha256"] = _tailscale_key_sha256(eff_key)
+                _save_vpn_settings({"providers": {"tailscale": ts_update}})
+                updated = _load_or_init_vpn_settings()
+            else:
+                # If previously configured with Tailscale, bring it down when selecting "none".
+                if current.get("provider") == "tailscale":
+                    _apply_tailscale_state(False, auth_key="")
+                    _save_vpn_settings({"providers": {"tailscale": {"auth_status": "never", "last_error": ""}}})
+                    updated = _load_or_init_vpn_settings()
+        except Exception as e:
+            err = _friendly_vpn_error(e)
+            _save_vpn_settings({"providers": {"tailscale": {"auth_status": "error", "last_error": err}}})
+            return jsonify({"status": "error", "provider": provider, "error": err}), 200
+
+    ts = updated.get("providers", {}).get("tailscale", {})
+    ts_key = (ts.get("auth_key") or "").strip()
+    ts_auth_status = (ts.get("auth_status") or "never").strip().lower()
+    ts_last_error = (ts.get("last_error") or "").strip()
+    ovpn = updated.get("providers", {}).get("openvpn", {})
+    ovpn_configured = bool((ovpn.get("config") or "").strip() or (ovpn.get("username") or "").strip() or (ovpn.get("password") or "").strip())
+    return jsonify({
+        "status": "ok",
+        "provider": updated.get("provider", "none"),
+        "providers": {
+            "tailscale": {"auth_key_present": bool(ts_key), "auth_status": ts_auth_status},
+            "openvpn": {"configured": ovpn_configured},
+        },
+        "status_text": ("VPN Status: Error. " + ts_last_error) if ts_auth_status == "error" and ts_last_error else "",
+        "applied": apply_now,
+    })
+
+
+@app.route('/api/vpn/status', methods=['GET'])
+def api_vpn_status_get():
+    vpn = _load_or_init_vpn_settings()
+    provider = vpn.get("provider", "none")
+    ts_cfg = vpn.get("providers", {}).get("tailscale", {})
+    ts_key_present = bool((ts_cfg.get("auth_key") or "").strip())
+    ts_auth_status = (ts_cfg.get("auth_status") or "never").strip().lower()
+    ts_last_error = (ts_cfg.get("last_error") or "").strip()
+    if provider == "tailscale":
+        payload = _tailscale_status_payload(vpn)
+        payload["auth_key_present"] = ts_key_present
+        payload["auth_status"] = ts_auth_status
+        if not payload.get("service_loaded", False):
+            payload["status_text"] = "VPN Status: tailscaled.service is missing."
+        elif not payload.get("installed", False):
+            payload["status_text"] = "VPN Status: Tailscale selected, but not installed on device."
+        elif ts_auth_status == "error":
+            payload["status_text"] = "VPN Status: Error. " + (ts_last_error or "Failed to authorize.")
+        elif payload.get("logged_in", False):
+            payload["status_text"] = "VPN Status: Connected and authorized."
+        elif payload.get("needs_login", False) and ts_key_present:
+            payload["status_text"] = "VPN Status: Authorization required. Saved key will be used on Save."
+        elif payload.get("needs_login", False):
+            payload["status_text"] = "VPN Status: Authorization required. Add auth key and Save."
+        else:
+            payload["status_text"] = "VPN Status: Tailscale selected. Connection state is initializing."
+    else:
+        payload = {
+            "provider": "none",
+            "installed": False,
+            "available": True,
+            "desired_enabled": False,
+            "enabled": False,
+            "backend_state": "disabled",
+            "logged_in": False,
+            "needs_login": False,
+            "tailscale_ips": [],
+            "auth_key_present": ts_key_present,
+            "auth_status": ts_auth_status,
+            "status_text": "VPN Status: Disabled.",
+        }
+    payload["provider"] = provider
+    return jsonify(payload)
+
+
 def _apply_persisted_ssh_state_on_startup():
     settings = _load_or_init_system_settings()
     desired = bool(settings.get("ssh_enabled", True))
@@ -2354,6 +2928,36 @@ def _apply_persisted_ssh_state_on_startup():
         log.info(f"Applied persisted SSH state on startup: unit={ctl['unit']} enabled={desired}")
     except Exception as e:
         log.error(f"Failed to apply persisted SSH state on startup: {e}")
+
+
+def _apply_persisted_vpn_state_on_startup():
+    image_changed = _is_new_image_boot()
+    vpn = _load_or_init_vpn_settings()
+    provider = vpn.get("provider", "none")
+    if provider != "tailscale":
+        return
+    if not _tailscale_cli_available():
+        log.info("Tailscale CLI missing; persisted VPN state skipped")
+        return
+    auth_key = (vpn.get("providers", {}).get("tailscale", {}).get("auth_key") or "").strip()
+    try:
+        details_before = _tailscale_status_details()
+        use_auth_key = _should_use_auth_key_for_up(vpn, details_before, force=image_changed)
+        _apply_tailscale_state(
+            True,
+            auth_key=auth_key if use_auth_key else "",
+            advertise_tags=_tailscale_advertise_tags(vpn),
+        )
+        details_after = _tailscale_status_details()
+        auth_ok = bool(details_after.get("logged_in", False)) and (not bool(details_after.get("needs_login", False)))
+        ts_update = {"auth_status": "ok" if auth_ok else "pending", "last_error": ""}
+        if use_auth_key and auth_key:
+            ts_update["last_auth_key_sha256"] = _tailscale_key_sha256(auth_key)
+        _save_vpn_settings({"providers": {"tailscale": ts_update}})
+        log.info(f"Applied persisted VPN state on startup: provider=tailscale image_changed={image_changed}")
+    except Exception as e:
+        _save_vpn_settings({"providers": {"tailscale": {"auth_status": "error", "last_error": _friendly_vpn_error(e)}}})
+        log.error(f"Failed to apply persisted VPN state on startup: {e}")
 
 
 @app.route('/api/https-settings', methods=['GET', 'POST'])
@@ -3241,6 +3845,7 @@ def _ensure_ssl_cert(force_regen: bool = False):
 
 if __name__ == "__main__":
     _apply_persisted_ssh_state_on_startup()
+    _apply_persisted_vpn_state_on_startup()
     settings = _load_or_init_settings()
     https_enabled = settings.get("https_enabled", False)
     if https_enabled:

@@ -233,6 +233,15 @@ for f in "$DEST/systemd/"*.service; do
     fi
 done
 
+# Ensure wlan0 is not managed by systemd-networkd DHCP (netservices owns DHCP via udhcpc).
+if [ -f "$DEST/systemd/20-wireless-wlan0.network" ]; then
+    echo "  Copying 20-wireless-wlan0.network -> /etc/systemd/network/"
+    mkdir -p /etc/systemd/network
+    cp "$DEST/systemd/20-wireless-wlan0.network" /etc/systemd/network/20-wireless-wlan0.network
+    echo "  Restarting systemd-networkd ..."
+    systemctl restart systemd-networkd 2>/dev/null || echo "  [WARN] Failed to restart systemd-networkd"
+fi
+
 echo "  Reloading systemd daemon ..."
 systemctl daemon-reload
 
