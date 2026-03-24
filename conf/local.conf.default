@@ -12,6 +12,7 @@ IMAGE_INSTALL:append = " wvdial "
 IMAGE_INSTALL:append = " python3-pyserial python3-pyserial-asyncio python3-pip"
 IMAGE_INSTALL:append = " htop "
 IMAGE_INSTALL:append = " mc "
+IMAGE_INSTALL:append = " tzdata "
 
 # Influx RexGen support
 IMAGE_INSTALL:append = " rexgen-core "
@@ -22,5 +23,5 @@ IMAGE_INSTALL:append = " rex-sys-log "
 IMAGE_INSTALL:append = " wlan-manager "
 IMAGE_INSTALL:append = " tailscale " 
 
-INFLUX_VERSION="2.1.4"
+INFLUX_VERSION="2.1.5"
 INFLUX_RELEASE="pro.${INFLUX_VERSION}"
