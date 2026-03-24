@@ -34,6 +34,8 @@ SRC_URI += "file://LICENSE \
 	file://opt/influx/local_settings.sh \
 	file://opt/influx/lte_start_ppp.sh \
 	file://opt/influx/lte_start_wvdial.sh \
+	file://opt/influx/mender_update_finish.sh \
+	file://opt/influx/mender_update_start.sh \
 	file://opt/influx/net_failover.sh \
 	file://opt/influx/options \
 	file://opt/influx/pap-secrets \

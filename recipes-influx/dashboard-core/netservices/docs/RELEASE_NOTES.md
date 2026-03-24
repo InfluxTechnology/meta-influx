@@ -1,29 +1,94 @@
 # ReXgen Control Center Release Notes
 
+## ReXgen Control Center 1.1.4 - Dashboard Architecture Split, Service Refactor, and Time Control
+
+Release type: Architecture + runtime refactor + platform control  
+Baseline: 1.1.3 final (`SVN r8412`, 2026-03-09)  
+Release compare range: committed `r8413..r8419` + local 1.1.4 deltas  
+Primary goal: finalize dashboard architecture split, reduce runtime config/path duplication through shared constants, and harden Linux time configuration behavior.
+
+### What users will notice
+- Dashboard structure transition from post-1.1.3 work is now finalized:
+  - unified main pages under `templates_main`
+  - rexgen pages under dedicated `templates_rexgen`
+  - cleaner router split while keeping one dashboard runtime process.
+- Device Info formatting updates:
+  - CPU temperature shown in `°C`
+  - WLAN hostnames normalized to lowercase `.local`
+  - Tailscale hostname placement aligned for consistent read order.
+- `System Settings` now includes a dedicated `Time Settings` section:
+  - timezone selection from dropdown
+  - NTP server input
+  - one-click `Check` that shows if the server is reachable and what time is returned.
+- Time view was simplified:
+  - removed confusing diagnostic-only text rows
+  - kept only actionable controls and explicit server check result.
+
+### Major platform changes
+- Shared constants refactor in service layer and dashboard constants reuse.
+- Service/runtime constants extracted into dedicated modules (`paths`, `network`, `runtime`) to reduce duplicated literals.
+- Core services updated to consume shared constants:
+  - `shared_state`
+  - `client_manager`
+  - `wifi_manager`
+  - `ap_manager`
+  - `netservices_config`.
+
+### New functionality included in this release scope
+- Dedicated rexgen dashboard domain with separate routes:
+  - `/rexgen`
+  - `/structure` and `/rexgen/structure`
+- New rexgen APIs:
+  - `/api/rexgen/structure` for validated `structure.json` serving
+  - `/api/rexgen/runtime` for CAN mode/count and runtime-path telemetry
+- New rexgen-focused pages (`rexgen_home`, `structure`) for runtime visibility beyond the classic netservices pages.
+
+### Time control improvements
+- Stronger NTP determinism:
+  - if no `ntp_server` is configured, default is now `pool.ntp.org`.
+  - fallback NTP list is single, ordered, and includes globally reachable + China-friendly servers.
+- Correct timesyncd precedence:
+  - dashboard-managed drop-in now clears inherited base NTP lists before applying configured values.
+  - configured NTP order is now effectively authoritative at runtime.
+- Better OTA resilience:
+  - after image change detection, persisted `system.time` settings from `netservices.conf` are automatically re-applied to Linux.
+
+### Canonical fallback NTP order
+- `ntp.aliyun.com`
+- `ntp.tencent.com`
+- `time.cloudflare.com`
+- `time.google.com`
+- `asia.pool.ntp.org`
+- `pool.ntp.org`
+- `time.apple.com`
+- `ntp.ubuntu.com`
+- `time.windows.com`
+
+### Technical note
+- Dashboard version is now `1.1.4`.
+
 ## ReXgen Control Center 1.1.3 - VPN-Aware DNS Policy and Tailscale Resolver Guard
 
 Release type: Networking policy and VPN integration refinement  
 Baseline: 1.1.2  
 Primary goal: make DNS resolution deterministic across VPN state transitions and future multi-provider VPN support.
 
-### Highlights
-- Dashboard version bump to `1.1.3`.
-- Tailscale `up` path now forces `--accept-dns=false` to avoid resolver overwrite from Tailscale.
-- Tailscale tags moved from hardcoded defaults to optional config-driven values.
-- Added persistent DNS policy section in `netservices.conf`:
-  - base DNS list and resolver options (`dns.servers`, `dns.options`)
-  - provider DNS list support (`vpn.providers.<provider>.dns_servers`, currently Tailscale)
-- Effective DNS behavior:
-  - active provider DNS is applied first (priority)
-  - base DNS follows as fallback
-  - duplicates removed, order preserved
-  - inactive-provider DNS is excluded from resolver/ping flow (fixes stale Tailscale DNS after reboot when provider is disabled)
-- Connectivity probing now reuses the same effective DNS order used to build `/etc/resolv.conf`.
-- Post-integration DNS behavior fixes:
-  - base DNS defaults no longer include Tailscale DNS; Tailscale DNS is kept only in provider-specific config.
-  - resolver writer now replaces `/etc/resolv.conf` symlink with a static file when needed (for images using `systemd-resolved` symlink mode).
-  - resolver write-skip cache now validates real file state before skipping.
-  - VPN Save now sends immediate DNS refresh request to `wifi-manager`, so resolver is updated immediately after provider change.
+### What users will notice
+- Changing VPN provider and pressing `Save` now updates DNS behavior immediately.
+- DNS no longer gets stuck with stale Tailscale entries after switching VPN to `Disabled`.
+- On devices where `/etc/resolv.conf` was managed through symlink mode, DNS settings are now applied reliably.
+
+### Improvements
+- Better Tailscale safety:
+  - `tailscale up` runs with `--accept-dns=false` to keep dashboard-controlled DNS policy.
+- Better multi-VPN readiness:
+  - base DNS and provider DNS are separated in config.
+  - active provider DNS gets priority, base DNS remains fallback.
+- Better consistency:
+  - connectivity checks use the same DNS order as resolver generation.
+
+### Technical note
+- Dashboard version is now `1.1.3`.
 
 ## ReXgen Control Center 1.1.2 - VPN Operational Integration and Interface Visibility
 

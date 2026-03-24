@@ -28,7 +28,7 @@
         .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
         .row:last-child { margin-bottom: 0; }
         .row label { color: #333; font-size: 0.9em; }
-        input[type="text"], input[type="number"], input[type="password"] { width: 220px; padding: 8px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.9em; }
+        input[type="text"], input[type="number"], input[type="password"], textarea { width: 220px; padding: 8px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.9em; }
         input:focus { border-color: #20b2aa; outline: none; }
         .divider { height: 1px; background: #f0f0f2; margin: 8px 0; }
         .services-list { font-size: 0.86em; color: #333; }
@@ -181,6 +181,33 @@
         <!-- 5. Remote Update -->
         <div class="card">
             <div class="section-header">
+                <span class="section-label">Time Settings</span>
+                <span class="section-links">
+                    <a onclick="loadTimeSettings()">Refresh</a><span class="sep">|</span>
+                    <a onclick="saveTimeSettings()">Save</a>
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <label>Timezone</label>
+                    <select id="time_timezone" style="width:220px;padding:8px;border:1px solid #e0e0e0;border-radius:6px;font-size:0.9em;">
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <label>NTP Server</label>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input id="time_ntp_server" type="text" placeholder="0.pool.ntp.org" style="width:170px;">
+                        <button onclick="checkNtpServer(true)" style="padding: 8px 10px; background: #178a83; color: #fff; border: none; border-radius: 6px; font-size: 0.82em; cursor: pointer; font-weight: 600;">Check</button>
+                    </div>
+                </div>
+                <div id="time_ntp_server_line" style="font-size:0.78em;color:#5f6670;margin-top:4px;">NTP server check: loading...</div>
+            </div>
+        </div>
+
+        <!-- 6. Remote Update -->
+        <div class="card">
+            <div class="section-header">
                 <span class="section-label">Remote Update</span>
                 <span class="section-links">
                     <a onclick="loadConfig()">Refresh</a><span class="sep">|</span>
@@ -193,7 +220,7 @@
             </div>
         </div>
 
-        <!-- 6. System -->
+        <!-- 7. System -->
         <div class="card">
             <div class="section-header">
                 <span class="section-label">System</span>
@@ -219,6 +246,7 @@
     <script>
         var initialSshEnabled = true;
         var initialVpnProvider = 'none';
+        var initialTimeSettings = null;
 
         function setValues(data) {
             if (data.error) { alert(data.error); }
@@ -274,6 +302,81 @@
                     applyVpnProviderUi();
                 })
                 .catch(function() {});
+        }
+
+        function _formatNtpServerCheck(data) {
+            if (!data) { return 'NTP server check: unavailable.'; }
+            if (!data.ok) {
+                return 'NTP server check: NOT reachable (' + (data.error || 'unknown error') + ')';
+            }
+            var ips = (data.resolved_ips || []).join(', ');
+            var localTime = data.sampled_local || '-';
+            var utcTime = data.sampled_utc || '-';
+            var offset = (typeof data.offset_seconds === 'number') ? data.offset_seconds.toFixed(3) + 's' : '-';
+            var active = data.active_source ? 'active source' : 'not active source';
+            return 'NTP server check: reachable | source=' + active + ' | local=' + localTime + ' | utc=' + utcTime + ' | offset=' + offset + ' | ip=' + (ips || '-');
+        }
+
+        function checkNtpServer(manual) {
+            var server = (document.getElementById('time_ntp_server').value || '').trim();
+            if (!server) {
+                document.getElementById('time_ntp_server_line').textContent = 'NTP server check: enter a server first.';
+                return;
+            }
+            if (manual) {
+                document.getElementById('time_ntp_server_line').textContent = 'NTP server check: checking...';
+            }
+            fetch('/api/time-server-check?server=' + encodeURIComponent(server))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    document.getElementById('time_ntp_server_line').textContent = _formatNtpServerCheck(data);
+                })
+                .catch(function() {
+                    document.getElementById('time_ntp_server_line').textContent = 'NTP server check: request failed.';
+                });
+        }
+
+        function loadTimeSettings() {
+            fetch('/api/time-settings')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var cfg = (data && data.configured) ? data.configured : {};
+                    var runtime = (data && data.runtime) ? data.runtime : {};
+                    var timezones = (data && data.timezones) ? data.timezones : [];
+                    var select = document.getElementById('time_timezone');
+                    var currentTz = cfg.timezone || runtime.timezone || '';
+                    select.innerHTML = '';
+                    timezones.forEach(function(tz) {
+                        var opt = document.createElement('option');
+                        opt.value = tz;
+                        opt.textContent = tz;
+                        if (tz === currentTz) { opt.selected = true; }
+                        select.appendChild(opt);
+                    });
+                    if (!timezones.length) {
+                        var fallback = document.createElement('option');
+                        fallback.value = currentTz || 'Europe/Sofia';
+                        fallback.textContent = currentTz || 'Europe/Sofia';
+                        fallback.selected = true;
+                        select.appendChild(fallback);
+                    } else if (currentTz && timezones.indexOf(currentTz) < 0) {
+                        var extra = document.createElement('option');
+                        extra.value = currentTz;
+                        extra.textContent = currentTz;
+                        extra.selected = true;
+                        select.appendChild(extra);
+                    }
+
+                    document.getElementById('time_ntp_server').value = cfg.ntp_server || '';
+                    checkNtpServer(false);
+                    initialTimeSettings = {
+                        timezone: currentTz,
+                        ntp_server: document.getElementById('time_ntp_server').value
+                    };
+                })
+                .catch(function() {
+                    document.getElementById('time_ntp_server_line').textContent = 'NTP server check: unavailable.';
+                });
         }
 
         function loadVpnStatus() {
@@ -410,6 +513,30 @@
             });
         }
 
+        function saveTimeSettings() {
+            var timezone = (document.getElementById('time_timezone').value || '').trim();
+            var ntpServer = (document.getElementById('time_ntp_server').value || '').trim();
+            if (!timezone) { alert('Timezone is required.'); return; }
+            if (!ntpServer) { alert('NTP server is required.'); return; }
+            if (!confirm('Save time settings and apply now?')) { return; }
+            fetch('/api/time-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    timezone: timezone,
+                    ntp_server: ntpServer,
+                    apply: true
+                })
+            })
+            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+            .then(function(resp) {
+                if (!resp.ok) { alert((resp.data && resp.data.error) || 'Failed to save time settings'); return; }
+                alert('Time settings saved and applied.');
+                loadTimeSettings();
+            })
+            .catch(function() { alert('Save request failed'); });
+        }
+
         function saveConfig() {
             var payload = {
                 server_url: (document.getElementById('server_url').value || '').trim(),
@@ -529,7 +656,9 @@
         loadSshStatus();
         loadVpnSettings();
         loadVpnStatus();
+        loadTimeSettings();
         loadHttps();
+        document.getElementById('time_ntp_server').addEventListener('blur', function() { checkNtpServer(false); });
         document.getElementById('vpn_provider').addEventListener('change', applyVpnProviderUi);
     </script>
     {% include '_footer.html' %}

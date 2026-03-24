@@ -11,15 +11,21 @@ import time
 import logging
 from pathlib import Path
 
+try:
+    from .constants_paths import REXGEN_TMP_DIR, WIFI_STATE_FILE
+    from .constants_runtime import HEARTBEAT_TIMEOUT_SECONDS, TRACE_VERBOSE
+except ImportError:
+    from constants_paths import REXGEN_TMP_DIR, WIFI_STATE_FILE
+    from constants_runtime import HEARTBEAT_TIMEOUT_SECONDS, TRACE_VERBOSE
+
 # ========== Configuration ==========
 
 # State file location — /data/rexgen/tmp persists across reboots and Mender OTA updates
-STATE_DIR = "/data/rexgen/tmp"
-STATE_FILE = f"{STATE_DIR}/wifi_state.json"
+STATE_DIR = REXGEN_TMP_DIR
+STATE_FILE = WIFI_STATE_FILE
 
 # Heartbeat timeout (seconds)
-HEARTBEAT_TIMEOUT = 30
-TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "0") == "1"
+HEARTBEAT_TIMEOUT = HEARTBEAT_TIMEOUT_SECONDS
 log = logging.getLogger("shared_state")
 
 

@@ -4,12 +4,32 @@
 import ipaddress
 import json
 import logging
+import re
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+try:
+    from .constants_network import DEFAULT_DNS_OPTIONS, DEFAULT_DNS_SERVERS
+    from .constants_paths import NETSERVICES_CONFIG_FILE
+except ImportError:
+    from constants_network import DEFAULT_DNS_OPTIONS, DEFAULT_DNS_SERVERS
+    from constants_paths import NETSERVICES_CONFIG_FILE
 
 log = logging.getLogger("netservices_config")
 
-NETSERVICES_CONFIG_FILE = "/data/rexgen/config/netservices.conf"
+DEFAULT_FALLBACK_NTP = [
+    "ntp.aliyun.com",
+    "ntp.tencent.com",
+    "time.cloudflare.com",
+    "time.google.com",
+    "asia.pool.ntp.org",
+    "pool.ntp.org",
+    "time.apple.com",
+    "ntp.ubuntu.com",
+    "time.windows.com",
+]
+
+_NTP_HOST_LABEL_RE = re.compile(r"^[A-Za-z0-9-]{1,63}$")
 
 
 class NetservicesConfig:
@@ -26,10 +46,18 @@ class NetservicesConfig:
             "ap": {"ap_psk": ""},
             "sta": {"networks": []},
             "dashboard": {"https_enabled": False, "https_hostname": "", "theme": "light", "lang": "en", "experimental": False},
-            "system": {"ssh_enabled": True, "mender_artifact": ""},
+            "system": {
+                "ssh_enabled": True,
+                "mender_artifact": "",
+                "time": {
+                    "timezone": "",
+                    "ntp_server": "pool.ntp.org",
+                    "fallback_ntp": list(DEFAULT_FALLBACK_NTP),
+                },
+            },
             "dns": {
-                "servers": ["223.5.5.5", "9.9.9.9", "1.1.1.1", "8.8.8.8"],
-                "options": "timeout:1 attempts:2",
+                "servers": list(DEFAULT_DNS_SERVERS),
+                "options": DEFAULT_DNS_OPTIONS,
             },
             "vpn": {
                 "provider": "none",
@@ -95,6 +123,20 @@ class NetservicesConfig:
         if isinstance(system, dict):
             base["system"]["ssh_enabled"] = bool(system.get("ssh_enabled", True))
             base["system"]["mender_artifact"] = (system.get("mender_artifact") or "").strip()
+            time_cfg = system.get("time")
+            if isinstance(time_cfg, dict):
+                tz = (time_cfg.get("timezone") or "").strip()
+                base["system"]["time"]["timezone"] = tz
+                base["system"]["time"]["ntp_server"] = self._clean_ntp_server(
+                    (time_cfg.get("ntp_server") or "").strip(),
+                    fallback=base["system"]["time"]["ntp_server"],
+                )
+                fallback_raw = time_cfg.get("fallback_ntp")
+                if isinstance(fallback_raw, list):
+                    base["system"]["time"]["fallback_ntp"] = self._clean_ntp_servers(
+                        fallback_raw,
+                        fallback=DEFAULT_FALLBACK_NTP,
+                    )
         dns = data.get("dns")
         if isinstance(dns, dict):
             base["dns"]["servers"] = self._clean_dns_servers(dns.get("servers") or [])
@@ -147,6 +189,54 @@ class NetservicesConfig:
         if cleaned:
             return cleaned
         return list(self._default()["dns"]["servers"])
+
+    def _is_valid_ntp_host(self, host: str) -> bool:
+        h = (host or "").strip()
+        if not h or len(h) > 255 or "/" in h or " " in h or "\t" in h:
+            return False
+
+        # Accept IPv4 / IPv6 literals directly.
+        try:
+            ipaddress.ip_address(h)
+            return True
+        except ValueError:
+            pass
+
+        # Hostname validation (RFC-ish, pragmatic).
+        if h.endswith("."):
+            h = h[:-1]
+        if not h:
+            return False
+        labels = h.split(".")
+        for label in labels:
+            if not _NTP_HOST_LABEL_RE.match(label):
+                return False
+            if label.startswith("-") or label.endswith("-"):
+                return False
+        return True
+
+    def _clean_ntp_server(self, value: str, fallback: str = "") -> str:
+        v = (value or "").strip()
+        if self._is_valid_ntp_host(v):
+            return v
+        return (fallback or "").strip()
+
+    def _clean_ntp_servers(self, servers: List, fallback: Optional[List[str]] = None) -> List[str]:
+        cleaned = []
+        seen = set()
+        for raw in (servers or []):
+            v = (str(raw) if raw is not None else "").strip()
+            if not self._is_valid_ntp_host(v):
+                continue
+            if v in seen:
+                continue
+            seen.add(v)
+            cleaned.append(v)
+            if len(cleaned) >= 32:
+                break
+        if cleaned:
+            return cleaned
+        return list(fallback or [])
 
     def _read_all(self) -> Dict:
         if not self.path.exists():
@@ -259,13 +349,44 @@ class NetservicesConfig:
             data.setdefault("system", {})
             data["system"]["ssh_enabled"] = bool(system.get("ssh_enabled", True))
             self._write_all(data)
-        return {"ssh_enabled": bool(system.get("ssh_enabled", True))}
+        time_cfg = system.get("time") if isinstance(system.get("time"), dict) else {}
+        fallback_ntp = time_cfg.get("fallback_ntp") if isinstance(time_cfg.get("fallback_ntp"), list) else []
+        return {
+            "ssh_enabled": bool(system.get("ssh_enabled", True)),
+            "time": {
+                "timezone": (time_cfg.get("timezone") or "").strip(),
+                "ntp_server": self._clean_ntp_server(
+                    (time_cfg.get("ntp_server") or "").strip(),
+                    fallback=self._default()["system"]["time"]["ntp_server"],
+                ),
+                "fallback_ntp": self._clean_ntp_servers(
+                    fallback_ntp,
+                    fallback=DEFAULT_FALLBACK_NTP,
+                ),
+            },
+        }
 
     def write_system(self, payload: Dict):
         data = self._read_all()
         data.setdefault("system", {})
         if "ssh_enabled" in payload:
             data["system"]["ssh_enabled"] = bool(payload.get("ssh_enabled"))
+        if "time" in payload and isinstance(payload.get("time"), dict):
+            tpay = payload.get("time") or {}
+            data["system"].setdefault("time", {})
+            if "timezone" in tpay:
+                data["system"]["time"]["timezone"] = (tpay.get("timezone") or "").strip()
+            if "ntp_server" in tpay:
+                existing = (data["system"]["time"].get("ntp_server") or "").strip()
+                data["system"]["time"]["ntp_server"] = self._clean_ntp_server(
+                    tpay.get("ntp_server") or "",
+                    fallback=existing or self._default()["system"]["time"]["ntp_server"],
+                )
+            if "fallback_ntp" in tpay and isinstance(tpay.get("fallback_ntp"), list):
+                data["system"]["time"]["fallback_ntp"] = self._clean_ntp_servers(
+                    tpay.get("fallback_ntp") or [],
+                    fallback=DEFAULT_FALLBACK_NTP,
+                )
         self._write_all(data)
 
     def read_dns(self) -> Dict:

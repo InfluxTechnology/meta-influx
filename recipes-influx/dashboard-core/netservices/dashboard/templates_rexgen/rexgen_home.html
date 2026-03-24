@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReXgen Dashboard</title>
+    <style>
+        :root {
+            --bg1: #f2fbfa;
+            --bg2: #dff2ef;
+            --panel: #fff;
+            --ink: #222;
+            --muted: #86868b;
+            --line: #eef0f2;
+            --line-strong: #e0e0e0;
+            --accent: #20b2aa;
+            --accent-dark: #178a83;
+            --accent-soft: #e0f7f5;
+            --shadow: 0 10px 40px rgba(0,0,0,0.12);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+            color: var(--ink);
+        }
+
+        .container {
+            width: min(1400px, 96vw);
+            margin: 24px auto;
+            padding: 18px;
+            background: var(--panel);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--line);
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            margin: 6px 0 0;
+            font-size: 0.92rem;
+            color: var(--muted);
+        }
+
+        .links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border: 1px solid var(--line-strong);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--ink);
+            background: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .btn.primary {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            color: var(--accent-dark);
+        }
+
+        .grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: 1fr;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .card-head {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            background: #f5f5f7;
+            font-size: 0.83rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .card-body {
+            padding: 12px;
+        }
+
+        .kv {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 8px 12px;
+            font-size: 0.92rem;
+        }
+
+        .kv .k { color: var(--muted); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--line);
+            vertical-align: top;
+        }
+
+        th {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+            background: #fafafb;
+        }
+
+        .path {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+            font-size: 0.82rem;
+            color: #4c5560;
+        }
+
+        .state {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .empty {
+            border: 1px dashed var(--line-strong);
+            border-radius: 10px;
+            padding: 12px;
+            color: var(--muted);
+            background: #fcfcfd;
+        }
+
+        .can-wrap {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 10px;
+        }
+
+        .can-col {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: #fafbfc;
+            overflow: hidden;
+        }
+
+        .can-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--line);
+            background: #f5f5f7;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #5e6670;
+        }
+
+        .can-body {
+            height: 220px;
+            overflow: auto;
+            padding: 8px 10px;
+            font-family: "Menlo", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.78rem;
+            line-height: 1.35;
+            color: #26303a;
+            background: #fff;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .can-row {
+            margin: 0 0 4px;
+            padding: 0;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background: #9aa2ab;
+        }
+
+        .dot.live { background: #20b2aa; }
+
+        .s-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 8px 12px 6px;
+            align-items: center;
+        }
+
+        .s-tab {
+            padding: 3px 14px;
+            border-radius: 12px;
+            background: #f5f5f7;
+            color: #86868b;
+            font-size: 0.73em;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .s-tab.active {
+            background: #20b2aa;
+            color: #fff;
+        }
+
+        .s-tab:hover:not(.active) {
+            background: #e0f7f5;
+            color: #178a83;
+        }
+
+        .s-body {
+            background: #f8f9fa;
+            margin: 8px;
+            border-radius: 8px;
+            overflow: hidden;
+            min-height: 320px;
+            border: 1px solid #e8e8e8;
+        }
+
+        #sensorCanvas {
+            display: block;
+            width: 100%;
+            height: 300px;
+        }
+
+        #sensorText {
+            padding: 10px 14px;
+            font-family: "Menlo", monospace;
+            font-size: 0.8em;
+            color: #333;
+        }
+
+        #sensorMap { height: 420px; }
+
+        .s-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #555;
+            display: inline-block;
+        }
+
+        .s-dot.live { background: #20b2aa; }
+
+        .s-vals {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            padding: 8px 12px;
+        }
+
+        .ch-toggle {
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: #f5f5f7;
+            color: #86868b;
+            font-size: 0.73em;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid #e0e0e0;
+            font-family: "Menlo", monospace;
+            letter-spacing: 0.02em;
+            transition: opacity .15s;
+        }
+
+        .ch-toggle.active {
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .ch-toggle:not(.active) { opacity: 0.38; }
+
+        .gnss-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px 8px;
+        }
+
+        .gnss-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            border-bottom: 1px solid #efefef;
+        }
+
+        .gnss-key { color: #86868b; }
+        .gnss-val { color: #178a83; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <section class="top">
+            <div>
+                <h1>ReXgen Dashboard</h1>
+                <p class="subtitle">Base overview page for structure and live pipe sources.</p>
+            </div>
+            <div class="links"></div>
+        </section>
+
+        <section class="grid">
+            <article id="sensorCard" class="card" style="display:none;">
+                <div class="card-head">Sensor Pipes</div>
+                <div id="sensorTabs" class="s-tabs">
+                    <span id="sensorLiveDot" class="s-dot" style="margin-left:auto;margin-right:4px;"></span>
+                </div>
+                <div class="s-body">
+                    <canvas id="sensorCanvas"></canvas>
+                    <div id="sensorMap" style="display:none;"></div>
+                    <div id="sensorText" style="display:none;"></div>
+                    <div id="sensorValBar" class="s-vals"></div>
+                </div>
+            </article>
+
+            <article class="card">
+                <div class="card-head">CAN Live</div>
+                <div class="card-body">
+                    <div id="canState" class="state">Scanning CAN sources...</div>
+                    <div id="canWrap" class="can-wrap"></div>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        var SENSOR_PIPES = ["acc", "gyro", "adc", "dig", "gnss"];
+        var STEP_PIPES = ["dig"];
+        var COLORS = ["#20b2aa", "#e53935", "#0288d1", "#f57c00", "#8e24aa", "#2e7d32"];
+        var MAX_PTS = 80;
+        var sBufs = {};
+        var sLatest = {};
+        var sSeqs = {};
+        var sChannelActive = {};
+        var sActive = null;
+        var sPollTmr = null;
+        var sLiveTmr = null;
+        var leafMap = null;
+        var leafMark = null;
+        var leafReady = false;
+        var canViews = {};
+        var canPollTimer = null;
+        var canLiveTimer = null;
+        var canRuntime = { can_count: 0, can_mode: "pipe", use_socketcan: false };
+
+        function esc(v) {
+            return String(v == null ? "" : v)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function sCh(pipe) { return pipe ? pipe.split("/")[0] : ""; }
+
+        function chLabel(raw) {
+            var m1 = raw.match(/^(?:acc|gyro)_([xyz])$/i);
+            if (m1) return m1[1].toUpperCase();
+            var m2 = raw.match(/^(?:adc|dig)_?(\d+)$/i);
+            if (m2) return "CH" + m2[1];
+            return raw;
+        }
+
+        function fmtVal(v) {
+            if (v === undefined || v === null) return "---";
+            var n = Number(v);
+            return (n < 0 ? "-" : "+") + Math.abs(n).toFixed(3);
+        }
+
+        function parseLine(text) {
+            var m = text.match(/^\(\d+\)\s+(\S+)\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/);
+            return m ? { name: m[1], value: parseFloat(m[2]) } : null;
+        }
+
+        function pushVal(pipe, name, val) {
+            if (!sBufs[pipe]) sBufs[pipe] = {};
+            if (!sBufs[pipe][name]) sBufs[pipe][name] = [];
+            sBufs[pipe][name].push(val);
+            if (sBufs[pipe][name].length > MAX_PTS) sBufs[pipe][name].shift();
+            if (!sLatest[pipe]) sLatest[pipe] = {};
+            sLatest[pipe][name] = val;
+        }
+
+        function isChOn(pipe, name) {
+            return !sChannelActive[pipe] || sChannelActive[pipe][name] !== false;
+        }
+
+        function toggleChannel(pipe, name) {
+            if (!sChannelActive[pipe]) sChannelActive[pipe] = {};
+            sChannelActive[pipe][name] = !isChOn(pipe, name);
+            renderSensor();
+        }
+
+        function switchSensor(pipe) {
+            sActive = pipe;
+            clearTimeout(sPollTmr);
+            document.querySelectorAll(".s-tab").forEach(function(t) {
+                t.classList.toggle("active", t.dataset.pipe === pipe);
+            });
+            renderSensor();
+            pollSensor();
+        }
+
+        function pollSensor() {
+            if (!sActive) return;
+            var seq = sSeqs[sActive] || 0;
+            fetch("/api/pipes/read?pipe=" + encodeURIComponent(sActive) + "&seq=" + seq)
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.lines && d.lines.length) {
+                        d.lines.forEach(function(l) {
+                            var p = parseLine(l.text);
+                            if (p) pushVal(sActive, p.name, p.value);
+                        });
+                        sSeqs[sActive] = d.seq;
+                        renderSensor();
+                        var dot = document.getElementById("sensorLiveDot");
+                        if (dot) dot.className = "s-dot live";
+                        clearTimeout(sLiveTmr);
+                        sLiveTmr = setTimeout(function() {
+                            var d2 = document.getElementById("sensorLiveDot");
+                            if (d2) d2.className = "s-dot";
+                        }, 3000);
+                    }
+                    sPollTmr = setTimeout(pollSensor, 500);
+                })
+                .catch(function() { sPollTmr = setTimeout(pollSensor, 500); });
+        }
+
+        function renderSensor() {
+            if (!sActive) return;
+            var ch = sCh(sActive);
+            var canvas = document.getElementById("sensorCanvas");
+            var mapDiv = document.getElementById("sensorMap");
+            var textDiv = document.getElementById("sensorText");
+            if (ch === "gnss") {
+                canvas.style.display = "none";
+                textDiv.style.display = "block";
+                renderGnss();
+                return;
+            }
+            mapDiv.style.display = "none";
+            textDiv.style.display = "none";
+            canvas.style.display = "block";
+            drawChart();
+            renderToggles();
+        }
+
+        function drawChart() {
+            var canvas = document.getElementById("sensorCanvas");
+            if (!canvas) return;
+            var W = canvas.parentElement.clientWidth || 580;
+            canvas.width = W;
+            canvas.height = 300;
+            var ctx = canvas.getContext("2d");
+            var H = 300;
+            ctx.fillStyle = "#f8f9fa";
+            ctx.fillRect(0, 0, W, H);
+
+            var allNames = Object.keys(sBufs[sActive] || {});
+            var names = allNames.filter(function(n) { return isChOn(sActive, n); });
+            if (!names.length) {
+                ctx.fillStyle = "#cccccc";
+                ctx.font = "11px monospace";
+                ctx.textAlign = "center";
+                ctx.fillText("Waiting for data...", W / 2, H / 2);
+                return;
+            }
+
+            var isStep = STEP_PIPES.indexOf(sCh(sActive)) !== -1;
+            var allVals = [];
+            names.forEach(function(n) { allVals = allVals.concat(sBufs[sActive][n]); });
+            var mn = Math.min.apply(null, allVals);
+            var mx = Math.max.apply(null, allVals);
+            if (mn === mx) { mn -= 0.5; mx += 0.5; }
+            var span = mx - mn;
+            mn -= span * 0.08;
+            mx += span * 0.08;
+
+            var PL = 48, PR = 12, PT = 8, PB = 10;
+            var cW = W - PL - PR, cH = H - PT - PB;
+
+            ctx.lineWidth = 1;
+            for (var g = 0; g <= 4; g++) {
+                var gy = PT + (g / 4) * cH;
+                ctx.strokeStyle = "#e0e0e0";
+                ctx.beginPath();
+                ctx.moveTo(PL, gy);
+                ctx.lineTo(PL + cW, gy);
+                ctx.stroke();
+                ctx.fillStyle = "#aaaaaa";
+                ctx.font = "8.5px monospace";
+                ctx.textAlign = "right";
+                ctx.fillText((mx - (g / 4) * (mx - mn)).toFixed(2), PL - 3, gy + 3);
+            }
+
+            names.forEach(function(name) {
+                var idx = allNames.indexOf(name);
+                var data = sBufs[sActive][name];
+                if (!data || !data.length) return;
+                var N = data.length;
+                ctx.strokeStyle = COLORS[idx % COLORS.length];
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                data.forEach(function(v, j) {
+                    var x = PL + (j / Math.max(N - 1, 1)) * cW;
+                    var y = PT + ((mx - v) / (mx - mn)) * cH;
+                    if (j === 0) {
+                        ctx.moveTo(x, y);
+                        return;
+                    }
+                    if (isStep) {
+                        ctx.lineTo(x, PT + ((mx - data[j - 1]) / (mx - mn)) * cH);
+                    }
+                    ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                var last = data[data.length - 1];
+                var ly = PT + ((mx - last) / (mx - mn)) * cH;
+                ctx.fillStyle = COLORS[idx % COLORS.length];
+                ctx.font = "8px monospace";
+                ctx.textAlign = "left";
+                ctx.fillText(chLabel(name), PL + cW + 2, ly + 3);
+            });
+        }
+
+        function renderToggles() {
+            var el = document.getElementById("sensorValBar");
+            var allNames = Object.keys(sBufs[sActive] || {});
+            var latest = sLatest[sActive] || {};
+            if (!allNames.length) { el.innerHTML = ""; return; }
+            el.innerHTML = allNames.map(function(name, idx) {
+                var on = isChOn(sActive, name);
+                var color = COLORS[idx % COLORS.length];
+                var bg = on ? "background:" + color + ";border-color:" + color + ";" : "";
+                var v = latest[name];
+                return '<button class="ch-toggle' + (on ? ' active' : '') + '" style="' + bg + '"' +
+                    ' data-pipe="' + esc(sActive) + '" data-ch="' + esc(name) + '">' +
+                    chLabel(name) + ': <b>' + fmtVal(v) + "</b></button>";
+            }).join("");
+            el.querySelectorAll(".ch-toggle").forEach(function(btn) {
+                btn.addEventListener("click", function() {
+                    toggleChannel(btn.dataset.pipe, btn.dataset.ch);
+                });
+            });
+        }
+
+        var GNSS_UNITS = {
+            Latitude: "°", Longitude: "°", Altitude: " m", SpeedOverGround: " km/h",
+            CourseOverGround: "°", GroundDistance: " m", NumberSatellites: "",
+            Quality: "", HorizontalAccuracy: " m", VerticalAccuracy: " m",
+            SpeedAccuracy: " m/s", GeoidSeparation: " m"
+        };
+
+        function renderGnss() {
+            var mapDiv = document.getElementById("sensorMap");
+            var textDiv = document.getElementById("sensorText");
+            var vb = document.getElementById("sensorValBar");
+            var latest = sLatest[sActive] || {};
+            var lat = latest["Latitude"];
+            var lon = latest["Longitude"];
+            var quality = latest["Quality"];
+            var sats = latest["NumberSatellites"];
+            var hasFix = (lat !== undefined && lon !== undefined) &&
+                (quality !== undefined ? Number(quality) > 0 : (sats !== undefined && Number(sats) > 0));
+
+            if (hasFix) {
+                mapDiv.style.display = "block";
+                if (!leafReady) {
+                    leafReady = true;
+                    var lnk = document.createElement("link");
+                    lnk.rel = "stylesheet";
+                    lnk.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+                    document.head.appendChild(lnk);
+                    var scr = document.createElement("script");
+                    scr.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+                    scr.onload = function() { initLeaflet(lat, lon); updateMap(lat, lon); };
+                    document.head.appendChild(scr);
+                } else if (typeof L !== "undefined") {
+                    if (!leafMap) initLeaflet(lat, lon);
+                    updateMap(lat, lon);
+                }
+                if (leafMap) setTimeout(function() { leafMap.invalidateSize(); }, 30);
+            } else {
+                mapDiv.style.display = "none";
+            }
+
+            var keys = Object.keys(latest);
+            textDiv.innerHTML = keys.length
+                ? '<div class="gnss-grid">' + keys.map(function(k) {
+                    var u = GNSS_UNITS[k] || "";
+                    var v = typeof latest[k] === "number" ? latest[k].toFixed(6) : latest[k];
+                    return '<div class="gnss-row"><span class="gnss-key">' + esc(k) +
+                        '</span><span class="gnss-val">' + esc(String(v)) + u + "</span></div>";
+                }).join("") + "</div>"
+                : '<div style="color:#555;font-size:0.85em;padding:10px">Waiting for GNSS data...</div>';
+
+            vb.innerHTML = hasFix
+                ? '<span style="color:#178a83;font-family:Menlo,monospace;font-size:0.8em">Lat <b>' + lat.toFixed(6) + "</b></span>" +
+                    '<span style="color:#b08000;font-family:Menlo,monospace;font-size:0.8em">Lon <b>' + lon.toFixed(6) + "</b></span>" +
+                    (latest["Altitude"] !== undefined
+                        ? '<span style="color:#6a1b9a;font-family:Menlo,monospace;font-size:0.8em">Alt <b>' + Number(latest["Altitude"]).toFixed(1) + " m</b></span>" : "")
+                : '<span style="color:#bdbdbd;font-size:0.8em">No GPS fix</span>';
+        }
+
+        function initLeaflet(lat, lon) {
+            var el = document.getElementById("sensorMap");
+            if (!el || leafMap) return;
+            leafMap = L.map("sensorMap").setView([lat || 51.5, lon || 0], 13);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: "© OpenStreetMap", maxZoom: 19
+            }).addTo(leafMap);
+        }
+
+        function updateMap(lat, lon) {
+            if (!leafMap) return;
+            if (!leafMark) {
+                leafMark = L.marker([lat, lon]).addTo(leafMap);
+                leafMap.setView([lat, lon], 14);
+            } else {
+                leafMark.setLatLng([lat, lon]);
+            }
+        }
+
+        function loadSensors() {
+            fetch("/api/pipes")
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var pipes = (data.pipes || []).filter(function(p) {
+                        return p.readable && SENSOR_PIPES.indexOf(p.channel) !== -1;
+                    }).sort(function(a, b) {
+                        if (a.channel === "gnss") return 1;
+                        if (b.channel === "gnss") return -1;
+                        return SENSOR_PIPES.indexOf(a.channel) - SENSOR_PIPES.indexOf(b.channel);
+                    });
+                    if (!pipes.length) return;
+                    var card = document.getElementById("sensorCard");
+                    var tabsEl = document.getElementById("sensorTabs");
+                    card.style.display = "block";
+                    tabsEl.innerHTML = "";
+                    pipes.forEach(function(p, i) {
+                        var btn = document.createElement("button");
+                        btn.className = "s-tab";
+                        btn.dataset.pipe = p.path;
+                        btn.textContent = p.channel.toUpperCase();
+                        btn.onclick = (function(pipe) {
+                            return function() { switchSensor(pipe); };
+                        })(p.path);
+                        tabsEl.appendChild(btn);
+                        if (i === 0) switchSensor(p.path);
+                    });
+                })
+                .catch(function() {});
+        }
+
+        function looksLikeCanPipe(p) {
+            var ch = String((p && p.channel) || "").toLowerCase();
+            var path = String((p && p.path) || "").toLowerCase();
+            return ch.indexOf("can") !== -1 || path.indexOf("can") !== -1;
+        }
+
+        function canIndexFromPipe(p) {
+            var txt = String((p && (p.channel || p.path)) || "").toLowerCase();
+            var m = txt.match(/can(\d+)/);
+            return m ? Number(m[1]) : null;
+        }
+
+        function selectCanSources(pipes, runtime) {
+            var readable = (pipes || []).filter(function(p) {
+                return p && p.readable && looksLikeCanPipe(p);
+            });
+            var byChannel = {};
+            readable.forEach(function(p) {
+                var idx = canIndexFromPipe(p);
+                var key = idx != null ? ("can" + idx) : (p.channel || p.path || "can");
+                if (!byChannel[key]) byChannel[key] = [];
+                byChannel[key].push(p);
+            });
+            var chosen = [];
+            Object.keys(byChannel).sort().forEach(function(channel) {
+                var items = byChannel[channel];
+                items.sort(function(a, b) {
+                    var pa = a.type === "rx" ? 0 : (a.type === "sys" ? 1 : 2);
+                    var pb = b.type === "rx" ? 0 : (b.type === "sys" ? 1 : 2);
+                    return pa - pb;
+                });
+                chosen.push(items[0]);
+            });
+            var expected = Number((runtime && runtime.can_count) || 0);
+            for (var i = 0; i < expected; i++) {
+                var key = "can" + i;
+                var exists = chosen.some(function(src) {
+                    return String(src.channel || "").toLowerCase() === key || canIndexFromPipe(src) === i;
+                });
+                if (!exists) {
+                    chosen.push({
+                        channel: key,
+                        path: "",
+                        type: runtime && runtime.can_mode === "socketcan" ? "socketcan" : "pipe",
+                        readable: false,
+                        missing: true
+                    });
+                }
+            }
+            chosen.sort(function(a, b) {
+                var ai = canIndexFromPipe(a);
+                var bi = canIndexFromPipe(b);
+                if (ai != null && bi != null) return ai - bi;
+                return String(a.channel || "").localeCompare(String(b.channel || ""));
+            });
+            return chosen;
+        }
+
+        function renderCanColumns(sources, runtime) {
+            var wrap = document.getElementById("canWrap");
+            var state = document.getElementById("canState");
+            if (!sources.length) {
+                var modeMsg = runtime && runtime.can_mode === "socketcan"
+                    ? "SocketCAN mode is active."
+                    : "Pipe mode is active.";
+                state.textContent = modeMsg + " No CAN source is streaming yet.";
+                wrap.innerHTML = '<div class="empty">No active CAN pipe source found.</div>';
+                return;
+            }
+            var expected = Number((runtime && runtime.can_count) || 0);
+            var mode = runtime && runtime.can_mode ? runtime.can_mode : "pipe";
+            state.textContent = "Mode: " + mode + " | Expected CAN: " + expected + " | Columns: " + sources.length;
+            wrap.innerHTML = sources.map(function(src) {
+                var id = "can_" + String(src.path || src.channel || "can").replace(/[^a-zA-Z0-9_-]/g, "_");
+                var sourceText = src.missing ? "waiting source" : esc(src.type || "rx");
+                return '' +
+                    '<div class="can-col">' +
+                        '<div class="can-head">' +
+                            '<span>' + esc(src.channel || src.path) + '</span>' +
+                            '<span><span id="' + id + '_dot" class="dot"></span> ' + sourceText + '</span>' +
+                        '</div>' +
+                        '<div id="' + id + '_body" class="can-body">' +
+                            (src.missing
+                                ? ('<div class="can-row">No live source for ' + esc(src.channel || "can") + ' yet.</div>')
+                                : '') +
+                        '</div>' +
+                    '</div>';
+            }).join("");
+        }
+
+        function pollCanSources() {
+            var keys = Object.keys(canViews);
+            if (!keys.length) return;
+            var pending = keys.length;
+            keys.forEach(function(path) {
+                var cv = canViews[path];
+                fetch("/api/pipes/read?pipe=" + encodeURIComponent(path) + "&seq=" + (cv.seq || 0))
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        if (d.lines && d.lines.length) {
+                            cv.seq = d.seq || cv.seq || 0;
+                            d.lines.forEach(function(line) {
+                                var txt = (line && line.text) ? String(line.text) : "";
+                                if (!txt) return;
+                                cv.rows.push(txt);
+                            });
+                            if (cv.rows.length > 140) cv.rows = cv.rows.slice(cv.rows.length - 140);
+                            var body = document.getElementById(cv.domId + "_body");
+                            if (body) {
+                                body.innerHTML = cv.rows.map(function(row) {
+                                    return '<div class="can-row">' + esc(row) + '</div>';
+                                }).join("");
+                                body.scrollTop = body.scrollHeight;
+                            }
+                            var dot = document.getElementById(cv.domId + "_dot");
+                            if (dot) dot.className = "dot live";
+                            clearTimeout(canLiveTimer);
+                            canLiveTimer = setTimeout(function() {
+                                var d2 = document.getElementById(cv.domId + "_dot");
+                                if (d2) d2.className = "dot";
+                            }, 2500);
+                        }
+                    })
+                    .catch(function() {})
+                    .finally(function() {
+                        pending -= 1;
+                        if (!pending) {
+                            canPollTimer = setTimeout(pollCanSources, 500);
+                        }
+                    });
+            });
+        }
+
+        function loadCanLive() {
+            Promise.all([
+                fetch("/api/pipes", { cache: "no-store" }).then(function(r) { return r.json(); }),
+                fetch("/api/rexgen/runtime", { cache: "no-store" }).then(function(r) { return r.json(); })
+            ])
+                .then(function(values) {
+                    var pipesData = values[0] || {};
+                    canRuntime = values[1] || canRuntime;
+                    var sources = selectCanSources(pipesData.pipes || [], canRuntime);
+                    renderCanColumns(sources, canRuntime);
+                    canViews = {};
+                    sources.forEach(function(src) {
+                        if (!src.path || src.missing) return;
+                        var domId = "can_" + src.path.replace(/[^a-zA-Z0-9_-]/g, "_");
+                        canViews[src.path] = { seq: 0, rows: [], domId: domId };
+                    });
+                    clearTimeout(canPollTimer);
+                    pollCanSources();
+                })
+                .catch(function() {
+                    var wrap = document.getElementById("canWrap");
+                    var state = document.getElementById("canState");
+                    state.textContent = "Failed to load CAN sources";
+                    wrap.innerHTML = '<div class="empty">Cannot read /api/pipes right now.</div>';
+                });
+        }
+
+        loadSensors();
+        loadCanLive();
+        window.addEventListener("resize", function() {
+            if (sActive && sCh(sActive) !== "gnss") drawChart();
+        });
+    </script>
+</body>
+</html>

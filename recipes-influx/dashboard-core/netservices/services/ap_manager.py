@@ -12,40 +12,70 @@ import time
 import hashlib
 from pathlib import Path
 
+try:
+    from .constants_network import (
+        AP_DEFAULT_PASSWORD,
+        AP_IP,
+        AP_NETMASK,
+        DHCP_END,
+        DHCP_LEASE,
+        DHCP_START,
+        IFACE_AP,
+        IFACE_BASE,
+        WIFI_CHANNEL_DEFAULT,
+        WIFI_HW_MODE_DEFAULT,
+        WPA_PBKDF2_DKLEN,
+        WPA_PBKDF2_ITERATIONS,
+    )
+    from .constants_paths import (
+        AP_BLOCKED_FILE,
+        DHCP_LEASES_FILE,
+        DNSMASQ_CONF,
+        HOSTAPD_CONF,
+        HOSTAPD_CTRL_DIR,
+    )
+    from .constants_runtime import AP_BLOCK_DURATION_SECONDS, TRACE_VERBOSE
+except ImportError:
+    from constants_network import (
+        AP_DEFAULT_PASSWORD,
+        AP_IP,
+        AP_NETMASK,
+        DHCP_END,
+        DHCP_LEASE,
+        DHCP_START,
+        IFACE_AP,
+        IFACE_BASE,
+        WIFI_CHANNEL_DEFAULT,
+        WIFI_HW_MODE_DEFAULT,
+        WPA_PBKDF2_DKLEN,
+        WPA_PBKDF2_ITERATIONS,
+    )
+    from constants_paths import (
+        AP_BLOCKED_FILE,
+        DHCP_LEASES_FILE,
+        DNSMASQ_CONF,
+        HOSTAPD_CONF,
+        HOSTAPD_CTRL_DIR,
+    )
+    from constants_runtime import AP_BLOCK_DURATION_SECONDS, TRACE_VERBOSE
+
 log = logging.getLogger(__name__)
-TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "0") == "1"
 
 # ========== Configuration ==========
 
-# Interfaces
-IFACE_AP = "wlan1"
-IFACE_BASE = "wlan0"  # Base interface for creating virtual AP
+# Interfaces (shared constants)
 
-# AP Network
-AP_IP = "192.168.51.1"
-AP_NETMASK = "255.255.255.0"
-AP_PASSWORD = "12345678"
+# AP Network (shared constants)
 
-# DHCP Range
-DHCP_START = "192.168.51.2"
-DHCP_END = "192.168.51.40"
-DHCP_LEASE = "24h"
+# DHCP Range (shared constants)
 
 # DNS - no external server needed with captive portal (address=/#/)
 
-# WiFi
-WIFI_CHANNEL = 6
-WIFI_HW_MODE = "g"  # g=2.4GHz, a=5GHz
+# WiFi defaults (shared constants)
 
-# Config file paths
-HOSTAPD_CONF = "/etc/hostapd.conf"
-DNSMASQ_CONF = "/etc/dnsmasq.d/rexgen-ap.conf"
-HOSTAPD_CTRL_DIR = "/var/run/hostapd"
-BLOCKED_FILE = "/data/rexgen/tmp/ap_blocked.json"
-DHCP_LEASES = "/var/lib/misc/dnsmasq.leases"
+# Config file paths (shared constants)
 
-# Block duration
-BLOCK_DURATION = 300  # 5 minutes
+# Block duration (shared constants)
 
 
 class APManager:
@@ -54,9 +84,9 @@ class APManager:
     def __init__(self, serial: str, run_cmd):
         self.serial = serial
         self.ssid = f"{serial}"
-        self.psk = self._derive_psk(self.ssid, AP_PASSWORD)
+        self.psk = self._derive_psk(self.ssid, AP_DEFAULT_PASSWORD)
         self.ip = AP_IP
-        self.channel = WIFI_CHANNEL
+        self.channel = WIFI_CHANNEL_DEFAULT
         self.interface = IFACE_AP
         self._run = run_cmd
         self._systemctl = lambda action, svc: run_cmd(f"systemctl {action} {svc}")
@@ -81,7 +111,7 @@ class APManager:
         return f"""interface={self.interface}
 driver=nl80211
 ssid={self.ssid}
-hw_mode={WIFI_HW_MODE}
+hw_mode={WIFI_HW_MODE_DEFAULT}
 channel={self.channel}
 ieee80211n=1
 wmm_enabled=1
@@ -99,8 +129,8 @@ rsn_pairwise=CCMP
             "sha1",
             (passphrase or "").encode("utf-8"),
             (ssid or "").encode("utf-8"),
-            4096,
-            32
+            WPA_PBKDF2_ITERATIONS,
+            WPA_PBKDF2_DKLEN
         ).hex()
 
     @staticmethod
@@ -511,7 +541,7 @@ address=/#/{self.ip}
         # Do not add lease-only entries here: leases include recently disconnected devices.
         try:
             now = int(time.time())
-            leases = Path(DHCP_LEASES).read_text()
+            leases = Path(DHCP_LEASES_FILE).read_text()
             matched_leases = 0
             for lease_line in leases.splitlines():
                 # Format: expiry mac ip hostname client-id
@@ -542,23 +572,23 @@ address=/#/{self.ip}
     def _read_blocked(self) -> dict:
         """Read blocked clients file. Returns {mac: expiry_timestamp}"""
         try:
-            with open(BLOCKED_FILE, "r") as f:
+            with open(AP_BLOCKED_FILE, "r") as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError, IOError):
             return {}
 
     def _write_blocked(self, blocked: dict):
         """Write blocked clients file atomically"""
-        temp = BLOCKED_FILE + ".tmp"
+        temp = AP_BLOCKED_FILE + ".tmp"
         os.makedirs(os.path.dirname(temp), exist_ok=True)
         with open(temp, "w") as f:
             json.dump(blocked, f)
-        os.rename(temp, BLOCKED_FILE)
+        os.rename(temp, AP_BLOCKED_FILE)
 
     def block_client(self, mac: str):
-        """Block a client for BLOCK_DURATION seconds"""
+        """Block a client for configured block duration seconds."""
         mac = mac.lower()
-        log.info(f"Blocking AP client {mac} for {BLOCK_DURATION}s")
+        log.info(f"Blocking AP client {mac} for {AP_BLOCK_DURATION_SECONDS}s")
 
         # Force immediate drop (some clients ignore a single deauth/disassoc frame)
         for _ in range(3):
@@ -568,7 +598,7 @@ address=/#/{self.ip}
 
         # Save to blocked list
         blocked = self._read_blocked()
-        blocked[mac] = time.time() + BLOCK_DURATION
+        blocked[mac] = time.time() + AP_BLOCK_DURATION_SECONDS
         self._write_blocked(blocked)
 
     def unblock_client(self, mac: str):

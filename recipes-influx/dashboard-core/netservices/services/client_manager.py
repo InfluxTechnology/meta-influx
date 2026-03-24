@@ -6,7 +6,6 @@ Connects to external WiFi networks using wpa_cli
 
 import hashlib
 import logging
-import os
 import re
 import subprocess
 import time
@@ -14,6 +13,26 @@ from pathlib import Path
 from typing import Optional, List
 
 from netservices_config import NetservicesConfig
+try:
+    from .constants_network import (
+        DEFAULT_DNS_OPTIONS,
+        DEFAULT_DNS_SERVERS,
+        IFACE_CLIENT,
+        WPA_PBKDF2_DKLEN,
+        WPA_PBKDF2_ITERATIONS,
+    )
+    from .constants_paths import RESOLV_CONF, WIFI_STATE_FILE, WPA_CONFIG, WPA_SOCKET_DIR
+    from .constants_runtime import CONNECT_FORENSICS
+except ImportError:
+    from constants_network import (
+        DEFAULT_DNS_OPTIONS,
+        DEFAULT_DNS_SERVERS,
+        IFACE_CLIENT,
+        WPA_PBKDF2_DKLEN,
+        WPA_PBKDF2_ITERATIONS,
+    )
+    from constants_paths import RESOLV_CONF, WIFI_STATE_FILE, WPA_CONFIG, WPA_SOCKET_DIR
+    from constants_runtime import CONNECT_FORENSICS
 
 log = logging.getLogger(__name__)
 
@@ -21,22 +40,17 @@ log = logging.getLogger(__name__)
 def _derive_wpa_psk(ssid: str, passphrase: str) -> str:
     """Derive 64-hex WPA PSK from passphrase and SSID (PBKDF2-HMAC-SHA1, 4096 iters)."""
     return hashlib.pbkdf2_hmac(
-        "sha1", passphrase.encode("utf-8"), ssid.encode("utf-8"), 4096, 32
+        "sha1",
+        passphrase.encode("utf-8"),
+        ssid.encode("utf-8"),
+        WPA_PBKDF2_ITERATIONS,
+        WPA_PBKDF2_DKLEN,
     ).hex()
-CONNECT_FORENSICS = os.environ.get("REXGEN_CONNECT_FORENSICS", "0") == "1"
-STATE_FILE = "/tmp/rexgen/wifi_state.json"
+STATE_FILE = WIFI_STATE_FILE
 
 # ========== Configuration ==========
 
-# Interface
-IFACE_CLIENT = "wlan0"
-
-# wpa_supplicant paths
-WPA_CONFIG = "/etc/wpa_supplicant.conf"
-WPA_SOCKET_DIR = "/var/run/wpa_supplicant"
-RESOLV_CONF = "/etc/resolv.conf"
-DEFAULT_DNS_SERVERS = ["223.5.5.5", "9.9.9.9", "1.1.1.1", "8.8.8.8"]
-DEFAULT_DNS_OPTIONS = "timeout:1 attempts:2"
+# Interface / wpa / DNS defaults come from shared constants modules.
 
 # Config file header (required for wpa_cli to work)
 WPA_CONFIG_HEADER = f"""ctrl_interface={WPA_SOCKET_DIR}

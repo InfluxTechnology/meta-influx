@@ -28,11 +28,11 @@ import uuid
 import base64
 import collections
 import hashlib
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from pathlib import Path
 
 # Minimal imports for lower memory
-from flask import Flask, render_template, request, redirect, jsonify, make_response, session, url_for
+from flask import Blueprint, Flask, render_template, request, redirect, jsonify, make_response, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.serving import make_server
 
@@ -40,6 +40,22 @@ from werkzeug.serving import make_server
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'services'))
 from shared_state import wifi_state
 from netservices_config import NetservicesConfig
+try:
+    from .rexgend_router import rexgend_router
+    from .rexgen_constants import (
+        REXGEN_PIPE_DIR,
+        REXGEND_CONFIG_FILE,
+        REXGEND_SERVICE,
+        WIFI_DASHBOARD_SERVICE,
+    )
+except ImportError:
+    from rexgend_router import rexgend_router
+    from rexgen_constants import (
+        REXGEN_PIPE_DIR,
+        REXGEND_CONFIG_FILE,
+        REXGEND_SERVICE,
+        WIFI_DASHBOARD_SERVICE,
+    )
 
 # ========== Configuration ==========
 
@@ -53,14 +69,15 @@ SSL_CA_FILE = SSL_CERT_DIR / "ca.crt"
 SSL_CA_KEY_FILE = SSL_CERT_DIR / "ca.key"
 SERIAL_FILE = "/home/root/rexusb/var/serial"
 CONNECT_LOCK_TIMEOUT_SECONDS = 90
-REXGEND_CONFIG_FILE = "/data/rexgen/config/rexgend.conf"
-REXGEND_SERVICE = "rexgend.service"
-WIFI_DASHBOARD_SERVICE = "wifi-dashboard.service"
 MENDER_CONFIG_FILE = "/etc/mender/mender.conf"
 MENDER_SERVICES = ["mender-authd.service", "mender-updated.service"]
+TIMESYNCD_SERVICE = "systemd-timesyncd.service"
+TIMESYNCD_DROPIN_DIR = Path("/etc/systemd/timesyncd.conf.d")
+TIMESYNCD_DROPIN_FILE = TIMESYNCD_DROPIN_DIR / "10-rexgen-time.conf"
+ZONEINFO_DIR = Path("/usr/share/zoneinfo")
 CONTROL_CENTER_DEFAULT_USER = "admin"
 CONTROL_CENTER_DEFAULT_PASS = "admin"
-DASHBOARD_VERSION = "1.1.3"
+DASHBOARD_VERSION = "1.1.4"
 LOGIN_ATTEMPT_WINDOW_SECONDS = 600
 LOGIN_LOCK_SECONDS = 900
 LOGIN_MAX_FAILURES = 5
@@ -88,15 +105,10 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "0") == "1"
 
-# Flask app - minimal config
-app = Flask(__name__, template_folder='templates')
-app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-app.config['TEMPLATES_AUTO_RELOAD'] = True
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+# Flask blueprint
+dashboard = Blueprint("dashboard", __name__, template_folder='templates_main')
 
-@app.context_processor
+@dashboard.app_context_processor
 def _inject_globals():
     path = request.path
     if path in ("/device-info", "/cpu-detail", "/memory-detail", "/disk-detail",
@@ -119,6 +131,17 @@ def _inject_globals():
 
 _LOGIN_FAIL_STATE = {}
 _PERSIST_CFG = NetservicesConfig()
+DEFAULT_FALLBACK_NTP = [
+    "ntp.aliyun.com",
+    "ntp.tencent.com",
+    "time.cloudflare.com",
+    "time.google.com",
+    "asia.pool.ntp.org",
+    "pool.ntp.org",
+    "time.apple.com",
+    "ntp.ubuntu.com",
+    "time.windows.com",
+]
 
 
 def _make_password_hash(password: str) -> str:
@@ -172,6 +195,242 @@ def _load_or_init_system_settings() -> dict:
 
 def _save_system_settings(data: dict):
     _PERSIST_CFG.write_system(data)
+
+
+def _normalize_ntp_host(value: str) -> str:
+    host = (value or "").strip()
+    if not host:
+        return ""
+    if len(host) > 255 or "/" in host or " " in host or "\t" in host:
+        return ""
+    try:
+        ipaddress.ip_address(host)
+        return host
+    except Exception:
+        pass
+    if host.endswith("."):
+        host = host[:-1]
+    if not host:
+        return ""
+    labels = host.split(".")
+    for label in labels:
+        if not label or len(label) > 63:
+            return ""
+        if label.startswith("-") or label.endswith("-"):
+            return ""
+        if not re.match(r"^[A-Za-z0-9-]+$", label):
+            return ""
+    return host
+
+
+def _normalize_ntp_servers(values) -> list[str]:
+    cleaned = []
+    seen = set()
+    for raw in (values or []):
+        value = _normalize_ntp_host(str(raw) if raw is not None else "")
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        cleaned.append(value)
+        if len(cleaned) >= 32:
+            break
+    return cleaned
+
+
+def _is_valid_timezone(value: str) -> bool:
+    tz = (value or "").strip()
+    if not tz or tz.startswith("/") or ".." in tz or "\x00" in tz:
+        return False
+    candidate = (ZONEINFO_DIR / tz).resolve()
+    root = ZONEINFO_DIR.resolve()
+    return candidate.is_file() and (candidate == root or root in candidate.parents)
+
+
+def _timedatectl_value(prop: str) -> str:
+    try:
+        out = subprocess.run(
+            ["timedatectl", "show", f"--property={prop}", "--value"],
+            check=True,
+            timeout=8,
+            capture_output=True,
+            text=True,
+        ).stdout
+        return (out or "").strip()
+    except Exception:
+        return ""
+
+
+def _list_timezones() -> list[str]:
+    try:
+        out = subprocess.run(
+            ["timedatectl", "list-timezones"],
+            check=True,
+            timeout=12,
+            capture_output=True,
+            text=True,
+        ).stdout
+        zones = [line.strip() for line in (out or "").splitlines() if line.strip()]
+        if zones:
+            return zones
+    except Exception:
+        pass
+    return [
+        "UTC", "Europe/Sofia", "Europe/Berlin", "Europe/London", "Europe/Paris",
+        "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+        "Asia/Shanghai", "Asia/Hong_Kong", "Asia/Singapore", "Asia/Tokyo",
+    ]
+
+
+def _timesync_kv() -> dict:
+    try:
+        out = subprocess.run(
+            ["timedatectl", "show-timesync", "--all"],
+            check=True,
+            timeout=8,
+            capture_output=True,
+            text=True,
+        ).stdout
+    except Exception:
+        return {}
+    data = {}
+    for line in (out or "").splitlines():
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        data[key.strip()] = value.strip()
+    return data
+
+
+def _runtime_time_settings() -> dict:
+    timezone = _timedatectl_value("Timezone")
+    ntp_enabled_raw = _timedatectl_value("NTP")
+    ntp_synced_raw = _timedatectl_value("NTPSynchronized")
+    timesync_state = _systemctl_state("is-active", TIMESYNCD_SERVICE)
+    sync_kv = _timesync_kv()
+    return {
+        "timezone": timezone or "",
+        "use_ntp": (ntp_enabled_raw.lower() == "yes"),
+        "ntp_synchronized": (ntp_synced_raw.lower() == "yes"),
+        "timesyncd_active": (timesync_state == "active"),
+        "timesyncd_state": timesync_state,
+        "server_name": sync_kv.get("ServerName", ""),
+        "server_address": sync_kv.get("ServerAddress", ""),
+        "system_ntp_servers": [s for s in (sync_kv.get("SystemNTPServers", "") or "").split() if s],
+        "fallback_ntp_servers": [s for s in (sync_kv.get("FallbackNTPServers", "") or "").split() if s],
+        "poll_interval": sync_kv.get("PollIntervalUSec", ""),
+        "frequency": sync_kv.get("Frequency", ""),
+        "root_distance": sync_kv.get("RootDistanceMaxUSec", ""),
+        "ntp_message": sync_kv.get("NTPMessage", ""),
+    }
+
+
+def _probe_ntp_server(server: str, timeout_sec: float = 3.0) -> dict:
+    host = _normalize_ntp_host(server)
+    if not host:
+        return {"ok": False, "server": (server or ""), "error": "Invalid NTP server name"}
+
+    try:
+        infos = socket.getaddrinfo(host, 123, socket.AF_UNSPEC, socket.SOCK_DGRAM)
+    except Exception as e:
+        return {"ok": False, "server": host, "error": f"DNS resolve failed: {e}"}
+
+    resolved_ips = []
+    for info in infos:
+        try:
+            ip = (info[4] or [""])[0]
+            if ip and (ip not in resolved_ips):
+                resolved_ips.append(ip)
+        except Exception:
+            pass
+
+    for info in infos:
+        fam, socktype, proto, _, sockaddr = info
+        fd = None
+        try:
+            fd = socket.socket(fam, socktype, proto)
+            fd.settimeout(timeout_sec)
+            pkt = bytearray(48)
+            pkt[0] = 0x1B  # NTP client request
+            fd.sendto(pkt, sockaddr)
+            resp, _ = fd.recvfrom(512)
+            if len(resp) < 48:
+                continue
+            sec1900 = int.from_bytes(resp[40:44], "big")
+            frac = int.from_bytes(resp[44:48], "big")
+            ntp_to_unix = 2208988800
+            if sec1900 < ntp_to_unix:
+                continue
+            unix_ts = (sec1900 - ntp_to_unix) + (float(frac) / 4294967296.0)
+            sampled_utc = datetime.fromtimestamp(unix_ts, tz=timezone.utc)
+            sampled_local = sampled_utc.astimezone()
+            offset = unix_ts - time.time()
+            return {
+                "ok": True,
+                "server": host,
+                "resolved_ips": resolved_ips,
+                "sampled_unix": unix_ts,
+                "sampled_utc": sampled_utc.strftime("%Y-%m-%d %H:%M:%S %Z"),
+                "sampled_local": sampled_local.strftime("%Y-%m-%d %H:%M:%S %Z"),
+                "offset_seconds": round(offset, 3),
+            }
+        except Exception:
+            continue
+        finally:
+            if fd is not None:
+                try:
+                    fd.close()
+                except Exception:
+                    pass
+
+    return {"ok": False, "server": host, "resolved_ips": resolved_ips, "error": "No NTP response on UDP/123"}
+
+
+def _load_or_init_time_settings() -> dict:
+    system = _load_or_init_system_settings()
+    time_cfg = system.get("time") if isinstance(system.get("time"), dict) else {}
+    fallback_ntp = time_cfg.get("fallback_ntp") if isinstance(time_cfg.get("fallback_ntp"), list) else []
+    normalized_fallback = _normalize_ntp_servers(fallback_ntp or DEFAULT_FALLBACK_NTP)
+    if not normalized_fallback:
+        normalized_fallback = list(DEFAULT_FALLBACK_NTP)
+    ntp_server = _normalize_ntp_host(time_cfg.get("ntp_server") or "")
+    if not ntp_server:
+        ntp_server = "pool.ntp.org"
+    return {
+        "timezone": (time_cfg.get("timezone") or "").strip(),
+        "ntp_server": ntp_server,
+        "fallback_ntp": normalized_fallback,
+    }
+
+
+def _render_timesyncd_dropin(ntp_server: str, fallback_servers: list[str]) -> str:
+    lines = ["[Time]"]
+    # Reset inherited lists first so our configured order is authoritative.
+    lines.append("NTP=")
+    lines.append("FallbackNTP=")
+    if ntp_server:
+        lines.append(f"NTP={ntp_server}")
+    if fallback_servers:
+        lines.append("FallbackNTP=" + " ".join(fallback_servers))
+    return "\n".join(lines) + "\n"
+
+
+def _apply_time_settings_to_system(time_cfg: dict):
+    timezone = (time_cfg.get("timezone") or "").strip()
+    if timezone:
+        subprocess.run(["timedatectl", "set-timezone", timezone], check=True, timeout=12)
+
+    ntp_server = _normalize_ntp_host(time_cfg.get("ntp_server") or "")
+    fallback_ntp = time_cfg.get("fallback_ntp") if isinstance(time_cfg.get("fallback_ntp"), list) else []
+    selected_fallback = _normalize_ntp_servers(fallback_ntp or DEFAULT_FALLBACK_NTP)
+    if not selected_fallback:
+        selected_fallback = list(DEFAULT_FALLBACK_NTP)
+
+    TIMESYNCD_DROPIN_DIR.mkdir(parents=True, exist_ok=True)
+    TIMESYNCD_DROPIN_FILE.write_text(_render_timesyncd_dropin(ntp_server, selected_fallback))
+
+    subprocess.run(["systemctl", "daemon-reload"], check=True, timeout=8)
+    subprocess.run(["systemctl", "restart", TIMESYNCD_SERVICE], check=True, timeout=12)
+    subprocess.run(["timedatectl", "set-ntp", "true"], check=True, timeout=12)
 
 
 def _load_or_init_vpn_settings() -> dict:
@@ -325,8 +584,8 @@ def _load_or_init_secret_key() -> str:
     return key
 
 
-def _initialize_auth_runtime():
-    app.secret_key = _load_or_init_secret_key()
+def _initialize_auth_runtime(flask_app: Flask):
+    flask_app.secret_key = _load_or_init_secret_key()
     _load_or_init_auth_config()
 
 
@@ -420,15 +679,12 @@ def _clear_login_failures(client: str):
     _LOGIN_FAIL_STATE.pop(client, None)
 
 
-_initialize_auth_runtime()
-
-
 def _trace(msg: str):
     if TRACE_VERBOSE:
         log.info(f"[TRACE][DASH] {msg}")
 
 
-@app.before_request
+@dashboard.before_app_request
 def _auth_guard():
     path = request.path or "/"
     settings = _cached_settings()
@@ -480,7 +736,7 @@ def _auth_guard():
         next_path = next_path[:-1]
     if not _is_safe_next_path(next_path):
         next_path = "/"
-    return redirect(url_for("login_page", next=next_path), code=302)
+    return redirect(url_for("dashboard.login_page", next=next_path), code=302)
 
 
 def _is_ap_client_request(remote_addr: str) -> bool:
@@ -1554,23 +1810,14 @@ def _load_mender_settings() -> dict:
 
 # ========== API Endpoints ==========
 
-@app.route('/heartbeat', methods=['POST'])
+@dashboard.route('/heartbeat', methods=['POST'])
 def heartbeat():
     _trace(f"POST /heartbeat from={request.remote_addr}")
     wifi_state.heartbeat()
     return '{"status":"ok"}', 200, {'Content-Type': 'application/json'}
 
 
-@app.route('/api/theme')
-def api_theme():
-    theme = request.args.get('set', '').strip()
-    if theme in ('dark', 'light'):
-        _PERSIST_CFG.write_theme(theme)
-    return redirect(request.referrer or '/', code=302)
-
-
-
-@app.route('/api/status')
+@dashboard.route('/api/status')
 def api_status():
     _trace(f"GET /api/status from={request.remote_addr}")
     wifi_state.heartbeat()
@@ -1614,7 +1861,7 @@ def api_status():
     })
 
 
-@app.route('/api/networks')
+@dashboard.route('/api/networks')
 def api_networks():
     return jsonify({
         "networks": wifi_state.get("networks", []),
@@ -1622,7 +1869,7 @@ def api_networks():
     })
 
 
-@app.route('/api/saved-networks', methods=['GET'])
+@dashboard.route('/api/saved-networks', methods=['GET'])
 def api_saved_networks():
     return jsonify({
         "saved_networks": wifi_state.get("known_networks", []),
@@ -1632,7 +1879,7 @@ def api_saved_networks():
     })
 
 
-@app.route('/api/saved-networks', methods=['POST'])
+@dashboard.route('/api/saved-networks', methods=['POST'])
 def api_saved_networks_add():
     if wifi_state.get("connect_in_progress", False):
         return busy_connect_response()
@@ -1649,7 +1896,7 @@ def api_saved_networks_add():
     return jsonify({"status": "requested"}), 202
 
 
-@app.route('/api/saved-networks/delete', methods=['POST'])
+@dashboard.route('/api/saved-networks/delete', methods=['POST'])
 def api_saved_networks_delete():
     if wifi_state.get("connect_in_progress", False):
         return busy_connect_response()
@@ -1663,7 +1910,7 @@ def api_saved_networks_delete():
     return jsonify({"status": "requested"}), 202
 
 
-@app.route('/api/scan', methods=['POST'])
+@dashboard.route('/api/scan', methods=['POST'])
 def api_scan():
     _trace(f"POST /api/scan from={request.remote_addr}")
     wifi_state.heartbeat()
@@ -1677,7 +1924,7 @@ import re
 _MAC_RE = re.compile(r'^([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$')
 
 
-@app.route('/api/ap-clients')
+@dashboard.route('/api/ap-clients')
 def api_ap_clients():
     _trace(f"GET /api/ap-clients from={request.remote_addr}")
     wifi_state.heartbeat()
@@ -1702,7 +1949,7 @@ def api_ap_clients():
     })
 
 
-@app.route('/api/ap-clients/block', methods=['POST'])
+@dashboard.route('/api/ap-clients/block', methods=['POST'])
 def api_ap_block():
     _trace(f"POST /api/ap-clients/block from={request.remote_addr}")
     if wifi_state.get("connect_in_progress", False):
@@ -1718,7 +1965,7 @@ def api_ap_block():
     return jsonify({"status": "requested"}), 202
 
 
-@app.route('/api/ap-clients/unblock', methods=['POST'])
+@dashboard.route('/api/ap-clients/unblock', methods=['POST'])
 def api_ap_unblock():
     _trace(f"POST /api/ap-clients/unblock from={request.remote_addr}")
     if wifi_state.get("connect_in_progress", False):
@@ -1734,7 +1981,7 @@ def api_ap_unblock():
     return jsonify({"status": "requested"}), 202
 
 
-@app.route('/api/connect', methods=['POST'])
+@dashboard.route('/api/connect', methods=['POST'])
 def api_connect():
     """Non-blocking connect request with validation"""
     if not _is_ap_client_request(request.remote_addr):
@@ -1787,7 +2034,7 @@ def api_connect():
     return '{"status":"connecting"}', 200, {'Content-Type': 'application/json'}
 
 
-@app.route('/api/ap-settings/password', methods=['POST'])
+@dashboard.route('/api/ap-settings/password', methods=['POST'])
 def api_ap_settings_password():
     _trace(f"POST /api/ap-settings/password from={request.remote_addr}")
     if wifi_state.get("connect_in_progress", False):
@@ -1807,19 +2054,19 @@ def api_ap_settings_password():
     return jsonify({"status": "requested"}), 202
 
 
-@app.route('/api/device-info')
+@dashboard.route('/api/device-info')
 def api_device_info():
     _trace(f"GET /api/device-info from={request.remote_addr}")
     return jsonify(get_device_info())
 
 
-@app.route('/api/device-status')
+@dashboard.route('/api/device-status')
 def api_device_status():
     _trace(f"GET /api/device-status from={request.remote_addr}")
     return jsonify(get_device_status())
 
 
-@app.route('/api/device-status/details/<kind>')
+@dashboard.route('/api/device-status/details/<kind>')
 def api_device_status_detail(kind):
     _trace(f"GET /api/device-status/details/{kind} from={request.remote_addr}")
     summary_only = request.args.get("summary") == "1"
@@ -1829,7 +2076,7 @@ def api_device_status_detail(kind):
     return jsonify(data)
 
 
-@app.route('/api/process-info/<int:pid>')
+@dashboard.route('/api/process-info/<int:pid>')
 def api_process_info(pid):
     _trace(f"GET /api/process-info/{pid} from={request.remote_addr}")
     base = f"/proc/{pid}"
@@ -1950,13 +2197,13 @@ def api_process_info(pid):
     return jsonify(info)
 
 
-@app.route('/api/rexgend-config', methods=['GET'])
+@dashboard.route('/api/rexgend-config', methods=['GET'])
 def api_rexgend_config_get():
     _trace(f"GET /api/rexgend-config from={request.remote_addr}")
     return jsonify(_load_rexgend_config())
 
 
-@app.route('/api/rexgend-config', methods=['POST'])
+@dashboard.route('/api/rexgend-config', methods=['POST'])
 def api_rexgend_config_save():
     _trace(f"POST /api/rexgend-config from={request.remote_addr}")
     data = request.get_json() or {}
@@ -1993,13 +2240,13 @@ def api_rexgend_config_save():
     return jsonify({"status": "ok", "restarted": restart})
 
 
-@app.route('/api/mender-config', methods=['GET'])
+@dashboard.route('/api/mender-config', methods=['GET'])
 def api_mender_config_get():
     _trace(f"GET /api/mender-config from={request.remote_addr}")
     return jsonify(_load_mender_config())
 
 
-@app.route('/api/mender-config', methods=['POST'])
+@dashboard.route('/api/mender-config', methods=['POST'])
 def api_mender_config_save():
     _trace(f"POST /api/mender-config from={request.remote_addr}")
     data = request.get_json() or {}
@@ -2019,13 +2266,13 @@ def api_mender_config_save():
     return jsonify({"status": "ok", "restarted": restart, "units": list(restarted_units) if restart else []})
 
 
-@app.route('/api/mender-settings', methods=['GET'])
+@dashboard.route('/api/mender-settings', methods=['GET'])
 def api_mender_settings_get():
     _trace(f"GET /api/mender-settings from={request.remote_addr}")
     return jsonify(_load_mender_settings())
 
 
-@app.route('/api/mender-settings', methods=['POST'])
+@dashboard.route('/api/mender-settings', methods=['POST'])
 def api_mender_settings_save():
     _trace(f"POST /api/mender-settings from={request.remote_addr}")
     data = request.get_json() or {}
@@ -2054,7 +2301,7 @@ def api_mender_settings_save():
     return jsonify({"status": "ok", "restarted": restart, "units": list(restarted_units) if restart else []})
 
 
-@app.route('/api/account-security', methods=['GET'])
+@dashboard.route('/api/account-security', methods=['GET'])
 def api_account_security_get():
     auth = _load_or_init_auth_config()
     return jsonify({
@@ -2062,7 +2309,7 @@ def api_account_security_get():
     })
 
 
-@app.route('/api/account-security', methods=['POST'])
+@dashboard.route('/api/account-security', methods=['POST'])
 def api_account_security_save():
     data = request.get_json() or {}
     current_password = data.get("current_password") or ""
@@ -2208,12 +2455,12 @@ def _console_cleanup_loop():
 threading.Thread(target=_console_cleanup_loop, daemon=True, name="console-cleanup").start()
 
 
-@app.route('/terminal')
+@dashboard.route('/terminal')
 def terminal_page():
     return render_template('terminal.html')
 
 
-@app.route('/api/console/start', methods=['POST'])
+@dashboard.route('/api/console/start', methods=['POST'])
 def api_console_start():
     d = request.get_json() or {}
     root_password = d.get('root_password') or ''
@@ -2231,7 +2478,7 @@ def api_console_start():
     return jsonify({'session_id': sess.id, 'dead': False})
 
 
-@app.route('/api/console/output')
+@dashboard.route('/api/console/output')
 def api_console_output():
     sid = request.args.get('session_id', '')
     with _console_sessions_lock:
@@ -2242,7 +2489,7 @@ def api_console_output():
     return jsonify({'data': base64.b64encode(data).decode(), 'dead': sess._dead})
 
 
-@app.route('/api/console/input', methods=['POST'])
+@dashboard.route('/api/console/input', methods=['POST'])
 def api_console_input():
     d = request.get_json() or {}
     sid = d.get('session_id', '')
@@ -2256,7 +2503,7 @@ def api_console_input():
     return jsonify({'ok': True})
 
 
-@app.route('/api/console/resize', methods=['POST'])
+@dashboard.route('/api/console/resize', methods=['POST'])
 def api_console_resize():
     d = request.get_json() or {}
     sid = d.get('session_id', '')
@@ -2270,7 +2517,7 @@ def api_console_resize():
     return jsonify({'ok': True})
 
 
-@app.route('/api/console/close', methods=['POST'])
+@dashboard.route('/api/console/close', methods=['POST'])
 def api_console_close():
     d = request.get_json() or {}
     sid = d.get('session_id', '')
@@ -2297,7 +2544,7 @@ def _verify_root_password(password: str) -> bool:
     return False
 
 
-@app.route('/api/root-password', methods=['POST'])
+@dashboard.route('/api/root-password', methods=['POST'])
 def api_root_password():
     data = request.get_json() or {}
     current_root_password = data.get("current_password") or ""
@@ -2625,7 +2872,7 @@ def _tailscale_status_payload(settings: dict | None = None) -> dict:
     }
 
 
-@app.route('/api/ssh-status', methods=['GET'])
+@dashboard.route('/api/ssh-status', methods=['GET'])
 def api_ssh_status_get():
     ctl = _ssh_control_unit()
     if not ctl:
@@ -2649,7 +2896,7 @@ def api_ssh_status_get():
     })
 
 
-@app.route('/api/ssh-status', methods=['POST'])
+@dashboard.route('/api/ssh-status', methods=['POST'])
 def api_ssh_status_set():
     data = request.get_json() or {}
     enable = bool(data.get("enabled", False))
@@ -2684,7 +2931,73 @@ def api_ssh_status_set():
     })
 
 
-@app.route('/api/vpn/login', methods=['POST'])
+@dashboard.route('/api/time-settings', methods=['GET'])
+def api_time_settings_get():
+    configured = _load_or_init_time_settings()
+    runtime = _runtime_time_settings()
+    return jsonify({
+        "configured": configured,
+        "runtime": runtime,
+        "timezones": _list_timezones(),
+    })
+
+
+@dashboard.route('/api/time-settings', methods=['POST'])
+def api_time_settings_set():
+    data = request.get_json() or {}
+    current = _load_or_init_time_settings()
+    updated = dict(current)
+    fallback_ntp = list(DEFAULT_FALLBACK_NTP)
+
+    if "timezone" in data:
+        tz = (data.get("timezone") or "").strip()
+        if tz and (not _is_valid_timezone(tz)):
+            return jsonify({"error": f"Invalid timezone '{tz}'"}), 400
+        updated["timezone"] = tz
+
+    if "ntp_server" in data:
+        ntp_server = _normalize_ntp_host(data.get("ntp_server") or "")
+        if not ntp_server:
+            return jsonify({"error": "Invalid NTP server"}), 400
+        updated["ntp_server"] = ntp_server
+
+    # Keep a single canonical fallback list/order.
+    updated["fallback_ntp"] = fallback_ntp
+
+    _save_system_settings({"time": updated})
+
+    apply_now = bool(data.get("apply", True))
+    if apply_now:
+        try:
+            _apply_time_settings_to_system(updated)
+        except subprocess.CalledProcessError as e:
+            stderr = (e.stderr or "").strip() if hasattr(e, "stderr") else ""
+            return jsonify({"error": stderr or str(e)}), 500
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({
+        "status": "ok",
+        "applied": apply_now,
+        "configured": _load_or_init_time_settings(),
+        "runtime": _runtime_time_settings(),
+        "dropin_path": str(TIMESYNCD_DROPIN_FILE),
+    })
+
+
+@dashboard.route('/api/time-server-check', methods=['GET'])
+def api_time_server_check():
+    server = (request.args.get("server") or "").strip()
+    if not server:
+        return jsonify({"ok": False, "error": "Missing server parameter"}), 400
+    payload = _probe_ntp_server(server)
+    runtime = _runtime_time_settings()
+    active = ((runtime.get("server_name") or "").strip(), (runtime.get("server_address") or "").strip())
+    payload["active_source"] = bool(server in active or payload.get("server") in active)
+    return jsonify(payload)
+
+
+@dashboard.route('/api/vpn/login', methods=['POST'])
 def api_vpn_login():
     if not _tailscale_cli_available():
         return jsonify({"error": "Tailscale CLI is not installed"}), 404
@@ -2736,7 +3049,7 @@ def api_vpn_login():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/api/vpn/logout', methods=['POST'])
+@dashboard.route('/api/vpn/logout', methods=['POST'])
 def api_vpn_logout():
     if not _tailscale_cli_available():
         return jsonify({"error": "Tailscale CLI is not installed"}), 404
@@ -2751,7 +3064,7 @@ def api_vpn_logout():
     return jsonify({"status": "ok", "provider": "tailscale"})
 
 
-@app.route('/api/vpn-settings', methods=['GET'])
+@dashboard.route('/api/vpn-settings', methods=['GET'])
 def api_vpn_settings_get():
     vpn = _load_or_init_vpn_settings()
     ts = vpn.get("providers", {}).get("tailscale", {})
@@ -2775,7 +3088,7 @@ def api_vpn_settings_get():
     })
 
 
-@app.route('/api/vpn-settings', methods=['POST'])
+@dashboard.route('/api/vpn-settings', methods=['POST'])
 def api_vpn_settings_set():
     data = request.get_json() or {}
     provider = (data.get("provider") or "none").strip().lower()
@@ -2871,7 +3184,7 @@ def api_vpn_settings_set():
     })
 
 
-@app.route('/api/vpn/status', methods=['GET'])
+@dashboard.route('/api/vpn/status', methods=['GET'])
 def api_vpn_status_get():
     vpn = _load_or_init_vpn_settings()
     provider = vpn.get("provider", "none")
@@ -2930,8 +3243,9 @@ def _apply_persisted_ssh_state_on_startup():
         log.error(f"Failed to apply persisted SSH state on startup: {e}")
 
 
-def _apply_persisted_vpn_state_on_startup():
-    image_changed = _is_new_image_boot()
+def _apply_persisted_vpn_state_on_startup(image_changed=None):
+    if image_changed is None:
+        image_changed = _is_new_image_boot()
     vpn = _load_or_init_vpn_settings()
     provider = vpn.get("provider", "none")
     if provider != "tailscale":
@@ -2960,7 +3274,24 @@ def _apply_persisted_vpn_state_on_startup():
         log.error(f"Failed to apply persisted VPN state on startup: {e}")
 
 
-@app.route('/api/https-settings', methods=['GET', 'POST'])
+def _apply_persisted_time_state_on_startup(image_changed=None):
+    if image_changed is None:
+        image_changed = _is_new_image_boot()
+    if not image_changed:
+        return
+    try:
+        configured = _load_or_init_time_settings()
+        _apply_time_settings_to_system(configured)
+        log.info(
+            "Re-applied persisted time settings after image update: "
+            f"timezone={configured.get('timezone') or '(unchanged)'} "
+            f"ntp_server={configured.get('ntp_server') or 'pool.ntp.org'}"
+        )
+    except Exception as e:
+        log.error(f"Failed to re-apply persisted time settings on startup: {e}")
+
+
+@dashboard.route('/api/https-settings', methods=['GET', 'POST'])
 def api_https_settings():
     if request.method == 'GET':
         settings = _load_or_init_settings()
@@ -3023,12 +3354,12 @@ def api_https_settings():
     })
 
 
-@app.route('/install-certificate')
+@dashboard.route('/install-certificate')
 def install_certificate():
     return render_template('install_certificate.html')
 
 
-@app.route('/host-switch')
+@dashboard.route('/host-switch')
 def host_switch():
     target = (request.args.get("target") or "").strip()
     if not target.startswith("https://"):
@@ -3049,17 +3380,17 @@ setTimeout(function() {{ window.location.replace(t); }}, 4500);
 </body></html>"""
 
 
-@app.route('/updating')
+@dashboard.route('/updating')
 def updating_page():
     return render_template("updating.html")
 
 
-@app.route('/api/update-status')
+@dashboard.route('/api/update-status')
 def api_update_status():
     return jsonify({"updating": _is_fw_upgrade_in_progress()})
 
 
-@app.route('/download-ca-cert')
+@dashboard.route('/download-ca-cert')
 def download_ca_cert():
     if not SSL_CA_FILE.exists():
         return "Certificate not available", 404
@@ -3069,7 +3400,7 @@ def download_ca_cert():
     return response
 
 
-@app.route('/api/system/reboot', methods=['POST'])
+@dashboard.route('/api/system/reboot', methods=['POST'])
 def api_system_reboot():
     _trace(f"POST /api/system/reboot from={request.remote_addr}")
     try:
@@ -3079,7 +3410,7 @@ def api_system_reboot():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
-@app.route('/api/system/restart-dashboard', methods=['POST'])
+@dashboard.route('/api/system/restart-dashboard', methods=['POST'])
 def api_system_restart_dashboard():
     _trace(f"POST /api/system/restart-dashboard from={request.remote_addr}")
     try:
@@ -3098,7 +3429,7 @@ def api_system_restart_dashboard():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
-@app.route('/api/system-services', methods=['GET'])
+@dashboard.route('/api/system-services', methods=['GET'])
 def api_system_services():
     _trace(f"GET /api/system-services from={request.remote_addr}")
     force = request.args.get("force", "0") == "1"
@@ -3153,7 +3484,7 @@ def api_system_services():
     })
 
 
-@app.route('/api/system-services/<path:unit>', methods=['GET'])
+@dashboard.route('/api/system-services/<path:unit>', methods=['GET'])
 def api_system_service_detail(unit):
     _trace(f"GET /api/system-services/{unit} from={request.remote_addr}")
     detail = _service_detail(unit)
@@ -3162,7 +3493,7 @@ def api_system_service_detail(unit):
     return jsonify(detail)
 
 
-@app.route('/api/system-services/<path:unit>/logs', methods=['GET'])
+@dashboard.route('/api/system-services/<path:unit>/logs', methods=['GET'])
 def api_system_service_logs(unit):
     _trace(f"GET /api/system-services/{unit}/logs from={request.remote_addr}")
     lines = request.args.get("lines", "120")
@@ -3173,8 +3504,6 @@ def api_system_service_logs(unit):
 
 
 # ========== Pipe Readers (rexgend /var/run/rexgen) ==========
-
-REXGEN_PIPE_DIR = "/var/run/rexgen"
 
 class _PipeReader:
     """Background thread that tails a named pipe and buffers the last N lines."""
@@ -3307,14 +3636,14 @@ def stat_is_fifo(path: str) -> bool:
         return False
 
 
-@app.route('/api/pipes')
+@dashboard.route('/api/pipes')
 def api_pipes_list():
     _trace(f"GET /api/pipes from={request.remote_addr}")
     pipes = _list_rexgen_pipes()
     return jsonify({"pipes": pipes, "base": REXGEN_PIPE_DIR})
 
 
-@app.route('/api/pipes/read')
+@dashboard.route('/api/pipes/read')
 def api_pipes_read():
     pipe_path = request.args.get("pipe", "")
     try:
@@ -3330,7 +3659,7 @@ def api_pipes_read():
 
 # ========== Web Pages ==========
 
-@app.route('/login', methods=['GET', 'POST'])
+@dashboard.route('/login', methods=['GET', 'POST'])
 def login_page():
     if _is_authenticated():
         return redirect('/', code=302)
@@ -3389,12 +3718,12 @@ def login_page():
     )
 
 
-@app.route('/logout')
+@dashboard.route('/logout')
 def logout_page():
     session.clear()
     return redirect('/login', code=302)
 
-@app.route('/')
+@dashboard.route('/')
 def home():
     # Smart home: AP clients land on WiFi setup; other interfaces land on Device information.
     if _is_ap_client_request(request.remote_addr):
@@ -3402,7 +3731,7 @@ def home():
     return redirect('/device-info', code=302)
 
 
-@app.route('/wifi-settings')
+@dashboard.route('/wifi-settings')
 def index():
     networks = wifi_state.get("networks", [])
     return render_template(
@@ -3413,100 +3742,78 @@ def index():
     )
 
 
-@app.route('/saved-networks')
+@dashboard.route('/saved-networks')
 def saved_networks_page():
     return render_template("manage_networks.html")
 
 
-@app.route('/wifi-network-info')
+@dashboard.route('/wifi-network-info')
 def wifi_network_info_page():
     return render_template("wifi_network_info.html")
 
 
-@app.route('/device-info')
+@dashboard.route('/device-info')
 def device_info_page():
     return render_template("device_info.html")
 
 
-@app.route('/services')
+@dashboard.route('/services')
 def services_page():
     return render_template("services.html")
 
 
-@app.route('/hardware-detail')
-def hardware_detail_page():
-    kind = (request.args.get("kind") or "cpu").strip().lower()
-    destinations = {"cpu": "/cpu-detail", "memory": "/memory-detail", "disk": "/disk-detail"}
-    return redirect(destinations.get(kind, "/cpu-detail"), code=302)
-
-
-@app.route('/cpu-detail')
+@dashboard.route('/cpu-detail')
 def cpu_detail_page():
     return render_template("cpu_detail.html")
 
 
-@app.route('/memory-detail')
+@dashboard.route('/memory-detail')
 def memory_detail_page():
     return render_template("memory_detail.html")
 
 
-@app.route('/disk-detail')
+@dashboard.route('/disk-detail')
 def disk_detail_page():
     return render_template("disk_detail.html")
 
 
-@app.route('/ap-settings')
+@dashboard.route('/ap-settings')
 def ap_settings_page():
     return render_template("ap_settings.html")
 
 
-@app.route('/ap-client-info')
+@dashboard.route('/ap-client-info')
 def ap_client_info_page():
     return render_template("ap_client_info.html")
 
 
-@app.route('/ap-password')
-def ap_password_page():
-    return redirect('/ap-settings', code=302)
-
-
-@app.route('/rexgend-settings')
+@dashboard.route('/rexgend-settings')
 def rexgend_settings_page():
     return render_template("rexgend_settings.html")
 
 
-@app.route('/pipe-output')
+@dashboard.route('/pipe-output')
 def pipe_output_page():
     pipe = request.args.get("pipe", "")
     return render_template("pipe_output.html", pipe=pipe)
 
 
-@app.route('/mender-settings')
-def mender_settings_page():
-    return redirect('/system-settings', code=302)
-
-
-@app.route('/system-settings')
+@dashboard.route('/system-settings')
 def system_settings_page():
     return render_template("system_settings.html")
 
 
-@app.route('/service-info')
+@dashboard.route('/service-info')
 def service_info_page():
     return render_template("service_info.html")
 
 
-@app.route('/process-info')
+@dashboard.route('/process-info')
 def process_info_page():
     return render_template("process_info.html")
 
 
-@app.route('/rexgen-settings')
-def rexgen_settings_page():
-    return redirect('/rexgend-settings', code=302)
-
-
-@app.route('/configure_wifi', methods=['POST'])
+@dashboard.route('/configure_wifi', methods=['POST'])
 def configure_wifi():
     if not _is_ap_client_request(request.remote_addr):
         return "SSID connect is allowed only when accessed via AP.", 403
@@ -3647,40 +3954,40 @@ def _dashboard_url():
 
 
 # Android connectivity check
-@app.route('/generate_204')
-@app.route('/gen_204')
+@dashboard.route('/generate_204')
+@dashboard.route('/gen_204')
 def android_captive():
     return redirect(_captive_portal_url(), code=302)
 
 # iOS/Apple connectivity check
-@app.route('/hotspot-detect.html')
-@app.route('/library/test/success.html')
+@dashboard.route('/hotspot-detect.html')
+@dashboard.route('/library/test/success.html')
 def ios_captive():
     return redirect(_captive_portal_url(), code=302)
 
 # Windows connectivity check
-@app.route('/ncsi.txt')
-@app.route('/connecttest.txt')
+@dashboard.route('/ncsi.txt')
+@dashboard.route('/connecttest.txt')
 def windows_captive():
     return redirect(_captive_portal_url(), code=302)
 
 # General captive portal
-@app.route('/chat', methods=['GET', 'POST'])
+@dashboard.route('/chat', methods=['GET', 'POST'])
 def captive_redirect():
     return redirect(_captive_portal_url(), code=302)
 
 
-@app.route('/favicon.ico')
+@dashboard.route('/favicon.ico')
 def favicon():
     return ('', 204)
 
 
-@app.route('/<path:path>')
+@dashboard.route('/<path:path>')
 def catch_all(path):
     return redirect(_dashboard_url(), code=302)
 
 
-@app.errorhandler(404)
+@dashboard.app_errorhandler(404)
 def not_found(e):
     return redirect(_dashboard_url(), code=302)
 
@@ -3841,11 +4148,29 @@ def _ensure_ssl_cert(force_regen: bool = False):
         raise
 
 
+def create_app() -> Flask:
+    flask_app = Flask(__name__, template_folder='templates_main')
+    flask_app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+    flask_app.config['TEMPLATES_AUTO_RELOAD'] = True
+    flask_app.config['SESSION_COOKIE_HTTPONLY'] = True
+    flask_app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    flask_app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+    flask_app.register_blueprint(dashboard)
+    flask_app.register_blueprint(rexgend_router)
+    _initialize_auth_runtime(flask_app)
+    return flask_app
+
+
+app = create_app()
+
+
 # ========== Main ==========
 
 if __name__ == "__main__":
+    image_changed = _is_new_image_boot()
     _apply_persisted_ssh_state_on_startup()
-    _apply_persisted_vpn_state_on_startup()
+    _apply_persisted_vpn_state_on_startup(image_changed=image_changed)
+    _apply_persisted_time_state_on_startup(image_changed=image_changed)
     settings = _load_or_init_settings()
     https_enabled = settings.get("https_enabled", False)
     if https_enabled:

@@ -1,23 +1,158 @@
 # Changelog
 
-## 1.1.3 (2026-03-09)
+## 1.1.4 (2026-03-23)
 
 ### Scope
-- Tailscale runtime behavior updates:
-  - `tailscale up` now always uses `--accept-dns=false` so Tailscale does not overwrite resolver policy.
-  - Tailscale advertise tags are now config-driven (`advertise_tags_enabled`, `advertise_tags`) instead of hardcoded.
-- DNS model refactor for VPN extensibility:
-  - new persistent DNS section in `netservices.conf` (`dns.servers`, `dns.options`) used as base resolver policy.
-  - provider-specific DNS support added under VPN provider config (currently `vpn.providers.tailscale.dns_servers`).
-  - effective DNS order now prepends active-provider DNS, then base DNS fallback with dedupe.
-  - provider DNS is excluded when provider is not active, preventing stale Tailscale DNS leakage after reboot.
-- Connectivity checks:
-  - `client_manager` now builds ping host list from the same effective DNS order used for `/etc/resolv.conf`.
-- DNS apply reliability fixes:
-  - base DNS defaults were corrected to exclude Tailscale DNS from `dns.servers` (Tailscale DNS stays provider-specific).
-  - resolver apply now handles systems where `/etc/resolv.conf` is a symlink (replaces with static file for deterministic policy).
-  - resolver cache skip logic now verifies actual file state, preventing stale external overwrites from being silently kept.
-  - VPN Save now triggers immediate DNS refresh in `wifi-manager` through shared-state request (`dns_refresh_request`) instead of waiting for reconnect/reboot.
+- Baseline release: `1.1.3 final (SVN r8412, 2026-03-09)`.
+- Release-to-release compare basis:
+  - committed SVN range in `/Linux/netservices`: `r8413..r8419`
+  - plus current working-copy deltas for 1.1.4.
+- Technical delta for this release (working files touched):
+  - `dashboard/app.py`
+  - `dashboard/templates_main/system_settings.html`
+  - `services/netservices_config.py`
+  - `docs/CHANGELOG.md`
+  - `docs/RELEASE_NOTES.md`
+- Runtime version bump:
+  - `DASHBOARD_VERSION: 1.1.3 -> 1.1.4`.
+
+### Included From SVN Since 1.1.3
+- Dashboard split/finalization commits included in this release range:
+  - `r8413`, `r8414`, `r8416`, `r8417`
+  - template migration: `dashboard/templates/*` -> `dashboard/templates_main/*`
+  - introduction of `dashboard/templates_rexgen/*` and `dashboard/rexgend_router.py`.
+- Shared constants refactor included in this release range (`r8419`):
+  - new modules: `services/constants_paths.py`, `services/constants_network.py`, `services/constants_runtime.py`
+  - new dashboard constants: `dashboard/rexgen_constants.py`
+  - service modules migrated to shared constants usage.
+- Device Info/runtime presentation updates included from `r8419`:
+  - CPU temperature display normalized to `°C`
+  - `wlan` hostname normalization to lowercase `.local`
+  - Tailscale hostname ordering aligned after WLAN hostname rows.
+
+### Dashboard Architecture
+- Main/rexgen template split finalized:
+  - legacy `dashboard/templates/*` replaced by `dashboard/templates_main/*`
+  - rexgen view isolation in `dashboard/templates_rexgen/*`
+  - route split through `dashboard/rexgend_router.py`.
+- Shared Flask runtime model retained in `dashboard/app.py` while separating page domains cleanly.
+
+### New Functional Capabilities
+- Added dedicated rexgen UI endpoints (separate from main dashboard pages):
+  - `GET /rexgen`
+  - `GET /structure`
+  - `GET /rexgen/structure`
+- Added rexgen JSON APIs:
+  - `GET /api/rexgen/structure` (loads and validates `/home/root/rexusb/status/structure.json`)
+  - `GET /api/rexgen/runtime` (reports CAN mode/count and key runtime config paths).
+- Added structure-focused UI pages with runtime visualization:
+  - `dashboard/templates_rexgen/rexgen_home.html`
+  - `dashboard/templates_rexgen/structure.html`.
+
+### Internal Refactor
+- Introduced shared constants layer for cross-service paths/network/runtime values:
+  - `services/constants_paths.py`
+  - `services/constants_network.py`
+  - `services/constants_runtime.py`
+- Updated runtime modules to consume shared constants instead of duplicated literals:
+  - `services/shared_state.py`
+  - `services/client_manager.py`
+  - `services/ap_manager.py`
+  - `services/wifi_manager.py`
+  - `services/netservices_config.py`
+  - `dashboard/rexgen_constants.py`.
+
+### Time/Runtime API
+- Added Linux time management API surface in `dashboard/app.py`:
+  - `GET /api/time-settings`
+  - `POST /api/time-settings`
+  - `GET /api/time-server-check`
+- Added NTP server probe implementation (`_probe_ntp_server`):
+  - validates server token
+  - resolves DNS (`getaddrinfo`)
+  - performs UDP/123 NTP request
+  - extracts NTP transmit timestamp
+  - returns sampled UTC/local time + estimated offset.
+- Added time apply path (`_apply_time_settings_to_system`):
+  - `timedatectl set-timezone`
+  - writes managed drop-in: `/etc/systemd/timesyncd.conf.d/10-rexgen-time.conf`
+  - `systemctl daemon-reload`
+  - `systemctl restart systemd-timesyncd.service`
+  - `timedatectl set-ntp true`.
+- Added startup recovery path after OTA/image change:
+  - `_apply_persisted_time_state_on_startup(image_changed=...)`
+  - invoked from main bootstrap after shared `image_changed = _is_new_image_boot()`.
+
+### Config Model
+- Extended `services/netservices_config.py` with persisted `system.time`:
+  - `timezone`
+  - `ntp_server`
+  - `fallback_ntp` (single ordered list).
+- Added NTP value hygiene:
+  - hostname/IP validation
+  - dedupe with stable order
+  - bounded list length.
+- Canonical defaults:
+  - primary default `ntp_server = pool.ntp.org`
+  - canonical fallback order:
+    - `ntp.aliyun.com`
+    - `ntp.tencent.com`
+    - `time.cloudflare.com`
+    - `time.google.com`
+    - `asia.pool.ntp.org`
+    - `pool.ntp.org`
+    - `time.apple.com`
+    - `ntp.ubuntu.com`
+    - `time.windows.com`.
+
+### UI/UX
+- Added `Time Settings` block in `system_settings.html`:
+  - timezone dropdown
+  - editable NTP server
+  - explicit `Check` action for server availability/time sample.
+- Simplified controls:
+  - removed `Use NTP` toggle from UI (NTP enforced enabled in backend apply path)
+  - removed fallback region/list editor controls
+  - removed non-actionable runtime diagnostics rows.
+
+### Behavior Fixes
+- Fixed precedence bug in `timesyncd` merge behavior:
+  - drop-in renderer now clears inherited values before applying configured values:
+    - `NTP=`
+    - `FallbackNTP=`
+  - then writes target values, making configured order authoritative.
+- Fixed fallback list clipping by raising sanitize cap (enables full configured fallback set to persist/apply).
+- Fixed post-image-update drift by re-applying persisted time settings automatically on detected image change.
+
+## 1.1.3 (2026-03-09)
+
+### Added
+- Persistent base DNS policy in `netservices.conf`:
+  - `dns.servers`
+  - `dns.options`
+- Provider-specific DNS list support (current provider: Tailscale):
+  - `vpn.providers.tailscale.dns_servers`
+- Shared-state DNS refresh IPC:
+  - `request_dns_refresh()`
+  - `has_dns_refresh_request()`
+
+### Changed
+- `tailscale up` command now always includes `--accept-dns=false`.
+- Tailscale advertise tags are config-driven:
+  - `advertise_tags_enabled`
+  - `advertise_tags`
+- Effective DNS construction now follows:
+  - active provider DNS first
+  - base DNS fallback second
+  - dedupe with order preserved
+- Connectivity probing uses the same effective DNS list as resolver generation.
+
+### Fixed
+- Removed Tailscale DNS from base defaults (`dns.servers`) so base DNS stays provider-agnostic.
+- Fixed stale provider DNS leakage into `/etc/resolv.conf` when provider is disabled.
+- Fixed resolver apply on systems where `/etc/resolv.conf` is a symlink (replace with static file when applying policy).
+- Fixed resolver cache skip behavior to validate real file state before skipping write.
+- Fixed delayed resolver updates after VPN Save by triggering immediate DNS refresh in `wifi-manager`.
 
 ## 1.1.2 (2026-03-06)
 
@@ -52,7 +187,7 @@ Release commits:
   - system control APIs (SSH/HTTPS/account/reboot/restart)
   - service monitor API model changes
 - Persistent config model refactor in `services/netservices_config.py`.
-- System settings UX rewritten (`dashboard/templates/system_settings.html`) from service-centric screen to sectioned security/control screen.
+- System settings UX rewritten (`dashboard/templates_main/system_settings.html`) from service-centric screen to sectioned security/control screen.
 - Deployment flow extended to include SSL assets (`install.sh`, `scpme.sh`).
 
 ### Runtime and platform changes
@@ -213,29 +348,29 @@ Release commits:
   - `scpme.sh`
   - `services/netservices_config.py`
   - `dashboard/app.py`
-  - `dashboard/templates/rexgend_settings.html`
-  - `dashboard/templates/ap_settings.html`
-  - `dashboard/templates/wifi_network_info.html`
-  - `dashboard/templates/manage_networks.html`
-  - `dashboard/templates/process_info.html`
-  - `dashboard/templates/system_settings.html`
-  - `dashboard/templates/ap_client_info.html`
-  - `dashboard/templates/device_info.html`
-  - `dashboard/templates/service_info.html`
+  - `dashboard/templates_main/rexgend_settings.html`
+  - `dashboard/templates_main/ap_settings.html`
+  - `dashboard/templates_main/wifi_network_info.html`
+  - `dashboard/templates_main/manage_networks.html`
+  - `dashboard/templates_main/process_info.html`
+  - `dashboard/templates_main/system_settings.html`
+  - `dashboard/templates_main/ap_client_info.html`
+  - `dashboard/templates_main/device_info.html`
+  - `dashboard/templates_main/service_info.html`
 - **Added**
   - `ssl/ca.crt`
   - `ssl/ca.key`
-  - `dashboard/templates/disk_detail.html`
-  - `dashboard/templates/wifi_settings.html`
-  - `dashboard/templates/services.html`
-  - `dashboard/templates/memory_detail.html`
-  - `dashboard/templates/_footer.html`
-  - `dashboard/templates/_topnav.html`
-  - `dashboard/templates/login.html`
-  - `dashboard/templates/install_certificate.html`
-  - `dashboard/templates/_logout.html`
-  - `dashboard/templates/cpu_detail.html`
-  - `dashboard/templates/updating.html`
+  - `dashboard/templates_main/disk_detail.html`
+  - `dashboard/templates_main/wifi_settings.html`
+  - `dashboard/templates_main/services.html`
+  - `dashboard/templates_main/memory_detail.html`
+  - `dashboard/templates_main/_footer.html`
+  - `dashboard/templates_main/_topnav.html`
+  - `dashboard/templates_main/login.html`
+  - `dashboard/templates_main/install_certificate.html`
+  - `dashboard/templates_main/_logout.html`
+  - `dashboard/templates_main/cpu_detail.html`
+  - `dashboard/templates_main/updating.html`
 
 ---
 
@@ -295,7 +430,7 @@ Release commit: **r8384** (`v1.1.1: OTA detection and re-init, AP DHCP fix (dnsm
   - `GET /api/pipes/read?pipe=...&seq=...` (poll new lines since sequence)
   - `GET /pipe-output?pipe=...` (viewer page)
 - Added new template:
-  - `dashboard/templates/pipe_output.html`
+  - `dashboard/templates_main/pipe_output.html`
   - polling UI with pause/clear/status indicators and line class styling by channel/type
 - `rexgend_settings.html` gains experimental sensor card with per-pipe tabs and polling integration.
 
@@ -395,15 +530,15 @@ Release commit: **r8384** (`v1.1.1: OTA detection and re-init, AP DHCP fix (dnsm
 
 ### File-level delta (SVN summarize r8375 -> r8384)
 - **Added**
-  - `dashboard/templates/terminal.html`
-  - `dashboard/templates/pipe_output.html`
+  - `dashboard/templates_main/terminal.html`
+  - `dashboard/templates_main/pipe_output.html`
 - **Modified**
   - `dashboard/app.py`
-  - `dashboard/templates/system_settings.html`
-  - `dashboard/templates/rexgend_settings.html`
-  - `dashboard/templates/device_info.html`
-  - `dashboard/templates/_topnav.html`
-  - `dashboard/templates/_footer.html`
+  - `dashboard/templates_main/system_settings.html`
+  - `dashboard/templates_main/rexgend_settings.html`
+  - `dashboard/templates_main/device_info.html`
+  - `dashboard/templates_main/_topnav.html`
+  - `dashboard/templates_main/_footer.html`
   - `services/wifi_manager.py`
   - `services/client_manager.py`
   - `services/ap_manager.py`
@@ -415,5 +550,5 @@ Release commit: **r8384** (`v1.1.1: OTA detection and re-init, AP DHCP fix (dnsm
 
 ## Post-1.1.0 cleanup (SVN r8373, 2026-02-25)
 - Removed obsolete templates:
-  - `dashboard/templates/hardware_detail.html`
-  - `dashboard/templates/index.html`
+  - `dashboard/templates_main/hardware_detail.html`
+  - `dashboard/templates_main/index.html`

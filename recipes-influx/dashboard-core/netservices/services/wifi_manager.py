@@ -24,28 +24,47 @@ from shared_state import wifi_state
 from ap_manager import APManager
 from client_manager import ClientManager, cleanup_wpa_config
 from netservices_config import NetservicesConfig
+try:
+    from .constants_paths import LED_PATH, MENDER_ARTIFACT_INFO_FILE, SERIAL_FILE
+    from .constants_runtime import (
+        AP_CLIENTS_CACHE_SECONDS_DEFAULT,
+        CONNECT_FORENSICS,
+        CONNECT_LOCK_TIMEOUT_SECONDS,
+        MAIN_LOOP_INTERVAL_SECONDS,
+        NETWORK_SCAN_CACHE_SECONDS_DEFAULT,
+        RECONNECT_INTERVAL_SECONDS,
+        TRACE_VERBOSE,
+    )
+except ImportError:
+    from constants_paths import LED_PATH, MENDER_ARTIFACT_INFO_FILE, SERIAL_FILE
+    from constants_runtime import (
+        AP_CLIENTS_CACHE_SECONDS_DEFAULT,
+        CONNECT_FORENSICS,
+        CONNECT_LOCK_TIMEOUT_SECONDS,
+        MAIN_LOOP_INTERVAL_SECONDS,
+        NETWORK_SCAN_CACHE_SECONDS_DEFAULT,
+        RECONNECT_INTERVAL_SECONDS,
+        TRACE_VERBOSE,
+    )
 
 # ========== Configuration ==========
 
-# Device paths
-SERIAL_FILE = "/home/root/rexusb/var/serial"
-LED_PATH = "/sys/class/leds/JA35/brightness"
+# Device paths (shared constants)
 
 # Log file
 LOG_FILE = "/var/log/wifi_manager.log"
 
 # Timing intervals (seconds)
 # Keep loop responsive; expensive operations are throttled by cache windows.
-MAIN_LOOP_INTERVAL = 1
+MAIN_LOOP_INTERVAL = MAIN_LOOP_INTERVAL_SECONDS
 DEFAULT_NETWORK_SCAN_CONFIG = {
-    "cache_seconds": 10,
+    "cache_seconds": NETWORK_SCAN_CACHE_SECONDS_DEFAULT,
     "auto_scan_requires_dashboard_client": True
 }
 DEFAULT_AP_CLIENTS_CONFIG = {
-    "cache_seconds": 10,
+    "cache_seconds": AP_CLIENTS_CACHE_SECONDS_DEFAULT,
     "auto_update_requires_dashboard_client": True
 }
-CONNECT_LOCK_TIMEOUT_SECONDS = 90
 
 # Setup logging
 logging.basicConfig(
@@ -55,8 +74,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 log = logging.getLogger("wifi_manager")
-TRACE_VERBOSE = os.environ.get("REXGEN_TRACE_VERBOSE", "0") == "1"
-CONNECT_FORENSICS = os.environ.get("REXGEN_CONNECT_FORENSICS", "0") == "1"
 
 
 class WifiManager:
@@ -265,7 +282,7 @@ class WifiManager:
     def _get_mender_artifact() -> str:
         """Read current Mender artifact name from /etc/mender/artifact_info."""
         try:
-            content = Path("/etc/mender/artifact_info").read_text()
+            content = Path(MENDER_ARTIFACT_INFO_FILE).read_text()
             for line in content.splitlines():
                 line = line.strip()
                 if line.startswith("artifact_name="):
@@ -702,7 +719,7 @@ class WifiManager:
         self.update_state()
 
         last_reconnect_attempt = time.time()  # Don't retry immediately after startup
-        RECONNECT_INTERVAL = 60  # Only try to reconnect every 60 seconds to minimize AP disruption
+        reconnect_interval = RECONNECT_INTERVAL_SECONDS  # Minimize AP disruption.
 
         while True:
             try:
@@ -738,7 +755,7 @@ class WifiManager:
                 # Only attempt reconnect periodically to avoid disrupting AP clients
                 if not self.client.is_connected():
                     if not self.client.check_connection():
-                        if now - last_reconnect_attempt >= RECONNECT_INTERVAL:
+                        if now - last_reconnect_attempt >= reconnect_interval:
                             log.info("Attempting to reconnect to known networks...")
                             # Use cached networks if available, otherwise scan
                             cached_networks = wifi_state.get("networks", [])

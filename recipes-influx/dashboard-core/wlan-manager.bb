@@ -11,32 +11,39 @@ DESCRIPTION = " Create a virtual wlan1 interface \
 SRC_URI += "\
         file://dashboard/app.py \
         file://dashboard/__init__.py \
-	file://dashboard/templates/_footer.html \
-        file://dashboard/templates/_logout.html \
-        file://dashboard/templates/_topnav.html \
-        file://dashboard/templates/ap_client_info.html \
-        file://dashboard/templates/ap_settings.html \
-        file://dashboard/templates/cpu_detail.html \
-        file://dashboard/templates/device_info.html \
-        file://dashboard/templates/disk_detail.html \
-        file://dashboard/templates/install_certificate.html \
-        file://dashboard/templates/login.html \
-        file://dashboard/templates/manage_networks.html \
-        file://dashboard/templates/memory_detail.html \
-        file://dashboard/templates/pipe_output.html \
-        file://dashboard/templates/process_info.html \
-        file://dashboard/templates/rexgend_settings.html \
-        file://dashboard/templates/service_info.html \
-        file://dashboard/templates/services.html \
-        file://dashboard/templates/system_settings.html \
-        file://dashboard/templates/terminal.html \
-        file://dashboard/templates/updating.html \
-        file://dashboard/templates/wifi_network_info.html \
-        file://dashboard/templates/wifi_settings.html \
+        file://dashboard/rexgen_constants.py \
+        file://dashboard/rexgend_router.py \
+	file://dashboard/templates_main/_footer.html \
+        file://dashboard/templates_main/_logout.html \
+        file://dashboard/templates_main/_topnav.html \
+        file://dashboard/templates_main/ap_client_info.html \
+        file://dashboard/templates_main/ap_settings.html \
+        file://dashboard/templates_main/cpu_detail.html \
+        file://dashboard/templates_main/device_info.html \
+        file://dashboard/templates_main/disk_detail.html \
+        file://dashboard/templates_main/install_certificate.html \
+        file://dashboard/templates_main/login.html \
+        file://dashboard/templates_main/manage_networks.html \
+        file://dashboard/templates_main/memory_detail.html \
+        file://dashboard/templates_main/pipe_output.html \
+        file://dashboard/templates_main/process_info.html \
+        file://dashboard/templates_main/rexgend_settings.html \
+        file://dashboard/templates_main/service_info.html \
+        file://dashboard/templates_main/services.html \
+        file://dashboard/templates_main/system_settings.html \
+        file://dashboard/templates_main/terminal.html \
+        file://dashboard/templates_main/updating.html \
+        file://dashboard/templates_main/wifi_network_info.html \
+        file://dashboard/templates_main/wifi_settings.html \
+	file://dashboard/templates_rexgen/rexgen_home.html \
+	file://dashboard/templates_rexgen/structure.html \
         file://services/__init__.py \
         file://services/ap_clients_config.json \
         file://services/ap_manager.py \
         file://services/client_manager.py \
+        file://services/constants_network.py \
+        file://services/constants_paths.py \
+        file://services/constants_runtime.py \
         file://services/netservices_config.py \
         file://services/network_scan_config.json \
         file://services/shared_state.py \
@@ -58,7 +65,8 @@ INFLUX_DIRS = "\
     ${INFLUX_DIR} \
     ${INFLUX_DIR}/netservices/ \
     ${INFLUX_DIR}/netservices/dashboard/ \
-    ${INFLUX_DIR}/netservices/dashboard/templates/ \
+    ${INFLUX_DIR}/netservices/dashboard/templates_main/ \
+    ${INFLUX_DIR}/netservices/dashboard/templates_rexgen/ \
     ${INFLUX_DIR}/netservices/scripts/ \
     ${INFLUX_DIR}/netservices/services/ \
     ${INFLUX_DIR}/netservices/ssl/ \               
@@ -70,7 +78,7 @@ INFLUX_DIRS = "\
 INFLUX_FILES = "\
     ${S}/docs/ \
     ${S}/dashboard/ \
-    ${S}/dashboard/templates/ \
+    ${S}/dashboard/templates_main/ \
     ${S}/scripts/ \
     ${S}/services/ \
     ${S}/ssl/ \
@@ -86,7 +94,8 @@ do_install:prepend() {
 
 do_install () {    
     install -m 0755 ${S}/dashboard/*.py ${D}${INFLUX_DIR}/netservices/dashboard/
-    install -m 0755 ${S}/dashboard/templates/*.html ${D}${INFLUX_DIR}/netservices/dashboard/templates/
+    install -m 0755 ${S}/dashboard/templates_main/*.html ${D}${INFLUX_DIR}/netservices/dashboard/templates_main/
+    install -m 0755 ${S}/dashboard/templates_rexgen/*.html ${D}${INFLUX_DIR}/netservices/dashboard/templates_rexgen/
     install -m 0755 ${S}/scripts/*.sh ${D}${INFLUX_DIR}/netservices/scripts/
     install -m 0755 ${S}/services/*.py ${D}${INFLUX_DIR}/netservices/services/
     install -m 0755 ${S}/services/*.json ${D}${INFLUX_DIR}/netservices/services/

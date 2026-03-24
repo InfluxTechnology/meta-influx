@@ -128,12 +128,19 @@
         function renderInterfaceRows(items) {
             var host = document.getElementById('diInterfaceRows');
             if (!host) return;
+            function normalizeLocalHostname(name) {
+                var raw = String(name || '').trim().toLowerCase();
+                if (!raw) return '--';
+                raw = raw.replace(/\.+$/, '');
+                return raw.endsWith('.local') ? raw : (raw + '.local');
+            }
             if (!Array.isArray(items) || items.length === 0) {
                 host.innerHTML = '<div class="info-row"><div class="info-key">Interfaces</div><div class="info-val">--</div></div>';
                 return;
             }
             var html = '';
             var wlanHost = '';
+            var tailscaleHost = '';
             items.forEach(function(it) {
                 var iface = (it && it.iface) ? it.iface : '--';
                 var ipv4 = (it && it.ipv4) ? it.ipv4 : '--';
@@ -144,12 +151,15 @@
                 if ((iface === 'wlan0' || iface === 'wlan1') && hostname !== '--' && !wlanHost) {
                     wlanHost = hostname;
                 }
-                if (iface === 'tailscale0') {
-                    html += '<div class="info-row"><div class="info-key">tailscale0 hostname</div><div class="info-val">' + esc(hostname) + '</div></div>';
+                if (iface === 'tailscale0' && hostname !== '--') {
+                    tailscaleHost = hostname;
                 }
             });
             if (wlanHost) {
-                html += '<div class="info-row"><div class="info-key">wlan0 / wlan1 hostname</div><div class="info-val">' + esc(wlanHost) + '</div></div>';
+                html += '<div class="info-row"><div class="info-key">wlan0 / wlan1 hostname</div><div class="info-val">' + esc(normalizeLocalHostname(wlanHost)) + '</div></div>';
+            }
+            if (tailscaleHost) {
+                html += '<div class="info-row"><div class="info-key">tailscale0 hostname</div><div class="info-val">' + esc(tailscaleHost) + '</div></div>';
             }
             host.innerHTML = html;
         }
@@ -177,7 +187,7 @@
                     var cpuLoad = (typeof data.load_1m === 'number')
                         ? [data.load_1m, data.load_5m, data.load_15m].join(' / ')
                         : '--';
-                    var cpuTemp = (typeof data.cpu_temp_c === 'number') ? (data.cpu_temp_c + ' C') : '--';
+                    var cpuTemp = (typeof data.cpu_temp_c === 'number') ? (data.cpu_temp_c + ' °C') : '--';
                     var memUsage = (typeof data.memory_used_percent === 'number' && data.memory_used_percent >= 0)
                         ? (data.memory_used_percent + '% (' + (data.memory_used || '--') + ' / ' + (data.memory_total || '--') + ')')
                         : '--';
