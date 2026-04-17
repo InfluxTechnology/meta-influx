@@ -1,0 +1,11 @@
+--- a/meta-imx-sdk/conf/distro/include/fsl-imx-base.inc         2026-04-17 08:19:22.645749873 +0000
++++ b/meta-imx-sdk/conf/distro/include/fsl-imx-base.inc         2026-04-17 08:25:09.845428647 +0000
+@@ -5,7 +5,7 @@
+ DISTRO_VERSION = "6.6-scarthgap"
+ DISTROOVERRIDES = "fsl"
+ 
+-MAINTAINER = "NXP <lauren.post@nxp.com>"
++MAINTAINER = "Influx Technology <ggeorgiev@influxtechnology.com>"
+ 
+ POKY_DEFAULT_DISTRO_FEATURES:remove = "${POKY_DEFAULT_DISTRO_FEATURES_IMX_REMOVE}"
+ POKY_DEFAULT_DISTRO_FEATURES_IMX_REMOVE             ?= "wayland"
