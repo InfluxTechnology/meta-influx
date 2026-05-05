@@ -114,6 +114,7 @@
             <div class="card-body">
                 <div class="row"><label>Use Space Limit</label><input id="use_space_limit" type="checkbox"></div>
                 <div class="row"><label>Max Space Percent</label><input id="max_space_percent" type="number" min="1" max="100"></div>
+                <div class="row"><label>Delete Datalogs On Format</label><input id="delete_datalogs_on_format" type="checkbox"></div>
             </div>
         </div>
 
@@ -464,6 +465,7 @@
         document.getElementById('use_socketcan').checked  = !!data.use_socketcan;
         document.getElementById('use_space_limit').checked = !!data.use_space_limit;
         document.getElementById('max_space_percent').value = data.max_space_percent;
+        document.getElementById('delete_datalogs_on_format').checked = !!data.delete_datalogs_on_format;
         document.getElementById('log_errors').checked = !!data.log_errors;
     }
 
@@ -480,6 +482,7 @@
             use_socketcan:    document.getElementById('use_socketcan').checked  ? 1 : 0,
             use_space_limit:  document.getElementById('use_space_limit').checked ? 1 : 0,
             max_space_percent: parseInt(document.getElementById('max_space_percent').value || '0', 10),
+            delete_datalogs_on_format: document.getElementById('delete_datalogs_on_format').checked ? 1 : 0,
             log_errors:       document.getElementById('log_errors').checked ? 1 : 0
         };
         if (!confirm('Save rexgend.conf changes and restart rexgend now?')) return;

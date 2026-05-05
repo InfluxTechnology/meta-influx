@@ -14,6 +14,7 @@ LICENSE = "CLOSED"
 SRC_URI = " \
     file://rexgend \
     file://rexgend.conf \
+    file://example.so \
     file://rexgend.service \
     file://end_influx_upgrade.service \
 "
@@ -23,6 +24,9 @@ S = "${WORKDIR}"
 RDEPENDS:${PN} = "libusb1 "
 
 do_install () {
+	mkdir -p ${D}/data/rexgen/seedkey/
+	install -m 0644 ${S}/example.so ${D}/data/rexgen/seedkey/example.so
+
 	install -m 0755 ${S}/rexgend ${D}${REX_USB_DIR}/rexgend
 	install -m 0644 ${S}/rexgend.conf ${D}${REX_USB_DIR}/rexgend.conf
 	install -m 0644 ${S}/rexgend.service ${D}/etc/systemd/system/rexgend.service 

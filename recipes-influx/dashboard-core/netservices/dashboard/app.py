@@ -42,6 +42,7 @@ from shared_state import wifi_state
 from netservices_config import NetservicesConfig
 try:
     from .rexgend_router import rexgend_router
+    from .xoraya_router import xoraya_router
     from .rexgen_constants import (
         REXGEN_PIPE_DIR,
         REXGEND_CONFIG_FILE,
@@ -50,6 +51,7 @@ try:
     )
 except ImportError:
     from rexgend_router import rexgend_router
+    from xoraya_router import xoraya_router
     from rexgen_constants import (
         REXGEN_PIPE_DIR,
         REXGEND_CONFIG_FILE,
@@ -77,7 +79,7 @@ TIMESYNCD_DROPIN_FILE = TIMESYNCD_DROPIN_DIR / "10-rexgen-time.conf"
 ZONEINFO_DIR = Path("/usr/share/zoneinfo")
 CONTROL_CENTER_DEFAULT_USER = "admin"
 CONTROL_CENTER_DEFAULT_PASS = "admin"
-DASHBOARD_VERSION = "1.1.4"
+DASHBOARD_VERSION = "1.1.5"
 LOGIN_ATTEMPT_WINDOW_SECONDS = 600
 LOGIN_LOCK_SECONDS = 900
 LOGIN_MAX_FAILURES = 5
@@ -91,6 +93,7 @@ REXGEND_DEFAULTS = {
     "use_socketcan": 0,
     "use_space_limit": 1,
     "max_space_percent": 90,
+    "delete_datalogs_on_format": 0,
     "log_errors": 0,
     "use_ntp": 1,
     "ntp_update_period": 300,
@@ -1598,6 +1601,7 @@ def _load_rexgend_config() -> dict:
         "use_socketcan": 1 if _getint("Live data", "use_socketcan", REXGEND_DEFAULTS["use_socketcan"]) else 0,
         "use_space_limit": 1 if _getint("Storage", "use_space_limit", REXGEND_DEFAULTS["use_space_limit"]) else 0,
         "max_space_percent": _getint("Storage", "max_space_percent", REXGEND_DEFAULTS["max_space_percent"]),
+        "delete_datalogs_on_format": 1 if _getint("Storage", "delete_datalogs_on_format", REXGEND_DEFAULTS["delete_datalogs_on_format"]) else 0,
         "log_errors": 1 if _getint("CAN bus", "log_errors", REXGEND_DEFAULTS["log_errors"], alt_section="Canbus") else 0,
         "use_ntp": 1 if _getint("System", "use_ntp", REXGEND_DEFAULTS["use_ntp"]) else 0,
         "ntp_update_period": _getint("System", "ntp_update_period", REXGEND_DEFAULTS["ntp_update_period"]),
@@ -1626,6 +1630,7 @@ def _save_rexgend_config(data: dict):
     parser.set("Live data", "use_socketcan", str(1 if int(data["use_socketcan"]) else 0))
     parser.set("Storage", "use_space_limit", str(1 if int(data["use_space_limit"]) else 0))
     parser.set("Storage", "max_space_percent", str(int(data["max_space_percent"])))
+    parser.set("Storage", "delete_datalogs_on_format", str(1 if int(data["delete_datalogs_on_format"]) else 0))
     parser.set(can_section, "log_errors", str(1 if int(data["log_errors"]) else 0))
     # NTP is intentionally not used for now.
     parser.set("System", "use_ntp", "0")
@@ -2212,6 +2217,7 @@ def api_rexgend_config_save():
             "use_socketcan": 1 if int(data.get("use_socketcan", 0)) else 0,
             "use_space_limit": 1 if int(data.get("use_space_limit", 0)) else 0,
             "max_space_percent": int(data.get("max_space_percent", REXGEND_DEFAULTS["max_space_percent"])),
+            "delete_datalogs_on_format": 1 if int(data.get("delete_datalogs_on_format", REXGEND_DEFAULTS["delete_datalogs_on_format"])) else 0,
             "log_errors": 1 if int(data.get("log_errors", 0)) else 0,
             "use_ntp": 1 if int(data.get("use_ntp", 0)) else 0,
             "ntp_update_period": int(data.get("ntp_update_period", REXGEND_DEFAULTS["ntp_update_period"])),
@@ -4157,6 +4163,7 @@ def create_app() -> Flask:
     flask_app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
     flask_app.register_blueprint(dashboard)
     flask_app.register_blueprint(rexgend_router)
+    flask_app.register_blueprint(xoraya_router)
     _initialize_auth_runtime(flask_app)
     return flask_app
 
