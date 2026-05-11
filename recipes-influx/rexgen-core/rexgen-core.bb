@@ -15,7 +15,7 @@ SRC_URI = " \
     file://rexgend \
     file://rexgend.conf \
     file://example.so \
-    file:/seedkey \
+    file://seedkey \
     file://rexgend.service \
     file://end_influx_upgrade.service \
 "
