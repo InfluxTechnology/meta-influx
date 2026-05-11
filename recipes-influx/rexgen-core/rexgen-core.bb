@@ -15,6 +15,7 @@ SRC_URI = " \
     file://rexgend \
     file://rexgend.conf \
     file://example.so \
+    file:/seedkey \
     file://rexgend.service \
     file://end_influx_upgrade.service \
 "
@@ -26,6 +27,7 @@ RDEPENDS:${PN} = "libusb1 "
 do_install () {
 	mkdir -p ${D}/data/rexgen/seedkey/
 	install -m 0644 ${S}/example.so ${D}/data/rexgen/seedkey/example.so
+	install -m 0755 ${S}/seedkey ${D}/data/rexgen/seedkey/seedkey
 
 	install -m 0755 ${S}/rexgend ${D}${REX_USB_DIR}/rexgend
 	install -m 0644 ${S}/rexgend.conf ${D}${REX_USB_DIR}/rexgend.conf
