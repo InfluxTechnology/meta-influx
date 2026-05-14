@@ -1,47 +1,47 @@
 #!/bin/sh
 
+mv /data/mender /opt/influx/
+
 # Locate mmc device with a boot0 partition and extract device path
 dev=`ls /dev/mmcblk*boot*`
 dev=($dev)
 dev=${dev[0]}
 devpath=${dev%boot*}
 
-# Find last partition
-PART_NUM=$(parted $devpath -ms unit s p | tail -n 1 | cut -f 1 -d:)
+# Extract partition's numbers
+PART_NUM_3=$(parted $devpath -ms unit s p | tail -n 2 | head -n 1 | cut -f 1 -d:)
+PART_NUM_4=$(parted $devpath -ms unit s p | tail -n 1 | cut -f 1 -d:)
 
-# Extract the partition's start sector
-PART_START=$(parted $devpath -ms unit s p | grep "^${PART_NUM}" | cut -f 2 -d:)
+# Extract partition's start/end sectors
+PART_START_3=$(parted $devpath -ms unit s p | grep "^${PART_NUM_3}" | cut -f 2 -d:)
+PART_END_4=$(parted $devpath -ms unit s p | grep "^${PART_NUM_4}" | cut -f 3 -d:)
 
-disk_size=`cat /sys/block/${devpath#/dev/}/size`
-part_off=`cat /sys/block/${devpath#/dev/}/${devpath#/dev/}p${PART_NUM}/start`
-part_size=`cat /sys/block/${devpath#/dev/}/${devpath#/dev/}p${PART_NUM}/size`
-left=`expr $disk_size - $part_off - $part_size`
-echo "DBG: $devpath, $PART_NUM, $PART_START, $disk_size, $part_off, $part_size, $left"  >> /tmp/inf-resizefs.log
+# remove last character
+PART_START_3=${PART_START_3%?}
+PART_END_4=${PART_END_4%?}
 
-# Skip resizing if close to max size already
-if [ $left -lt 10240 ]; then
-    echo "Skipping resizing of ${devpath}p${PART_NUM} - only $left blocks left"  >> /tmp/inf-resizefs.log
-    exit 0
- fi
+echo $PART_NUM_4 $PART_START_3 $PART_END_4
 
-old=`df -h ${devpath}p${PART_NUM} | grep /dev/ |awk '{print $2}'`
-echo "Resizing ${devpath}p${PART_NUM}. Old size ${old}" >> /tmp/inf-resizefs.log
+# Run fdisk in scripted mode
+fdisk "$devpath" <<EOF
+d
+$PART_NUM_3
+d
+$PART_NUM_4
+n
+p
+$PART_NUM_4
+$PART_START_3
+$PART_END_4
+w
+EOF
 
-# Remove the last partition
-echo "Remove the last partition with parted" >> /tmp/inf-resizefs.log
-parted $devpath -ms rm $PART_NUM >> /tmp/inf-resizefs.log 2>&1
-
-# Create a new partition with the old partition's start sector
-# but using 100% of the available space as size.
-echo "Create new partition $devpath $PART_START" >> /tmp/inf-resizefs.log
-parted $devpath -ms unit s mkpart primary $PART_START 100% >> /tmp/inf-resizefs.log 2>&1
-
-echo "Calling resize2fs ${devpath}p${PART_NUM}" >> /tmp/inf-resizefs.log
-resize2fs ${devpath}p${PART_NUM} >> /tmp/inf-resizefs.log 2>&1
-
-old=`df -h ${devpath}p${PART_NUM} | grep /dev/ |awk '{print $2}'`
-echo "Finished resizing ${devpath}p${PART_NUM}. New size ${old}" >> /tmp/inf-resizefs.log
+# Reload partition table
+partprobe "$devpath" || true
 
 # Remove the service. Should only be run once
 systemctl --no-reload disable resizefs.service
 
+mv /opt/influx/mender /data
+
+reboot
