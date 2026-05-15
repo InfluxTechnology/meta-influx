@@ -1,5 +1,89 @@
 # ReXgen Control Center Release Notes
 
+## ReXgen Control Center 1.2.0 (2026-05-15) - Pluggable Modules and Release Tooling
+
+Release type: Architecture refactor + new first-party module + release tooling
+Baseline: 1.1.5 (2026-04-30)
+Primary goal: turn the dashboard from a flat single-tree app into a small
+core that loads pluggable modules, ship the first such module (xoraya) for
+in-browser control of Xoraya loggers, and standardize how releases are built
+and delivered.
+
+### What users will notice
+- Two new top-level entries reachable directly from the dashboard:
+  - **Xoraya logger configuration** under `/xoraya` — full browser interface
+    for the Xoraya datalogger (replaces the desktop "Xoraya Configuration"
+    application for browser usage). 15 interface tabs (CAN, FlexRay,
+    Ethernet, RS232, LIN, DLT, MOST, GPS, Video, Diag CCP/XCP/UDS,
+    RawSocket, Digital I/O, Event), HDD download, live monitor, system
+    controls, all over HTTP.
+  - **ReXgen module** under `/rexgen` — same scope as 1.1.5's rexgen pages,
+    now owned by `modules/rexgen/` (no functional change for operators).
+- Existing Wi-Fi / AP / Device / System pages keep the same URLs and same
+  behavior as 1.1.5.
+- Footer version reads **1.2.0**.
+
+### Major platform changes
+- **Pluggable `modules/` subsystem.** Add-on functionality (rexgen, xoraya,
+  and future modules) lives in self-contained directories under
+  `modules/<name>/` with its own router, templates, docs, version, and
+  optional native bridge. The dashboard core simply discovers and
+  registers each module's Flask blueprint on startup.
+- **Move of rexgen out of the dashboard core.** What was
+  `dashboard/rexgend_router.py` + `dashboard/templates_rexgen/` in 1.1.5
+  is now `modules/rexgen/` — same behavior, cleaner ownership boundary.
+- **New module: xoraya 1.0.0.** A complete browser equivalent of the
+  desktop Xoraya Configuration app. See `modules/xoraya/docs/RELEASE_NOTES.md`
+  for the full sub-release notes.
+
+### Release tooling (new)
+- **`scripts/pack.sh`** — single command that produces two tarballs under
+  `dist/`:
+  - `netservices-<ver>-deploy.tar.gz` — the runtime files only. Drops the
+    Xoraya SDK staging trees, .cpp sources, build scripts, dev docs, and
+    Python caches. This is the artifact to copy onto a ReXgen device.
+  - `netservices-<ver>-source.tar.gz` — the full tree for archival or
+    off-line builds.
+  - Each tarball gets a `.sha256` companion file for integrity checks.
+  - The filename is derived from `DASHBOARD_VERSION` automatically, so
+    bumping the version is all that is needed to retag a release.
+- **`scpme.sh` rewritten to use `rsync`** with explicit excludes. The
+  on-device footprint of the xoraya module dropped from ~57 MB (with
+  staging SDK) to ~1.3 MB.
+
+### Compatibility
+- No protocol or API breaks for existing netservices endpoints
+  (Wi-Fi/AP/Device/System/VPN/Time/HTTPS/Update/Terminal/Pipes/etc.).
+- Module URL prefixes are new and additive (`/xoraya/*`, `/rexgen/*`).
+- `netservices.conf` schema is unchanged.
+- Browsers: same baseline as 1.1.5 (modern Chrome/Firefox/Edge). The
+  Xoraya tabs require fetch / CSS Grid / `CSS.escape`.
+
+### Technical note
+- Dashboard version is now `1.2.0`.
+- Module versions are independent of the dashboard version. xoraya ships
+  at `1.0.0` in this release; future xoraya updates can roll independently
+  without bumping the dashboard.
+
+## ReXgen Control Center 1.1.5 - Maintenance and Release Documentation Update
+
+Release type: Maintenance/documentation update  
+Baseline: 1.1.4  
+Primary goal: keep release artifacts synchronized with current runtime/dashboard architecture and operational expectations.
+
+### What users will notice
+- No user-facing workflow break compared to 1.1.4.
+- Existing dashboard routes and APIs continue to work under the current architecture split.
+
+### Included in this release
+- Changelog and release-note refresh for current baseline.
+- Clarified operational positioning for architecture split and service/runtime consistency work.
+
+### Technical note
+- Version increment to `1.1.5` is used for release tracking/document alignment.
+
+# ReXgen Control Center Release Notes
+
 ## ReXgen Control Center 1.1.4 - Dashboard Architecture Split, Service Refactor, and Time Control
 
 Release type: Architecture + runtime refactor + platform control  

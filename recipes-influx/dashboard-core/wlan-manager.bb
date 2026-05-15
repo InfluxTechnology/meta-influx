@@ -11,8 +11,6 @@ DESCRIPTION = " Create a virtual wlan1 interface \
 SRC_URI += "\
         file://dashboard/app.py \
         file://dashboard/__init__.py \
-        file://dashboard/rexgen_constants.py \
-        file://dashboard/rexgend_router.py \
 	file://dashboard/templates_main/_footer.html \
         file://dashboard/templates_main/_logout.html \
         file://dashboard/templates_main/_topnav.html \
@@ -25,6 +23,7 @@ SRC_URI += "\
         file://dashboard/templates_main/login.html \
         file://dashboard/templates_main/manage_networks.html \
         file://dashboard/templates_main/memory_detail.html \
+        file://dashboard/templates_main/modules.html \
         file://dashboard/templates_main/pipe_output.html \
         file://dashboard/templates_main/process_info.html \
         file://dashboard/templates_main/rexgend_settings.html \
@@ -35,8 +34,11 @@ SRC_URI += "\
         file://dashboard/templates_main/updating.html \
         file://dashboard/templates_main/wifi_network_info.html \
         file://dashboard/templates_main/wifi_settings.html \
-	file://dashboard/templates_rexgen/rexgen_home.html \
-	file://dashboard/templates_rexgen/structure.html \
+        file://modules/__init__.py \
+        file://modules/rexgen/constants.py \
+        file://modules/rexgen/router.py \
+        file://modules/rexgen/templates/rexgen_home.html \
+        file://modules/rexgen/templates/structure.html \
         file://services/__init__.py \
         file://services/ap_clients_config.json \
         file://services/ap_manager.py \
@@ -66,7 +68,9 @@ INFLUX_DIRS = "\
     ${INFLUX_DIR}/netservices/ \
     ${INFLUX_DIR}/netservices/dashboard/ \
     ${INFLUX_DIR}/netservices/dashboard/templates_main/ \
-    ${INFLUX_DIR}/netservices/dashboard/templates_rexgen/ \
+    ${INFLUX_DIR}/netservices/modules/ \
+    ${INFLUX_DIR}/netservices/modules/rexgen/ \
+    ${INFLUX_DIR}/netservices/modules/rexgen/templates/ \
     ${INFLUX_DIR}/netservices/scripts/ \
     ${INFLUX_DIR}/netservices/services/ \
     ${INFLUX_DIR}/netservices/ssl/ \               
@@ -95,7 +99,10 @@ do_install:prepend() {
 do_install () {    
     install -m 0755 ${S}/dashboard/*.py ${D}${INFLUX_DIR}/netservices/dashboard/
     install -m 0755 ${S}/dashboard/templates_main/*.html ${D}${INFLUX_DIR}/netservices/dashboard/templates_main/
-    install -m 0755 ${S}/dashboard/templates_rexgen/*.html ${D}${INFLUX_DIR}/netservices/dashboard/templates_rexgen/
+#    install -m 0755 ${S}/dashboard/templates_rexgen/*.html ${D}${INFLUX_DIR}/netservices/dashboard/templates_rexgen/
+    install -m 0755 ${S}/modules/*.py ${D}${INFLUX_DIR}/netservices/modules/
+    install -m 0755 ${S}/modules/rexgen/*.py ${D}${INFLUX_DIR}/netservices/modules/rexgen/
+    install -m 0755 ${S}/modules/rexgen/templates/*.html ${D}${INFLUX_DIR}/netservices/modules/rexgen/templates/
     install -m 0755 ${S}/scripts/*.sh ${D}${INFLUX_DIR}/netservices/scripts/
     install -m 0755 ${S}/services/*.py ${D}${INFLUX_DIR}/netservices/services/
     install -m 0755 ${S}/services/*.json ${D}${INFLUX_DIR}/netservices/services/

@@ -1,0 +1,7 @@
+[Match]
+Name=wlan0
+
+[Network]
+DHCP=no
+LinkLocalAddressing=no
+IPv6AcceptRA=no

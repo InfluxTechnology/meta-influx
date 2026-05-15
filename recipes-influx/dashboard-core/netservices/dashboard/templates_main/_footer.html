@@ -47,7 +47,7 @@ html.dark #footer-bar a { color: #26c6c0 !important; }
 </style>
 
 <div id="footer-bar" style="position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:center;font-size:0.72em;color:#6f7680;z-index:40;background:rgba(245,247,248,0.95);border-top:1px solid #d8dde2;padding:4px 14px;">
-    <span style="pointer-events:none;">ReXgen Control Center Version {{ version }}</span>
+    <span id="version-unlock" style="cursor:pointer;">ReXgen Control Center Version {{ version }}</span>
 </div>
 
 <script>
@@ -58,5 +58,33 @@ if(theme==='dark') document.documentElement.classList.add('dark');
 
 /* English only — expose identity translate function for template scripts */
 window._t=function(s){ return s; };
+
+var KEY = 'rexgen_show_modules_tab';
+function applyModulesTabVisibility(){
+    var show = sessionStorage.getItem(KEY) === '1';
+    var tabs = document.querySelectorAll('.modules-tab-hidden');
+    tabs.forEach(function(el){ el.style.display = show ? '' : 'none'; });
+}
+applyModulesTabVisibility();
+
+var versionEl = document.getElementById('version-unlock');
+if (versionEl) {
+    var clicks = 0;
+    var firstTs = 0;
+    versionEl.addEventListener('click', function(){
+        var now = Date.now();
+        if (!firstTs || (now - firstTs) > 3000) {
+            firstTs = now;
+            clicks = 0;
+        }
+        clicks += 1;
+        if (clicks >= 5) {
+            sessionStorage.setItem(KEY, '1');
+            applyModulesTabVisibility();
+            clicks = 0;
+            firstTs = 0;
+        }
+    });
+}
 })();
 </script>

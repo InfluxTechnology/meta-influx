@@ -6,6 +6,7 @@ WiFi Dashboard Service - Lightweight version
 import os
 import sys
 import logging
+import importlib.util
 import time
 import subprocess
 import signal
@@ -40,24 +41,29 @@ from werkzeug.serving import make_server
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'services'))
 from shared_state import wifi_state
 from netservices_config import NetservicesConfig
+# Rexgen константи живеят в modules/rexgen/constants.py от 1.2.0 нататък
+# (преди това бяха в dashboard/rexgen_constants.py, който е премахнат).
+# Зареждаме ги чрез dynamic import — modules/ не е на sys.path по подразбиране,
+# а и държим dashboard core decoupled от конкретни module имена.
+REXGEN_PIPE_DIR = "/var/run/rexgen"
+REXGEND_CONFIG_FILE = "/data/rexgen/config/rexgend.conf"
+REXGEND_SERVICE = "rexgend.service"
+WIFI_DASHBOARD_SERVICE = "wifi-dashboard.service"
+
 try:
-    from .rexgend_router import rexgend_router
-    from .xoraya_router import xoraya_router
-    from .rexgen_constants import (
-        REXGEN_PIPE_DIR,
-        REXGEND_CONFIG_FILE,
-        REXGEND_SERVICE,
-        WIFI_DASHBOARD_SERVICE,
+    _spec_rex_consts = importlib.util.spec_from_file_location(
+        "netservices_rexgen_module_constants",
+        str(Path(__file__).resolve().parents[1] / "modules" / "rexgen" / "constants.py"),
     )
-except ImportError:
-    from rexgend_router import rexgend_router
-    from xoraya_router import xoraya_router
-    from rexgen_constants import (
-        REXGEN_PIPE_DIR,
-        REXGEND_CONFIG_FILE,
-        REXGEND_SERVICE,
-        WIFI_DASHBOARD_SERVICE,
-    )
+    if _spec_rex_consts and _spec_rex_consts.loader:
+        _rex_consts = importlib.util.module_from_spec(_spec_rex_consts)
+        _spec_rex_consts.loader.exec_module(_rex_consts)
+        REXGEN_PIPE_DIR = getattr(_rex_consts, "REXGEN_PIPE_DIR", REXGEN_PIPE_DIR)
+        REXGEND_CONFIG_FILE = getattr(_rex_consts, "REXGEND_CONFIG_FILE", REXGEND_CONFIG_FILE)
+        REXGEND_SERVICE = getattr(_rex_consts, "REXGEND_SERVICE", REXGEND_SERVICE)
+        WIFI_DASHBOARD_SERVICE = getattr(_rex_consts, "WIFI_DASHBOARD_SERVICE", WIFI_DASHBOARD_SERVICE)
+except Exception:
+    pass
 
 # ========== Configuration ==========
 
@@ -79,7 +85,7 @@ TIMESYNCD_DROPIN_FILE = TIMESYNCD_DROPIN_DIR / "10-rexgen-time.conf"
 ZONEINFO_DIR = Path("/usr/share/zoneinfo")
 CONTROL_CENTER_DEFAULT_USER = "admin"
 CONTROL_CENTER_DEFAULT_PASS = "admin"
-DASHBOARD_VERSION = "1.1.5"
+DASHBOARD_VERSION = "1.2.0"
 LOGIN_ATTEMPT_WINDOW_SECONDS = 600
 LOGIN_LOCK_SECONDS = 900
 LOGIN_MAX_FAILURES = 5
@@ -125,11 +131,31 @@ def _inject_globals():
         active_tab = "rexgend"
     elif path == "/system-settings":
         active_tab = "system"
+    elif path == "/modules":
+        active_tab = "modules"
     else:
         active_tab = ""
     return {"version": DASHBOARD_VERSION, "active_tab": active_tab,
             "theme": _PERSIST_CFG.read_theme(),
             "experimental": _PERSIST_CFG.read_experimental()}
+
+
+@dashboard.route("/modules")
+def modules_page():
+    netservices_root = Path(__file__).resolve().parents[1]
+    modules_root = netservices_root / "modules"
+    rows = []
+    if modules_root.is_dir():
+        for module_dir in sorted(modules_root.iterdir(), key=lambda p: p.name):
+            if not module_dir.is_dir():
+                continue
+            if not (module_dir / "router.py").is_file():
+                continue
+            rows.append({
+                "name": module_dir.name,
+                "path": f"/{module_dir.name}",
+            })
+    return render_template("modules.html", modules=rows)
 
 
 _LOGIN_FAIL_STATE = {}
@@ -4154,6 +4180,45 @@ def _ensure_ssl_cert(force_regen: bool = False):
         raise
 
 
+def _register_optional_module_routers(flask_app: Flask) -> None:
+    """
+    Auto-discover optional routers from:
+      <netservices>/modules/<module_name>/router.py
+
+    Convention:
+      - file name: router.py
+      - exported variable: router (Flask Blueprint)
+    """
+    netservices_root = Path(__file__).resolve().parents[1]
+    modules_root = netservices_root / "modules"
+    if not modules_root.is_dir():
+        log.info("modules folder not found; no optional modules loaded")
+        return
+
+    for module_dir in sorted(modules_root.iterdir(), key=lambda p: p.name):
+        if not module_dir.is_dir():
+            continue
+        router_file = module_dir / "router.py"
+        if not router_file.is_file():
+            continue
+        module_name = f"netservices_optional_router_{module_dir.name}"
+        try:
+            spec = importlib.util.spec_from_file_location(module_name, str(router_file))
+            if spec is None or spec.loader is None:
+                log.warning(f"Skipping optional module {module_dir.name}: cannot load spec")
+                continue
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            bp = getattr(mod, "router", None)
+            if isinstance(bp, Blueprint):
+                flask_app.register_blueprint(bp)
+                log.info(f"Registered optional module router: {module_dir.name}")
+            else:
+                log.warning(f"Skipping optional module {module_dir.name}: router Blueprint not found")
+        except Exception as e:
+            log.exception(f"Failed to load optional module router {module_dir.name}: {e}")
+
+
 def create_app() -> Flask:
     flask_app = Flask(__name__, template_folder='templates_main')
     flask_app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -4162,8 +4227,7 @@ def create_app() -> Flask:
     flask_app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     flask_app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
     flask_app.register_blueprint(dashboard)
-    flask_app.register_blueprint(rexgend_router)
-    flask_app.register_blueprint(xoraya_router)
+    _register_optional_module_routers(flask_app)
     _initialize_auth_runtime(flask_app)
     return flask_app
 

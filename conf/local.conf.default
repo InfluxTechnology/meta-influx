@@ -24,5 +24,5 @@ IMAGE_INSTALL:append = " rex-sys-log "
 IMAGE_INSTALL:append = " wlan-manager "
 IMAGE_INSTALL:append = " tailscale " 
 
-INFLUX_VERSION="2.1.8"
+INFLUX_VERSION="2.1.9"
 INFLUX_RELEASE="pro.${INFLUX_VERSION}"

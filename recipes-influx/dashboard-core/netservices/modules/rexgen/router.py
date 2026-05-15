@@ -1,30 +1,43 @@
 #!/usr/bin/env python3
-"""Routes for the standalone rexgen dashboard."""
+"""Routes for rexgen dashboard module."""
 
 import json
+import importlib.util
+from pathlib import Path
 
 from flask import Blueprint, jsonify, render_template
 
-try:
-    from .rexgen_constants import REXGEND_CONFIG_PATH, STRUCTURE_JSON_PATH
-except ImportError:
-    from rexgen_constants import REXGEND_CONFIG_PATH, STRUCTURE_JSON_PATH
+_constants_file = Path(__file__).with_name("constants.py")
+_spec = importlib.util.spec_from_file_location("netservices_rexgen_constants", str(_constants_file))
+if _spec is None or _spec.loader is None:
+    raise RuntimeError(f"Cannot load constants from {_constants_file}")
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
 
-rexgend_router = Blueprint("rexgend_router", __name__, template_folder="templates_rexgen")
+REXGEND_CONFIG_PATH = _mod.REXGEND_CONFIG_PATH
+STRUCTURE_JSON_PATH = _mod.STRUCTURE_JSON_PATH
+
+_ROOT = Path(__file__).resolve().parent
+router = Blueprint(
+    "rexgen_router",
+    __name__,
+    template_folder="templates",
+    root_path=str(_ROOT),
+)
 
 
-@rexgend_router.route("/rexgen")
+@router.route("/rexgen")
 def rexgen_home():
     return render_template("rexgen_home.html")
 
 
-@rexgend_router.route("/structure")
-@rexgend_router.route("/rexgen/structure")
+@router.route("/structure")
+@router.route("/rexgen/structure")
 def rexgen_structure_page():
     return render_template("structure.html")
 
 
-@rexgend_router.route("/api/rexgen/structure")
+@router.route("/api/rexgen/structure")
 def rexgen_structure():
     if not STRUCTURE_JSON_PATH.exists():
         return jsonify({
@@ -99,7 +112,7 @@ def _extract_can_count(payload: dict) -> int:
     return count
 
 
-@rexgend_router.route("/api/rexgen/runtime")
+@router.route("/api/rexgen/runtime")
 def rexgen_runtime():
     payload = _read_structure_payload()
     cfg = _read_rexgend_conf()
