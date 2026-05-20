@@ -1,9 +1,0 @@
-[Unit]
-Description=Resize data partition to full available size
-
-[Service]
-Type=oneshot
-ExecStart=/bin/sh -c 'sleep 2 ; /usr/sbin/inf-resizefs.sh'
-
-[Install]
-WantedBy=multi-user.target
