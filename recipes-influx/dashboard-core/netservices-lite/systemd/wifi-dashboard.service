@@ -1,0 +1,20 @@
+[Unit]
+Description=ReXgen WiFi Dashboard Service (lite)
+After=wifi-manager.service network.target
+Requires=wifi-manager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/influx/netservices-lite/dashboard/app.py
+WorkingDirectory=/opt/influx/netservices-lite/dashboard
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+NoNewPrivileges=false
+ProtectSystem=false
+ProtectHome=false
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Saved Networks</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, #f2fbfa 0%, #dff2ef 100%); }
+        a { color: #20b2aa; }
+        a:hover { color: #5ed8d1; }
+        .top-switch a:hover, .back-btn:hover, .pwd-toggle:hover { color: #5ed8d1; }
+        .container { background: #fff; width: 94%; max-width: 640px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); padding: 20px; }
+
+        .top-switch { display: flex; background: #f5f5f7; border-radius: 16px 16px 0 0; overflow: hidden; margin: -20px -20px 12px -20px; }
+        .top-switch a { flex: 1; height: 64px; text-decoration: none; color: #20b2aa; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .top-switch a.active { background: #fff; color: #178a83; }
+        .top-switch svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .top-switch .tab-label { font-size: 0.62em; font-weight: 600; line-height: 1; white-space: nowrap; text-align: center; }
+
+        .header { position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; min-height: 24px; }
+        .back-btn { position: absolute; left: 0; top: 50%; transform: translateY(-50%); font-size: 1.2em; color: #20b2aa; text-decoration: none; line-height: 1; }
+        h1 { margin: 0; font-size: 1.1em; color: #333; text-align: center; width: 100%; }
+        .subpage-title { margin: -6px 0 10px 0; text-align: center; font-size: 0.84em; color: #86868b; }
+
+        .status { display: none; margin: 10px 0; padding: 9px 10px; border-radius: 8px; font-size: 0.92em; }
+        .status.ok { display: block; background: #e8f5e9; color: #2e7d32; }
+        .status.err { display: block; background: #ffebee; color: #c62828; }
+
+        .section { margin-top: 12px; }
+        .section:first-of-type { margin-top: 0; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 15px; background: #f5f5f7; }
+        .section-label { font-size: 0.75em; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1; }
+
+        .network-item { display: flex; align-items: center; gap: 8px; padding: 12px 15px; border-bottom: 1px solid #e5e5e7; background: #fff; }
+        .network-item:last-child { border-bottom: none; }
+        .ssid { flex: 1; color: #333; word-break: break-word; }
+        .connected { font-size: 0.75em; color: #178a83; border: 1px solid #b7ebe7; background: #e6fbf9; border-radius: 999px; padding: 2px 7px; white-space: nowrap; }
+        .del { border: 0; background: #d32f2f; color: #fff; border-radius: 7px; padding: 7px 10px; font-size: 0.82em; cursor: pointer; white-space: nowrap; }
+        .empty { padding: 12px 15px; color: #86868b; font-size: 0.95em; }
+
+        .form-body { padding: 12px 15px; display: grid; gap: 8px; }
+        input { width: 100%; padding: 10px; border: 1px solid #dce3e7; border-radius: 8px; font-size: 0.95em; }
+        input:focus { outline: none; border-color: #20b2aa; }
+        .hint { margin: 0; color: #86868b; font-size: 0.8em; }
+        .pwd-row { display: flex; align-items: center; gap: 8px; }
+        .pwd-row input { flex: 1; }
+        .pwd-toggle { color: #20b2aa; font-size: 0.85em; cursor: pointer; user-select: none; white-space: nowrap; }
+        .save { border: 0; background: linear-gradient(135deg, #20b2aa 0%, #178a83 100%); color: white; padding: 10px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .save:disabled, .del:disabled { opacity: 0.7; cursor: not-allowed; }
+    
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear { display: none; }
+        input[type="password"]::-webkit-credentials-auto-fill-button {
+            visibility: hidden;
+            display: none !important;
+            pointer-events: none;
+        }
+</style>
+    <!-- footer-safe-space -->    <style>body { padding-bottom: 64px !important; } .container { margin-top: 36px; }</style>
+</head>
+<body>
+    <div class="container">
+        {% include '_topnav.html' %}
+
+        <div class="header">
+            <a class="back-btn" href="/wifi-settings">&larr;</a>
+            <h1>Wi-Fi Settings</h1>
+        </div>
+        <div class="subpage-title">Manage Saved Networks</div>
+
+        <div id="status" class="status"></div>
+
+        <div class="section">
+            <div class="section-header"><span class="section-label">Saved Networks</span></div>
+            <div id="savedList" class="empty">Loading...</div>
+        </div>
+
+        <div class="section">
+            <div class="section-header"><span class="section-label">Add Or Update</span></div>
+            <form id="addForm" class="form-body">
+                <input id="ssid" type="text" maxlength="32" placeholder="SSID" required>
+                <div class="pwd-row">
+                    <input id="password" type="password" maxlength="63" placeholder="Password (leave empty for open)">
+                    <span id="pwdToggle" class="pwd-toggle" onclick="toggleManagePassword()">Show</span>
+                </div>
+                <p class="hint">WPA password must be 8-63 characters.</p>
+                <button id="saveBtn" class="save" type="submit">Save Network</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        function showStatus(msg, ok) {
+            var el = document.getElementById('status');
+            el.className = 'status ' + (ok ? 'ok' : 'err');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(function() {
+                el.style.display = 'none';
+                el.className = 'status';
+            }, 5000);
+        }
+
+        function renderSaved(data) {
+            var list = document.getElementById('savedList');
+            var saved = data.saved_networks || [];
+            var connected = data.connected_ssid || null;
+            if (!saved.length) {
+                list.className = 'empty';
+                list.textContent = 'No saved networks yet.';
+                return;
+            }
+
+            var html = '';
+            saved.forEach(function(ssid) {
+                html += '<div class="network-item">' +
+                    '<span class="ssid">' + ssid + '</span>' +
+                    (connected === ssid ? '<span class="connected">Connected</span>' : '') +
+                    '<button class="del" onclick="deleteSaved(\'' + ssid.replace(/'/g, "\\'") + '\')">Delete</button>' +
+                '</div>';
+            });
+            list.className = '';
+            list.innerHTML = html;
+        }
+
+        function loadSaved() {
+            fetch('/api/saved-networks')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    renderSaved(data);
+                });
+        }
+
+        function loadSavedData() {
+            return fetch('/api/saved-networks').then(function(r) { return r.json(); });
+        }
+
+        function toggleManagePassword() {
+            var pwd = document.getElementById('password');
+            var toggle = document.getElementById('pwdToggle');
+            if (!pwd || !toggle) return;
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                toggle.textContent = 'Hide';
+            } else {
+                pwd.type = 'password';
+                toggle.textContent = 'Show';
+            }
+        }
+
+        function waitForSavedChange(checkFn, doneMsg) {
+            var attempts = 0;
+            var maxAttempts = 15;
+
+            function poll() {
+                loadSavedData()
+                    .then(function(data) {
+                        renderSaved(data);
+                        if (checkFn(data)) {
+                            showStatus(doneMsg, true);
+                            return;
+                        }
+
+                        attempts++;
+                        if (attempts >= maxAttempts) {
+                            showStatus('Request submitted but update is still pending. Please refresh.', false);
+                            return;
+                        }
+                        setTimeout(poll, 1000);
+                    })
+                    .catch(function() {
+                        attempts++;
+                        if (attempts >= maxAttempts) {
+                            showStatus('Could not verify update right now.', false);
+                            return;
+                        }
+                        setTimeout(poll, 1000);
+                    });
+            }
+
+            poll();
+        }
+
+        function deleteSaved(ssid) {
+            if (!confirm("Delete saved network '" + ssid + "'?")) return;
+            fetch('/api/saved-networks/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ssid: ssid })
+            })
+            .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+            .then(function(res) {
+                if (!res.ok || res.data.error) {
+                    showStatus(res.data.error || 'Delete request failed', false);
+                    return;
+                }
+                showStatus('Delete requested. Waiting for update...', true);
+                waitForSavedChange(function(data) {
+                    var list = data.saved_networks || [];
+                    return list.indexOf(ssid) < 0;
+                }, "Deleted '" + ssid + "'");
+            })
+            .catch(function() { showStatus('Delete request failed', false); });
+        }
+
+        document.getElementById('addForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var saveBtn = document.getElementById('saveBtn');
+            var ssid = document.getElementById('ssid').value.trim();
+            var password = document.getElementById('password').value;
+
+            saveBtn.disabled = true;
+            fetch('/api/saved-networks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ssid: ssid, password: password })
+            })
+            .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+            .then(function(res) {
+                saveBtn.disabled = false;
+                if (!res.ok || res.data.error) {
+                    showStatus(res.data.error || 'Save request failed', false);
+                    return;
+                }
+                document.getElementById('password').value = '';
+                showStatus('Save requested. Waiting for update...', true);
+                waitForSavedChange(function(data) {
+                    var list = data.saved_networks || [];
+                    return list.indexOf(ssid) >= 0;
+                }, "Saved '" + ssid + "'");
+            })
+            .catch(function() {
+                saveBtn.disabled = false;
+                showStatus('Save request failed', false);
+            });
+        });
+
+        loadSaved();
+    </script>
+    {% include '_footer.html' %}
+</body>
+</html>
