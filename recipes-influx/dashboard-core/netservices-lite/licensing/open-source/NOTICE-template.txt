@@ -1,0 +1,21 @@
+NOTICE
+
+ReXgen Pro Dashboard
+Copyright (c) Influx Technology LTD.
+
+This product includes third-party software components. Those components remain
+subject to their respective copyright notices and license terms.
+
+Representative third-party components:
+
+- Flask - BSD-3-Clause
+- Werkzeug - BSD-3-Clause
+- Jinja2 - BSD-3-Clause
+- MarkupSafe - BSD-3-Clause
+- itsdangerous - BSD-3-Clause
+- click - BSD-3-Clause
+- blinker - MIT
+
+If this software is distributed as part of a device firmware image, additional
+system-level open-source packages may also apply. Publish those package notices
+separately in the firmware compliance materials for the corresponding release.

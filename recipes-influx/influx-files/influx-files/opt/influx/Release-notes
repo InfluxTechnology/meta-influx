@@ -1,117 +1,30 @@
 ### Release notes ###
 
-v.2.0.2
-    Influx features
-	CAN Error frame support - socketcan and pipes
-	Changed ping server (from 8.8.8.8 to 9.9.9.9)
-
-    Bug fixes
-	AWS upload big files (500MB)
-	Enabled socket cAN by default 
-	Option to reserve percent of disk space for rxd files
-	Problem with wrong WiFi password 
-
-v 2.0.1
-    Kept Google cloud settings and rexgen logs on mender update
-
-v 2.0.0
-    Mender update image rootfs	
-
-    Influx features
-	GNSS LED added
-	Report MAX values interval is now configurable
-	Unit name contains RexGen serial number
-
-    Added rexgend service v.1.2.2
-        Inherited socket.service
-        Multi partition file upload to cloud
-	Support socket can over virtual can (configurable in rexgend.conf)
-	APN settings can be set through ReXdesk
-	Reflash, Reconfigure from Google Cloud
-        Support multi partition
-	Fixed sleeping mode
-	Live data runs continuously
-
-v 1.2.5
-    Fixed multiple files download
-    Fixed Cancel download
-    Fixed bad communication between Rexdesk and the device
-
-v 1.2.4
-    Added system logging service (rex_sys_log.sh) that logs the min, max and average cpu, temperature and memory.
-    It also logs GNSS position and download speed
-    Logs are written in /home/root/rexusb/log and uploaded to Google cloud at the end of the day.
-    Measurement times can be configured through rex_sys_log.conf
-    New version of socket service with Google fix
- 
-v 1.2.3
-    GCS support via Service Account credential json - download, upload, resume upload
-    GCS HMAC credentials removed
-
-v 1.2.2
-    GCS support (Google cloud)
-
-v 1.2.1
-  Distro 6.6-scarthgap
-  Linux kernel 6.6.23
-  U-boot 2024.04
-  Mender update single files (image update is NOT implemented)
-
-  Influx features
-
-v 1.0.2
-    Reworked ap_flask.py for better experience
-    Added LED for LTE and additional state for data transmit for both LEDs
-
-v 1.0.1
-    Fixed GNSS data wrong values.
-    Support for reconfiguring through S3 - configuration file name should be config.rxc in order to be downloaded. It should be placed in the logger's folder.
-    Support for Reflash through S3 - file name should be firmware.bin. It should be placed in the logger's folder.
-    Assigned LED for Wi-Fi connection - The first LED (JA35) is used for this.
-    Fixed skip uploading files to S3 due to interuption.
-    ReXgen Pro switches between Wi-Fi and LTE based on availability of Wi-Fi.
-    ReXgen Pro uploads status.json file to S3
-    
-    Rexgen tool v.1.17 support SD card functions
-        Format, get general info, log info by index, log count,
-        download all rxd files, download rdx by index, user configured rxd download folder
-
-    SD card partitions
-        Increased root file system partition. Created a new partition for not system files named "/data" 
-
-    Method to upload rxd files to Amazon S3 server
-        New tool to connect with Amazon server named aws.
-        Example scripts to download and upload the rxd files from rexgen device and send them to Amazon server.  
+v.1.0
+    Distro 6.6-scarthgap
+    Linux kernel 6.6.23
+    U-boot 2024.04
+    Mender update
 
     Installed image packages
-        mc (midnight comamnder), htop
-
-v.1.0.0
-    Linux kernel 6.1.36
-
-    Installed image packages
-        python3, python3-pyserial python3-pyserial-asyncio python3-pip,
-        i2c-tools-misc, i2c-tools, pciutils, can-utils, iproute2, evtest, alsa-utils, wget, nano,
-        gdbserver, openssh-sftp-server, sqlite3, v4l-utils, 
-        bluez5, bluez5-noinst-tools, bluez5-obex, openobex, obexftp, glibc-gconv-utf-16, glibc-utils, iperf3,
-        tslib, tslib-tests, tslib-calibrate, tslib-dev, mtdev, mmc-utils, memtester, screen, u-boot-fw-utils,
-        libgpiod, libgpiod-tools, firmwared, hostapd, murata-binaries, cyw-supplicant, cyw-hostapd,
-        hostap-conf, hostap-utils, backporttool-linux, uhubctl,
-        git, sync, curl, cronie, minicom, wvdial, ppp, fsl-rc-local, uhubctl,
-        influx-files, rexgen, rexgen-stream, rexgen-usb
+	packagegroup-core-boot, packagegroup-base-extended, lvm2, i2c-tools-misc, i2c-tools, pciutils,
+	can-utils, iproute2, ethtool, evtest, alsa-utils, wget, nano, gdbserver, openssh-sftp-server,
+	sqlite3, v4l-utils, bluez5, bluez5-noinst-tools, bluez5-obex, openobex, obexftp, glibc-gconv-utf-16,
+	glibc-utils, iperf3, tslib, tslib-tests, tslib-calibrate, tslib-dev, mtdev, mmc-utils, memtester,
+	screen, u-boot-inf-fw-utils, u-boot-script-inf, libgpiod, libgpiod-tools, firmwared, 
+	python3-pip, python3, python3-dev, auditd, hostapd, dnsmasq, murata-binaries, 
+        cyw-supplicant, cyw-hostapd, hostap-conf, hostap-utils, kernel-module-nxp-wlan, linux-firmware, 
+	uhubctl, influx-files, ppp, git, rsync, curl, cronie, minicom, wvdial, python3-pyserial, python3-pyserial-asyncio, 
+	python3-pip, htop, mc, tzdata, rexgen-core, wlan-manager, mender-artifact-info, mender-auth, mender-update
 
     Influx features
-        Driver for RexGen device, providing SocketCAN concept 
-            CAN FD support for CAN 0,1,2,3
-            Loopback mode for CAN 0,1
-            Silent Mode for CAN 0,1,2,3
-        RexGen device features
-            Up to 4 CAN channels support
-            Read GNSS data 
-            Read accelerometer and gyroscope data
-            CANFD support
-            Two analog and digital channels support
-            Read NFC card
-            Option to get/set date
-        Example scripts
-        Detection of new firmware for ReXgen device    
+	Rexgen device features
+    	    Socket control interface for ReXdesk app (ports 5053, 5054)
+	    Automatic RXD datalog upload to Cloud (AWS S3, Google Cloud - HMAC, Google Cloud - Service Account)
+	    GNSS data logging support
+	    API service for remote functions (port 5051)
+	    Live CAN via socketcan
+	    Multi partition
+	    Passthru mode
+	    CCP/XCP seedkey handlers: .so, .lua, .sh, .py, native binary (pre-loaded at startup)
+	Dash board

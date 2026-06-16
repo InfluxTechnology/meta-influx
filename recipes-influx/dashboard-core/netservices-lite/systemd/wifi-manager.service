@@ -1,22 +1,17 @@
 [Unit]
-Description=ReXgen WiFi Manager Service (lite)
-After=network.target autostart.service wpa_supplicant@wlan0.service
-Wants=network.target autostart.service wpa_supplicant@wlan0.service
+Description=ReXgen WiFi Manager Service
+After=network.target wpa_supplicant@wlan0.service
+Wants=network.target wpa_supplicant@wlan0.service
 
 [Service]
 Type=simple
 ExecStartPre=/bin/mkdir -p /data/rexgen/tmp /data/rexgen/config /var/run/wpa_supplicant
-ExecStart=/usr/bin/python3 /opt/influx/netservices-lite/services/wifi_manager.py
-WorkingDirectory=/opt/influx/netservices-lite/services
+ExecStart=/opt/influx/netservices-lite/bin/netservices-lite-manager
+WorkingDirectory=/opt/influx/netservices-lite
 Restart=always
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-
-# Security hardening
-NoNewPrivileges=false
-ProtectSystem=false
-ProtectHome=false
 
 [Install]
 WantedBy=multi-user.target

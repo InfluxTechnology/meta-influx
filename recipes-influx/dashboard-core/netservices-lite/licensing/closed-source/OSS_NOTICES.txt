@@ -1,0 +1,102 @@
+OPEN SOURCE SOFTWARE NOTICES
+
+This product includes a proprietary application layer and an embedded firmware
+stack that may contain third-party open-source components under multiple
+license families. These notices are provided to identify the licensing model
+used by representative packages referenced by the current Netservices project
+and by the associated device firmware build.
+
+Company:
+
+Influx Technology LTD
+Millbrook Proving Ground, Station Lane
+Millbrook, MK45 2JQ
+United Kingdom
+Tel: +44 (0) 1525 842504
+Sales: sales@influxtechnology.com
+Support: support@influxtechnology.com
+
+1. APPLICATION LAYER
+
+The Netservices Dashboard application layer uses a Python web stack whose
+representative dependency licenses include:
+
+- BSD-3-Clause
+- MIT
+
+Examples:
+
+- Flask - BSD-3-Clause
+- Werkzeug - BSD-3-Clause
+- Jinja2 - BSD-3-Clause
+- MarkupSafe - BSD-3-Clause
+- itsdangerous - BSD-3-Clause
+- click - BSD-3-Clause
+- blinker - MIT
+
+2. FIRMWARE AND SYSTEM LAYER
+
+The firmware or device image may include open-source components under one or
+more of the following license families:
+
+- BSD style licenses
+- MIT
+- Apache-2.0
+- LGPL-2.1-or-later
+- GPL-2.0-only or GPL-2.0-or-later
+- GPL-3.0-only or GPL-3.0-or-later
+
+Representative system-level components identified by code-path analysis or by
+provided project references include:
+
+- systemd
+- iproute2
+- iw
+- iputils
+- OpenSSL
+- Mender client
+- U-Boot and U-Boot related tooling
+- Linux kernel / linux-imx based kernel work
+- procps or psmisc
+- GNU coreutils
+- other Linux distribution packages included in the final image
+
+3. PROJECT REFERENCES
+
+Influx-maintained U-Boot reference:
+https://github.com/InfluxTechnology/uboot-imx/tree/inf_v2024.04
+
+Influx-maintained Linux kernel reference:
+https://github.com/InfluxTechnology/linux-imx/tree/influx_6.6.y
+
+4. RELEASE-SPECIFIC COMPLIANCE MATERIALS
+
+For each released device model and firmware version, Influx Technology should
+publish or ship release-specific compliance materials including:
+
+- package manifest with exact package names and versions;
+- declared package licenses;
+- applicable source-code download location or written offer;
+- local patches or modification notices where required;
+- upstream project references;
+- any package-specific NOTICE files.
+
+Recommended publication path:
+
+https://[support-host]/oss/[DEVICE_MODEL]/[FW_VERSION]/
+
+Recommended contents:
+
+- `index.html` or `README.txt`
+- `package-manifest.csv`
+- `third-party-licenses/`
+- `notices/`
+- `source/` or `source-links.txt`
+- `patches/` where applicable
+
+5. INTERPRETATION
+
+This file is an informational notice document. It does not replace the legal
+text of the underlying third-party licenses. If there is any inconsistency
+between this notice file and the actual license of a component, the actual
+component license controls.

@@ -13,16 +13,12 @@ IMAGE_INSTALL:append = " python3-pyserial python3-pyserial-asyncio python3-pip"
 IMAGE_INSTALL:append = " htop "
 IMAGE_INSTALL:append = " mc "
 IMAGE_INSTALL:append = " tzdata "
-IMAGE_INSTALL:append = " libqmi "
 
 # Influx RexGen support
 IMAGE_INSTALL:append = " rexgen-core "
-IMAGE_INSTALL:append = " cloud-support "
-IMAGE_INSTALL:append = " rex-sys-log "
 
 # Influx WIFI support
 IMAGE_INSTALL:append = " wlan-manager "
-IMAGE_INSTALL:append = " tailscale " 
 
-INFLUX_VERSION="2.1.9"
-INFLUX_RELEASE="pro.${INFLUX_VERSION}"
+INFLUX_VERSION="1.0"
+INFLUX_RELEASE="base.${INFLUX_VERSION}"
