@@ -15,7 +15,7 @@ IMAGE_INSTALL:append = " mc "
 IMAGE_INSTALL:append = " tzdata "
 IMAGE_INSTALL:append = " libqmi "
 
-CORE_IMAGE_EXTRA_INSTALL += " chrony"
+CORE_IMAGE_EXTRA_INSTALL += " chrony "
 
 # Influx RexGen support
 IMAGE_INSTALL:append = " rexgen-core "
