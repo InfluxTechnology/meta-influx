@@ -82,3 +82,5 @@ EXTRA_USERS_PARAMS = " \
   usermod -s /bin/sh tester; \
   usermod -p '${PASSWD}' root; \
 "
+
+INFLUX_IMAGE = "pro"
