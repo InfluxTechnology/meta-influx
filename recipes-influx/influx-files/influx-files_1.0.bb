@@ -1,10 +1,13 @@
 SUMMARY = "Miscellaneous files for the base system"
 DESCRIPTION = "The influx-files package adds some files referenced in documentation and includes the WiFi management project, along with the socket application."
 SECTION = "base"
-LICENSE = "MIT"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
-SRC_URI += "file://LICENSE \
+require conf/include/inf-common.inc
+
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://${INF_INC_DIR}/LICENSE-MIT;md5=d4b228eee080114fd16f597b56fc395c"
+
+SRC_URI += " \
 	file://etc/minirc.dfl \
 	file://etc/wvdial.conf \
 	file://etc/chatscripts/1nce-new.chat \
@@ -41,6 +44,7 @@ SRC_URI += "file://LICENSE \
 	file://opt/influx/pap-secrets \
 	file://opt/influx/pipes_reconnect.sh \
 	file://opt/influx/reboot.sh \
+	file://opt/influx/release_check.sh \
 	file://opt/influx/start_ppp0.sh \
 	file://opt/influx/rexgen_sn_to_hostname.sh \
 	file://usr/lib/systemd/system/wpa_supplicant@wlan0.service \
@@ -50,25 +54,6 @@ S = "${WORKDIR}"
 
 # Add runtime dependencies
 RDEPENDS:${PN} = "libusb1 python3 python3-flask python3-pip bash dnsmasq"
-
-REX_USB_DIR="/home/root/rexusb/"
-INFLUX_DIR="/opt/influx/"
-
-# Directories to create in the image
-INFLUX_DIRS = "\
-    ${INFLUX_DIR} \
-    ${REX_USB_DIR} \
-    /etc/chatscripts/ \
-    /etc/firmware/ \
-    /etc/mender/scripts/ \
-    /etc/ppp/ \
-    /etc/ppp/peers/ \
-    /etc/profile.d/ \
-    /etc/systemd/network/ \
-    /etc/systemd/system/ \
-    /usr/lib/systemd/system/ \
-    /usr/lib/systemd/system/multi-user.target.wants \
-"
 
 # Files to install with 755 permissions
 INFLUX_FILES_755 = "\
@@ -98,12 +83,6 @@ INFLUX_FILES_644 = "\
 "
 
 do_install () {
-    # Create necessary directories
-    for d in ${INFLUX_DIRS}; do
-	fold="${d#${S}}"
-	install -m 0755 -d ${D}${fold}
-    done
-
     for d in $(find ${INFLUX_FILES_755}); do
 	# skip folders
 	if [ -d ${d} ]; then

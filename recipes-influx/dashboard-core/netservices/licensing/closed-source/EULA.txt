@@ -1,0 +1,294 @@
+NETSERVICES DASHBOARD
+END USER LICENSE AGREEMENT
+
+IMPORTANT: PLEASE READ THIS END USER LICENSE AGREEMENT ("AGREEMENT")
+CAREFULLY BEFORE USING THE SOFTWARE. BY USING, ACCESSING, INSTALLING,
+COPYING, OR OPERATING THE SOFTWARE, OR BY USING THE DEVICE IN WHICH THE
+SOFTWARE IS EMBEDDED, YOU AGREE TO BE BOUND BY THIS AGREEMENT. IF YOU DO NOT
+AGREE TO THESE TERMS, DO NOT USE THE SOFTWARE.
+
+This Agreement is a legal agreement between the end user ("you" or "User")
+and:
+
+Influx Technology LTD
+Millbrook Proving Ground, Station Lane
+Millbrook, MK45 2JQ
+United Kingdom
+Tel: +44 (0) 1525 842504
+Sales: sales@influxtechnology.com
+Support: support@influxtechnology.com
+
+("Influx Technology", "Influx", "we", "us", or "our")
+
+This Agreement governs the proprietary software application layer known as the
+"Netservices Dashboard", together with any associated proprietary scripts,
+configuration logic, interfaces, layout, application code, and related updates
+provided by Influx Technology, when embedded in or supplied with an authorized
+device ("Software").
+
+1. LICENSE GRANT
+
+Subject to your compliance with this Agreement, Influx Technology grants you a
+limited, revocable, non-exclusive, non-transferable, non-sublicensable license
+to use the Software solely:
+
+- as embedded in, installed on, or supplied with an authorized Influx
+  Technology device or an authorized customer device configuration;
+- for your internal business or operational use;
+- in object code form only, unless Influx Technology expressly provides
+  otherwise in writing.
+
+No ownership rights are transferred to you. The Software is licensed, not sold.
+
+2. PERMITTED USE
+
+You may:
+
+- use the Software as necessary to operate the device in which it is supplied;
+- make a reasonable archival or backup copy only if such copy is strictly
+  necessary for recovery, continuity, or lawful internal maintenance;
+- allow your employees, contractors, and service providers to use the Software
+  on your behalf, provided that you remain responsible for their compliance
+  with this Agreement.
+
+3. LICENSE RESTRICTIONS
+
+Except to the extent expressly permitted by this Agreement or by mandatory
+applicable law, you must not, and must not allow any third party to:
+
+- copy, reproduce, republish, distribute, transmit, display, disclose, lease,
+  rent, loan, sublicense, assign, transfer, or commercially exploit the
+  Software separately from the authorized device;
+- modify, adapt, translate, port, arrange, or create derivative works of the
+  Software;
+- reverse engineer, decompile, disassemble, decrypt, extract source code from,
+  or otherwise attempt to derive the source code, structure, sequence,
+  organization, or underlying ideas of the Software;
+- bypass, disable, or interfere with security mechanisms, authentication
+  controls, licensing controls, usage restrictions, or integrity protections
+  in the Software or related services;
+- remove, alter, obscure, or falsify any copyright notice, trademark, serial
+  number, confidentiality marking, attribution text, or proprietary legend;
+- use the Software in any way that violates applicable law, export control
+  rules, sanctions, or third-party rights;
+- use the Software to develop, benchmark, validate, or market a competing
+  product where such use would violate confidentiality obligations, trade
+  secret protections, or contractual restrictions;
+- separate the Software from the device and redistribute it as a standalone
+  package unless Influx Technology expressly authorizes such redistribution in
+  writing.
+
+4. OWNERSHIP AND INTELLECTUAL PROPERTY
+
+The Software, including all copyrights, trade secrets, database rights,
+know-how, object code, source code where not disclosed, screen flows, user
+interface design, documentation, firmware integration logic, and all other
+intellectual property rights embodied in or related to the Software, is and
+shall remain the exclusive property of Influx Technology and its licensors.
+
+All rights not expressly granted under this Agreement are reserved by Influx
+Technology and its licensors.
+
+5. THIRD-PARTY OPEN-SOURCE SOFTWARE
+
+The device and/or Software package may include or interact with third-party
+software components that are licensed under separate open-source or third-party
+license terms, including without limitation BSD, MIT, Apache, LGPL, and GPL
+license families.
+
+Such third-party components are not licensed under this Agreement. They are
+licensed under their own respective terms, and the applicable notices, license
+texts, and source-code availability information are provided separately in:
+
+- `THIRD_PARTY_LICENSES.txt`
+- `OSS_NOTICES.txt`
+- `SOURCE_OFFER.txt`
+- the corresponding firmware/package manifest and source release materials
+
+Nothing in this Agreement is intended to restrict, supersede, or override any
+rights that you may receive under the applicable third-party open-source
+license terms.
+
+6. DEVICE-SPECIFIC AND FIRMWARE-SPECIFIC SCOPE
+
+The Software may be integrated with operating system packages, drivers,
+bootloader components, kernel components, communication stacks, update
+frameworks, or hardware-specific firmware layers. Such components may be
+provided by Influx Technology, third-party suppliers, or open-source projects.
+
+Your rights in those components are governed by the applicable component
+licenses, supply terms, or product documentation, not solely by this Agreement.
+
+7. UPDATES, PATCHES, AND NEW RELEASES
+
+Influx Technology may, but is not obligated to, provide updates, patches,
+bug fixes, upgrades, feature releases, security fixes, revised firmware
+packages, or replacement software modules ("Updates").
+
+Unless an Update is accompanied by separate license terms, each Update is
+governed by this Agreement. Influx Technology may condition access to Updates
+on compliance with support terms, maintenance agreements, subscription terms,
+or product lifecycle policies.
+
+8. FEEDBACK
+
+If you provide suggestions, ideas, bug reports, improvement proposals, feature
+requests, or other feedback relating to the Software ("Feedback"), Influx
+Technology may use such Feedback without restriction and without obligation to
+you, unless otherwise agreed in writing.
+
+9. CONFIDENTIALITY
+
+To the extent you receive non-public Software materials, technical data,
+diagnostics, documentation, or pre-release builds from Influx Technology, you
+must treat such materials as confidential and must not disclose them to any
+third party except as expressly authorized in writing by Influx Technology.
+
+10. COMPLIANCE WITH LAW
+
+You are responsible for ensuring that your use of the Software and device
+complies with all applicable laws, regulations, industry requirements, and
+internal compliance obligations, including those relating to cybersecurity,
+data protection, export control, sanctions, and operational safety.
+
+11. EXPORT CONTROL
+
+The Software may be subject to export control and sanctions laws of the United
+Kingdom, the United States, the European Union, and other jurisdictions. You
+must not export, re-export, transfer, or make available the Software in
+violation of any applicable export control or sanctions law.
+
+12. NO MISSION-CRITICAL WARRANTY
+
+Unless expressly agreed in writing by Influx Technology, the Software is not
+designed, licensed, or warranted for use in life support systems, nuclear
+facilities, aircraft navigation, weapons systems, or any other hazardous or
+mission-critical environment requiring fail-safe performance.
+
+13. LIMITED WARRANTY DISCLAIMER
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SOFTWARE IS PROVIDED
+"AS IS," "WITH ALL FAULTS," AND "AS AVAILABLE," WITHOUT WARRANTY OF ANY KIND,
+WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, INCLUDING ANY IMPLIED
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE,
+NON-INFRINGEMENT, SATISFACTORY QUALITY, QUIET ENJOYMENT, ACCURACY, OR THAT
+THE SOFTWARE WILL OPERATE WITHOUT INTERRUPTION OR ERROR.
+
+Influx Technology does not warrant that the Software will meet your
+requirements, interoperate with every third-party system, remain continuously
+available, or be free from vulnerabilities or defects.
+
+14. LIMITATION OF LIABILITY
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL INFLUX
+TECHNOLOGY OR ITS AFFILIATES, DIRECTORS, OFFICERS, EMPLOYEES, CONTRACTORS,
+SUPPLIERS, OR LICENSORS BE LIABLE FOR ANY:
+
+- INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES;
+- LOSS OF PROFIT, REVENUE, BUSINESS, CONTRACTS, CUSTOMERS, GOODWILL, OR
+  ANTICIPATED SAVINGS;
+- LOSS, CORRUPTION, OR DISCLOSURE OF DATA;
+- SYSTEM DOWNTIME, BUSINESS INTERRUPTION, OR COST OF SUBSTITUTE TECHNOLOGY;
+- SECURITY INCIDENT COSTS, EVEN IF CAUSED BY INTERACTION WITH THIRD-PARTY
+  SOFTWARE OR CONFIGURATION CHANGES;
+
+ARISING OUT OF OR IN CONNECTION WITH THE SOFTWARE, THE DEVICE, THIS AGREEMENT,
+OR THE USE OR INABILITY TO USE THE SOFTWARE, WHETHER BASED ON CONTRACT, TORT,
+NEGLIGENCE, STRICT LIABILITY, MISREPRESENTATION, STATUTE, OR ANY OTHER LEGAL
+THEORY, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE AGGREGATE LIABILITY OF
+INFLUX TECHNOLOGY UNDER OR IN CONNECTION WITH THIS AGREEMENT SHALL NOT EXCEED
+THE AMOUNT PAID, IF ANY, FOR THE SOFTWARE COMPONENT OF THE DEVICE OR, IF NO
+SEPARATE SOFTWARE PRICE WAS PAID, GBP 100.
+
+Nothing in this Agreement excludes or limits liability to the extent such
+liability cannot be excluded or limited under applicable law.
+
+15. INDEMNITY
+
+To the extent permitted by applicable law, you agree to indemnify, defend, and
+hold harmless Influx Technology and its affiliates, officers, employees, and
+suppliers from and against claims, losses, liabilities, damages, costs, and
+expenses arising from:
+
+- your breach of this Agreement;
+- your unlawful or unauthorized use of the Software;
+- your integration of the Software with unauthorized systems, code, or devices;
+- your redistribution or modification of the Software contrary to this
+  Agreement.
+
+16. TERM AND TERMINATION
+
+This Agreement remains effective until terminated.
+
+Influx Technology may terminate this Agreement immediately upon written notice
+if you materially breach this Agreement and, where the breach is capable of
+remedy, fail to remedy the breach within a reasonable time after notice.
+
+Upon termination:
+
+- all license rights granted under this Agreement immediately cease;
+- you must stop using the proprietary Software except to the extent continued
+  use is required by mandatory law or by rights granted under separate
+  third-party open-source licenses;
+- you must destroy or securely remove proprietary copies of the Software not
+  embedded in active authorized devices, except as required for legal retention.
+
+Sections intended by their nature to survive termination shall survive,
+including without limitation sections on ownership, restrictions, warranty
+disclaimer, limitation of liability, confidentiality, governing law, and
+third-party licensing notices.
+
+17. AUDIT AND ENFORCEMENT
+
+Where reasonably necessary to protect its rights, and subject to applicable
+law and confidentiality obligations, Influx Technology may request reasonable
+information confirming compliance with this Agreement in relation to enterprise
+or commercial deployments.
+
+18. ENTIRE AGREEMENT
+
+This Agreement constitutes the entire agreement between you and Influx
+Technology concerning the proprietary Software, except for:
+
+- separate written commercial agreements;
+- hardware supply agreements;
+- support or maintenance agreements;
+- open-source license terms applicable to third-party components.
+
+If there is a conflict between this Agreement and the license terms governing a
+third-party open-source component, the third-party license terms control only
+with respect to that component.
+
+19. SEVERABILITY
+
+If any provision of this Agreement is held invalid, illegal, or unenforceable,
+the remaining provisions shall remain in full force and effect to the maximum
+extent permitted by law.
+
+20. NO WAIVER
+
+Failure by Influx Technology to enforce any provision of this Agreement shall
+not constitute a waiver of that provision or any other provision.
+
+21. GOVERNING LAW AND JURISDICTION
+
+This Agreement and any dispute arising out of or in connection with it shall
+be governed by the laws of England and Wales, excluding conflict-of-laws rules.
+
+The courts of England and Wales shall have exclusive jurisdiction, except where
+mandatory consumer protection law requires otherwise.
+
+22. CONTACT DETAILS
+
+For legal, licensing, sales, or support questions relating to this Agreement
+or the Software, contact:
+
+Influx Technology LTD
+Millbrook Proving Ground, Station Lane
+Millbrook, MK45 2JQ
+United Kingdom
+Tel: +44 (0) 1525 842504
+Sales: sales@influxtechnology.com
+Support: support@influxtechnology.com

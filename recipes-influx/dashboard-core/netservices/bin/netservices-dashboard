@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/python3 -c "import sys; sys.path.insert(0, '/opt/influx/netservices/lib'); from dashboard.app import _entry; _entry()"

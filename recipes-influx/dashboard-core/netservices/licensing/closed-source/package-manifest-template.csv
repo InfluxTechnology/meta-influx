@@ -1,0 +1,18 @@
+package_name,version,license,source_url,modified_by_influx,patches_available,source_bundle_path,notices_required,notes
+flask,[VERSION],BSD-3-Clause,https://github.com/pallets/flask,no,no,[PATH],no,Application layer dependency
+werkzeug,[VERSION],BSD-3-Clause,https://github.com/pallets/werkzeug,no,no,[PATH],no,Application layer dependency
+jinja2,[VERSION],BSD-3-Clause,https://github.com/pallets/jinja,no,no,[PATH],no,Application layer dependency
+markupsafe,[VERSION],BSD-3-Clause,https://github.com/pallets/markupsafe,no,no,[PATH],no,Application layer dependency
+itsdangerous,[VERSION],BSD-3-Clause,https://github.com/pallets/itsdangerous,no,no,[PATH],no,Application layer dependency
+click,[VERSION],BSD-3-Clause,https://github.com/pallets/click,no,no,[PATH],no,Application layer dependency
+blinker,[VERSION],MIT,https://github.com/pallets-eco/blinker,no,no,[PATH],no,Application layer dependency
+openssl,[VERSION],Apache-2.0,https://github.com/openssl/openssl,[yes/no],[yes/no],[PATH],[yes/no],Firmware dependency
+mender,[VERSION],Apache-2.0,https://github.com/mendersoftware/mender,[yes/no],[yes/no],[PATH],[yes/no],Firmware dependency
+systemd,[VERSION],LGPL-2.1-or-later/GPL-mixed,https://github.com/systemd/systemd,[yes/no],[yes/no],[PATH],[yes/no],Firmware dependency
+iproute2,[VERSION],GPL-2.0,https://github.com/iproute2/iproute2,[yes/no],[yes/no],[PATH],[yes/no],Firmware dependency
+iw,[VERSION],GPL-2.0,[UPSTREAM_URL],[yes/no],[yes/no],[PATH],[yes/no],Firmware dependency
+iputils,[VERSION],[CHECK_RELEASE_LICENSE],[UPSTREAM_URL],[yes/no],[yes/no],[PATH],[yes/no],Firmware dependency
+u-boot,[VERSION],[CHECK_TREE_LICENSE],https://github.com/InfluxTechnology/uboot-imx/tree/inf_v2024.04,[yes/no],[yes/no],[PATH],[yes/no],Bootloader or bootloader tooling
+linux-imx,[VERSION],[CHECK_TREE_LICENSE],https://github.com/InfluxTechnology/linux-imx/tree/influx_6.6.y,[yes/no],[yes/no],[PATH],[yes/no],Kernel tree
+procps-or-psmisc,[VERSION],[CHECK_RELEASE_LICENSE],[UPSTREAM_URL],[yes/no],[yes/no],[PATH],[yes/no],Firmware dependency
+coreutils,[VERSION],[CHECK_RELEASE_LICENSE],[UPSTREAM_URL],[yes/no],[yes/no],[PATH],[yes/no],Firmware dependency

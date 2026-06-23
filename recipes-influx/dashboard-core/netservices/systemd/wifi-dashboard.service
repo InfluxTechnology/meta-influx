@@ -5,17 +5,12 @@ Requires=wifi-manager.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /opt/influx/netservices/dashboard/app.py
-WorkingDirectory=/opt/influx/netservices/dashboard
+ExecStart=/opt/influx/netservices/bin/netservices-dashboard
+WorkingDirectory=/opt/influx/netservices
 Restart=always
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-
-# Security hardening
-NoNewPrivileges=false
-ProtectSystem=false
-ProtectHome=false
 
 [Install]
 WantedBy=multi-user.target

@@ -1,0 +1,86 @@
+OPEN SOURCE SOURCE CODE OFFER
+
+This product may contain software components licensed under the GNU General
+Public License, the GNU Lesser General Public License, the Apache License,
+BSD-style licenses, the MIT License, and other open-source licenses.
+
+Where required by the applicable license terms, Influx Technology LTD will
+make available the corresponding source code for the relevant covered
+components, including applicable local modifications and build-related
+materials necessary to exercise the rights granted by those licenses.
+
+Company contact:
+
+Influx Technology LTD
+Millbrook Proving Ground, Station Lane
+Millbrook, MK45 2JQ
+United Kingdom
+Tel: +44 (0) 1525 842504
+Sales: sales@influxtechnology.com
+Support: support@influxtechnology.com
+
+1. ONLINE AVAILABILITY
+
+Influx Technology intends to make the corresponding source code available at:
+
+https://[support-host]/oss/[DEVICE_MODEL]/[FW_VERSION]/
+
+The online materials should include, where applicable:
+
+- corresponding source archives;
+- patch sets or local modifications;
+- build metadata, scripts, or recipe information as required by the applicable
+  license;
+- package manifest and declared licenses;
+- copy of the relevant license texts and notices.
+
+2. WRITTEN OFFER
+
+For any covered components distributed in object code form for which a written
+offer is used to satisfy license obligations, Influx Technology offers to
+provide the corresponding source code on a durable physical medium upon written
+request for a charge no more than the reasonable cost of physical distribution.
+
+This written offer is valid for at least three (3) years from the date of last
+distribution of the relevant product model, and for any longer period required
+by the applicable license terms.
+
+3. SCOPE OF CORRESPONDING SOURCE
+
+Where required by the applicable license, the corresponding source code may
+include:
+
+- the preferred form of the source for making modifications;
+- interface definition files;
+- scripts to control compilation, installation, and packaging;
+- local patches and modifications made by Influx Technology;
+- build recipes or equivalent metadata needed to regenerate the covered binary;
+- installation information where and to the extent required by the applicable
+  license.
+
+4. EXCLUSIONS
+
+This offer applies only to the open-source components for which source-code
+availability is required by the applicable third-party license terms. It does
+not apply to proprietary components owned by Influx Technology unless
+expressly stated otherwise.
+
+5. REQUESTS
+
+Requests for source code availability may be directed to:
+
+Support: support@influxtechnology.com
+Sales: sales@influxtechnology.com
+Postal address:
+Influx Technology LTD
+Millbrook Proving Ground, Station Lane
+Millbrook, MK45 2JQ
+United Kingdom
+
+Please include:
+
+- product name and device model;
+- firmware version;
+- serial number or purchase reference, if available;
+- the open-source component(s) requested;
+- your preferred delivery method.
