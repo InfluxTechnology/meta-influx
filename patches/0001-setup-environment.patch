@@ -9,7 +9,7 @@
 -    meta-toolchain-sdk
 -    adt-installer
 -    meta-ide-support
-+    influx-image-base
++    influx-image-pro
  
  EOF
  
