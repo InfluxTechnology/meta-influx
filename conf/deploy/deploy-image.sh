@@ -8,7 +8,7 @@ if [[ ! -d $CURR_DIR ]]; then
     exit
 fi
 
-BUILD="influx-image-base"
+BUILD="influx-image-pro"
 MACHINE=$(sudo cat $CURR_DIR/conf/local.conf | grep 'MACHINE' | sed "s/'//g" | sed "s/ //g" | awk -F '??=' '{print $2}')
 
 TMP_DIR=$CURR_DIR"/tmp/deploy/images/""$MACHINE"
