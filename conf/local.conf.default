@@ -21,4 +21,4 @@ IMAGE_INSTALL:append = " rexgen-core "
 IMAGE_INSTALL:append = " wlan-manager "
 
 INFLUX_VERSION="1.0"
-INFLUX_RELEASE="base.${INFLUX_VERSION}"
+INFLUX_RELEASE="sdk.${INFLUX_VERSION}"
