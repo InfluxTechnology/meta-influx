@@ -9,8 +9,7 @@ DESCRIPTION = " Create a virtual wlan1 interface \
 "
 require conf/include/inf-common.inc
 
-LICENSE = "Apache-2.0"
-LIC_FILES_CHKSUM = "file://${INF_INC_DIR}/LICENSE-APACHE;md5=b3cc49330475dc0567d92c24a9f3872d"
+LICENSE = "CLOSED"
 
 SRC_URI += "\
 	file://VERSION \
