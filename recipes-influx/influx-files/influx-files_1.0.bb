@@ -1,6 +1,6 @@
 SUMMARY = "Miscellaneous files for the base system"
 DESCRIPTION = "The influx-files package adds some files referenced in documentation and includes the WiFi management project, along with the socket application."
-#SECTION = "base"
+SECTION = "base"
 
 require conf/include/inf-common.inc
 
