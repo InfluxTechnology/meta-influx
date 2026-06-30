@@ -11,8 +11,7 @@ DESCRIPTION = " \
 
 require conf/include/inf-common.inc
 
-LICENSE = "BSD-3-Clause"
-LIC_FILES_CHKSUM = "file://${INF_INC_DIR}/LICENSE-BSD;md5=ad9e6cf3dfeaf1f84c5a305512fd6dc1"
+LICENSE = "CLOSED"
 
 SRC_URI = " \
     file://rexgend \
