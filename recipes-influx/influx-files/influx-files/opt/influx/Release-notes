@@ -18,6 +18,7 @@ v.1.0
 	python3-pip, htop, mc, tzdata, rexgen-core, wlan-manager, mender-artifact-info, mender-auth, mender-update
 
     Influx features
+
 	Rexgen device features
     Socket control interface for ReXdesk app (ports 5053, 5054)
 	Automatic RXD datalog upload to Cloud (AWS S3, Google Cloud - HMAC, Google Cloud - Service Account)
@@ -27,4 +28,5 @@ v.1.0
 	Multi partition
 	Passthru mode
 	CCP/XCP seedkey handlers: .so, .lua, .sh, .py, native binary (pre-loaded at startup)
+
 	Dash board
