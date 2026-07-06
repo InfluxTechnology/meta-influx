@@ -7,24 +7,24 @@ v.1.0
     Mender update
 
     Installed image packages
-		packagegroup-core-boot, packagegroup-base-extended, lvm2, i2c-tools-misc, i2c-tools, pciutils,
-		can-utils, iproute2, ethtool, evtest, alsa-utils, wget, nano, gdbserver, openssh-sftp-server,
-		sqlite3, v4l-utils, bluez5, bluez5-noinst-tools, bluez5-obex, openobex, obexftp, glibc-gconv-utf-16,
-		glibc-utils, iperf3, tslib, tslib-tests, tslib-calibrate, tslib-dev, mtdev, mmc-utils, memtester,
-		screen, u-boot-inf-fw-utils, u-boot-script-inf, libgpiod, libgpiod-tools, firmwared, 
-		python3-pip, python3, python3-dev, auditd, hostapd, dnsmasq, murata-binaries, 
-        cyw-supplicant, cyw-hostapd, hostap-conf, hostap-utils, kernel-module-nxp-wlan, linux-firmware, 
-		uhubctl, influx-files, ppp, git, rsync, curl, cronie, minicom, wvdial, python3-pyserial, python3-pyserial-asyncio, 
-		python3-pip, htop, mc, tzdata, rexgen-core, wlan-manager, mender-artifact-info, mender-auth, mender-update
+	packagegroup-core-boot, packagegroup-base-extended, lvm2, i2c-tools-misc, i2c-tools, pciutils,
+	can-utils, iproute2, ethtool, evtest, alsa-utils, wget, nano, gdbserver, openssh-sftp-server,
+	sqlite3, v4l-utils, bluez5, bluez5-noinst-tools, bluez5-obex, openobex, obexftp, glibc-gconv-utf-16,
+	glibc-utils, iperf3, tslib, tslib-tests, tslib-calibrate, tslib-dev, mtdev, mmc-utils, memtester,
+	screen, u-boot-inf-fw-utils, u-boot-script-inf, libgpiod, libgpiod-tools, firmwared, 
+	python3-pip, python3, python3-dev, auditd, hostapd, dnsmasq, murata-binaries, 
+	cyw-supplicant, cyw-hostapd, hostap-conf, hostap-utils, kernel-module-nxp-wlan, linux-firmware, 
+	uhubctl, influx-files, ppp, git, rsync, curl, cronie, minicom, wvdial, python3-pyserial, python3-pyserial-asyncio, 
+	python3-pip, htop, mc, tzdata, rexgen-core, wlan-manager, mender-artifact-info, mender-auth, mender-update
 
     Influx features
 	Rexgen device features
-    	Socket control interface for ReXdesk app (ports 5053, 5054)
-	    Automatic RXD datalog upload to Cloud (AWS S3, Google Cloud - HMAC, Google Cloud - Service Account)
-	    GNSS data logging support
-	    API service for remote functions (port 5051)
-	    Live CAN via socketcan
-	    Multi partition
-	    Passthru mode
-	    CCP/XCP seedkey handlers: .so, .lua, .sh, .py, native binary (pre-loaded at startup)
+    Socket control interface for ReXdesk app (ports 5053, 5054)
+	Automatic RXD datalog upload to Cloud (AWS S3, Google Cloud - HMAC, Google Cloud - Service Account)
+	GNSS data logging support
+	API service for remote functions (port 5051)
+	Live CAN via socketcan
+	Multi partition
+	Passthru mode
+	CCP/XCP seedkey handlers: .so, .lua, .sh, .py, native binary (pre-loaded at startup)
 	Dash board
