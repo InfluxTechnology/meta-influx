@@ -24,7 +24,8 @@ SRC_URI = " \
 
 S = "${WORKDIR}"
 
-RDEPENDS:${PN} = "libusb1 "
+DEPENDS += "openssl"
+RDEPENDS:${PN} += "libusb1 libcrypto"
 
 do_install () {
 	mkdir -p ${D}/data/rexgen/seedkey/

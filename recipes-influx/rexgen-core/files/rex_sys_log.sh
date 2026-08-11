@@ -1,11 +1,22 @@
 #!/bin/sh
-# sys_loging.sh — CPU/MEM/TEMP min/avg, daily max, download speed, GNSS location
+# rex_sys_log.sh — CPU/MEM/TEMP min/avg, daily max, download speed, GNSS location.
+#
+# System-log sink owner:
+#   All system-log writers (this script, rexgend CAN errors, cloud_sync NET_UPL)
+#   append to a single symlink:  $LOG_DIR/system.log
+#     - master switch [System] system_log = 1 -> symlink -> sys_usage_YYYY-MM-DD.log
+#     - master switch [System] system_log = 0 -> symlink -> /dev/null   (writes discarded)
+#   This script is the ONLY process that flips the symlink and rotates it daily.
+#   When the switch is off it also skips its own (expensive) sampling entirely.
 
 CONF_FILE="$(dirname "$0")/rex_sys_log.conf"
 [ -f "$CONF_FILE" ] && . "$CONF_FILE" || {
     echo "Missing config file: $CONF_FILE" >&2
     exit 1
 }
+
+REXGEND_CONF="/data/rexgen/config/rexgend.conf"
+SINK="$LOG_DIR/system.log"
 
 CPU_MAX_FILE="$LOG_DIR/cpu_max.state"
 MEM_MAX_FILE="$LOG_DIR/mem_max.state"
@@ -15,11 +26,34 @@ SERIAL=$(cat /home/root/rexusb/var/serial)
 
 mkdir -p "$LOG_DIR"
 DAY=$(date +%F)
-LOG_FILE="$LOG_DIR/sys_usage_${DAY}.log"
 LAST_DAY="$DAY"
 
 ts_now() { date "+%Y-%m-%d %H:%M:%S"; }
-log_line() { echo "$1" >> "$LOG_FILE"; }
+log_line() { echo "$1" >> "$SINK"; }   # follows the symlink -> daily file or /dev/null
+
+# ---- Master switch: read [System] system_log from rexgend.conf ----
+# Section-aware, defaults to 0 (off) when the key/file is missing.
+read_system_log() {
+    awk '
+        /^[[:space:]]*\[/ { sec=$0; gsub(/[[:space:]]/,"",sec); next }
+        sec=="[System]" {
+            line=$0; sub(/[#;].*/,"",line); gsub(/[[:space:]]/,"",line)
+            n=index(line,"="); if(n==0) next
+            if (substr(line,1,n-1)=="system_log") { print substr(line,n+1); exit }
+        }
+    ' "$REXGEND_CONF" 2>/dev/null
+}
+
+# ---- Point the sink symlink (only re-links when the target changes) ----
+point_sink() {
+    want="$1"                                  # "sys_usage_${DAY}.log" (relative) or "/dev/null"
+    have=$(readlink "$SINK" 2>/dev/null)
+    if [ "$have" != "$want" ]; then
+        ln -sf "$want" "$SINK"
+    fi
+    # Make sure the daily target exists so appenders (e.g. rexgend, no O_CREAT) succeed.
+    case "$want" in /dev/null) : ;; *) [ -e "$LOG_DIR/$want" ] || : > "$LOG_DIR/$want" ;; esac
+}
 
 # ---- Sensors ----
 get_cpu_pct() {
@@ -68,10 +102,10 @@ upload_pending_logs() {
     DAY=$(date +%F)
     CURRENT_LOG="sys_usage_${DAY}.log"
     if [ -x "$CLOUD_HANDLER" ]; then
-        for PENDING in "$LOG_DIR"/*.log; do
+        for PENDING in "$LOG_DIR"/sys_usage_*.log; do
             [ -f "$PENDING" ] || continue
             PENDING_NAME=$(basename "$PENDING")
-            # Skip the current day's log file
+            # Skip the current day's log file (it is the live sink target)
             if [ "$PENDING_NAME" = "$CURRENT_LOG" ]; then
                 continue
             fi
@@ -138,6 +172,8 @@ LAST_GNSS=$NOW
 UPLOAD_RETRY_INTERVAL=3600   # 1 hour
 LAST_UPLOAD_RETRY=$NOW
 
+WAS_ON=-1   # force a sink update on first iteration
+
 
 # ---- Main loop ----
 while true; do
@@ -145,30 +181,48 @@ while true; do
   TS=$(ts_now)
   DAY_NOW=$(date +%F)
 
-    # ---- Daily rotation & reset MAX ----
+  # ---- Master switch ----
+  ENABLED=$(read_system_log)
+  [ "$ENABLED" = "1" ] || ENABLED=0
+
+  if [ "$ENABLED" != "1" ]; then
+      # Logging disabled: point sink at /dev/null (writes are discarded cheaply),
+      # skip ALL sampling so we don't burn CPU, and idle.
+      point_sink /dev/null
+      WAS_ON=0
+      sleep 5
+      continue
+  fi
+
+  # Logging enabled: make sure the sink points at today's file.
+  point_sink "sys_usage_${DAY_NOW}.log"
+  # First time (or just turned on): reset the per-window accumulators.
+  if [ "$WAS_ON" != "1" ]; then
+      LAST_TS=$TS; LAST_MAX=$NOW
+      LAST_CPU_MIN=$NOW; LAST_CPU_AVG=$NOW; LAST_MEM_MIN=$NOW; LAST_MEM_AVG=$NOW
+      LAST_TEMP_MIN=$NOW; LAST_TEMP_AVG=$NOW; LAST_SPEED=$NOW; LAST_GNSS=$NOW
+      WAS_ON=1
+  fi
+
+  # ---- Daily rotation & reset MAX ----
   if [ "$DAY_NOW" != "$LAST_DAY" ]; then
       PREV_FILE="$LOG_DIR/sys_usage_${LAST_DAY}.log"
-      CLOUD_FILE_NAME="sys_usage_${LAST_DAY}.log"
 
-      # Write yesterday's MAX values
-      echo "$LAST_TS $SERIAL: CPU_MAX=${CPU_MAX}%" >> "$PREV_FILE"
-      echo "$LAST_TS $SERIAL: MEM_MAX=${MEM_MAX}%" >> "$PREV_FILE"
+      # Write yesterday's MAX values directly into the previous day's file
+      echo "$LAST_TS $SERIAL: CPU_MAX=${CPU_MAX}%"  >> "$PREV_FILE"
+      echo "$LAST_TS $SERIAL: MEM_MAX=${MEM_MAX}%"  >> "$PREV_FILE"
       echo "$LAST_TS $SERIAL: TEMP_MAX=${TEMP_MAX}C" >> "$PREV_FILE"
 
       # Reset MAX values
       CPU_MAX=0; MEM_MAX=0; TEMP_MAX=0
-      echo 0 > "$CPU_MAX_FILE"
-      echo 0 > "$MEM_MAX_FILE"
-      echo 0 > "$TEMP_MAX_FILE"
+      echo 0 > "$CPU_MAX_FILE"; echo 0 > "$MEM_MAX_FILE"; echo 0 > "$TEMP_MAX_FILE"
 
-      # Switch to new daily file (always, even if upload fails)
+      # Switch the sink to the new day's file
       LAST_DAY="$DAY_NOW"
-      LOG_FILE="$LOG_DIR/sys_usage_${LAST_DAY}.log"
+      point_sink "sys_usage_${LAST_DAY}.log"
 
-      # Upload all pending .log files
+      # Upload all pending (non-current) .log files, then clean archives > 7 days
       upload_pending_logs
-
-      # Cleanup: delete archived logs older than 7 days
       find "$LOG_DIR" -name "sys_usage_*.log.gz" -type f -mtime +7 -exec rm -f {} \;
   fi
 
@@ -236,31 +290,25 @@ while true; do
     log_line "$TS $SERIAL: GNSS=${GNSS}"
     LAST_GNSS=$NOW
   fi
-  #logger -t sys_logging "DEBUG: Before MAX"
+
   # ---- MAX VALUES ----
   if [ $((NOW - LAST_MAX)) -ge $MAX_INTERVAL ]; then
-    #logger -t sys_logging "Begin MAX"
     log_line "$TS $SERIAL: CPU_MAX=${CPU_MAX}%"
     log_line "$TS $SERIAL: MEM_MAX=${MEM_MAX}%"
     log_line "$TS $SERIAL: TEMP_MAX=${TEMP_MAX}C"
-  
-    # Reset MAX values after logging
-    CPU_MAX=0
-    MEM_MAX=0
-    TEMP_MAX=0
-    echo 0 > "$CPU_MAX_FILE"
-    echo 0 > "$MEM_MAX_FILE"
-    echo 0 > "$TEMP_MAX_FILE"
-  
-    LAST_MAX=$NOW
-    #logger -t sys_logging "END MAX"
 
+    CPU_MAX=0; MEM_MAX=0; TEMP_MAX=0
+    echo 0 > "$CPU_MAX_FILE"; echo 0 > "$MEM_MAX_FILE"; echo 0 > "$TEMP_MAX_FILE"
+    LAST_MAX=$NOW
   fi
 
   LAST_TS="$TS"
 
   # ---- Retry pending uploads hourly ----
-  upload_pending_logs
+  if [ $((NOW - LAST_UPLOAD_RETRY)) -ge $UPLOAD_RETRY_INTERVAL ]; then
+    upload_pending_logs
+    LAST_UPLOAD_RETRY=$NOW
+  fi
 
   sleep 5
 done

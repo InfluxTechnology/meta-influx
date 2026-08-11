@@ -1,15 +1,86 @@
 ### Release notes ###
 
-v.2.0.2
+v 2.1.11
     Influx features
-	CAN Error frame support - socketcan and pipes
-	Changed ping server (from 8.8.8.8 to 9.9.9.9)
+        Mechanizm to protect VPN settings updating from image, non providing the tailscale service
+        rexgend 1.3.6: Command-line interface: identity, status, configuration and cloud state queries, with JSON output
+        The system logs function are added as option in dash board web settings.
+    Bug fixes
+       File download USB overflow, that broke RXD retrieval and all cloud upload. 
+       Issue with downloading multiple files from Rexdesk.
+
+v 2.1.10
+	Added chronyd.service, providing NTP client/server 
+	Influx features
+		WIFI client fix
+		Licensing UI
+
+v 2.1.9
+    Influx features
+        Seedkey handlers can now be written in Lua 5.4 (`.lua`) in addition to ` .so`, `.sh`, `.py`, and native binaries.
+    Bug fixes
+        CCP/XCP key responses now reach the device fast enough to be transmitted in the same response cycle as the seed challenge. Previously the response could land one cycle late.
+
+v 2.1.8
+    Influx features
+        Seed/key mechanizm to unlock ECU
+        Fixed ssl connection issues on MinIO
+    Added libqmi package.
+        It provides an API and command-line tools to manage and use QMI-capable devices.
+
+v 2.1.6.rc
+    Default NTP server are pool.ntp.org
+    Added tzdata package to image
+    
+    Influx features
+        MinIO support (object storage server)
+    
+    Bug fixes
+        Smooth transition from WIFI to LTE in case of network failure
+
+v 2.1.4
+    Virtual private network (VPN) solution with tailscale
+
+v 2.1.0
+    Influx features
+        Configured avahi daemon on tcp ports 5053, 5054, 80
+        AP mode are available via virtual wlan1 interface
+        Web-based configuration dashboard available with unit info, WIFI/AP settings and rexgen info.
 
     Bug fixes
-	AWS upload big files (500MB)
-	Enabled socket cAN by default 
-	Option to reserve percent of disk space for rxd files
-	Problem with wrong WiFi password 
+        Receiving two IP addresses on wlan0
+        rexgend 1.2.8
+            implemented and improved passthru functionality
+            network speed fix
+
+v 2.0.8
+    Influx features
+        AP mode are available via virtual wlan1 interface
+        rexgend 1.2.7 implemented and improved passthru functionality
+        Basic dashboard available with unit info, WIFI/AP settings and rexgen info.
+
+    Bug fixes    
+        Receiving two IP addresses on wlan0 
+        
+v 2.0.4
+    Influx features
+        Option to edit mender and local WIFI settings before deploying
+
+v 2.0.3
+    Bug fixes
+        rexgend 1.2.6 restore the GNSS data in the pipes
+
+v 2.0.2
+    Influx features
+        CAN Error frame support - socketcan and pipes
+        Changed ping server (from 8.8.8.8 to 9.9.9.9)
+        Multiple networks support in AP mode
+
+    Bug fixes
+        AWS upload big files (500MB)
+        Enabled socket cAN by default 
+        Option to reserve percent of disk space for rxd files
+        Problem with wrong WiFi password
 
 v 2.0.1
     Kept Google cloud settings and rexgen logs on mender update
@@ -18,19 +89,19 @@ v 2.0.0
     Mender update image rootfs	
 
     Influx features
-	GNSS LED added
-	Report MAX values interval is now configurable
-	Unit name contains RexGen serial number
+        GNSS LED added
+        Report MAX values interval is now configurable
+        Unit name contains RexGen serial number
 
     Added rexgend service v.1.2.2
         Inherited socket.service
         Multi partition file upload to cloud
-	Support socket can over virtual can (configurable in rexgend.conf)
-	APN settings can be set through ReXdesk
-	Reflash, Reconfigure from Google Cloud
+	    Support socket can over virtual can (configurable in rexgend.conf)
+	    APN settings can be set through ReXdesk
+	    Reflash, Reconfigure from Google Cloud
         Support multi partition
-	Fixed sleeping mode
-	Live data runs continuously
+	    Fixed sleeping mode
+	    Live data runs continuously
 
 v 1.2.5
     Fixed multiple files download
