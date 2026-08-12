@@ -65,6 +65,7 @@ LPF="sources/meta-influx/patches"
 patch -Np1 -r - sources/meta-imx/meta-imx-sdk/conf/distro/include/fsl-imx-preferred-env.inc < $LPF/0001-remove-fsl-preferred-provider.patch
 patch -Np1 -r - sources/meta-imx/meta-imx-sdk/conf/distro/include/fsl-imx-base.inc < $LPF/change_maintainer.patch
 patch -Np1 -r - sources/base/setup-environment < $LPF/0001-setup-environment.patch
+patch -Np1 -r - sources/poky/meta/recipes-devtools/pseudo/pseudo_git.bb < $LPF/pseudo_1.9.3.patch
 
 # get command line options
 OLD_OPTIND=$OPTIND
